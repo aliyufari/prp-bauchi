@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Pu extends Model
@@ -17,6 +18,13 @@ class Pu extends Model
         'ward_id'
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'registered_voters' => 'integer',
+        ];
+    }
+
     public function ward(): BelongsTo
     {
         return $this->belongsTo(Ward::class);
@@ -25,5 +33,10 @@ class Pu extends Model
     public function users(): MorphMany
     {
         return $this->morphMany(User::class, 'location');
+    }
+
+    public function profiles(): HasMany
+    {
+        return $this->hasMany(UserProfile::class, 'pu_id');
     }
 }

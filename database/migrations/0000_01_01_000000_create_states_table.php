@@ -59,6 +59,8 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
+            $table->string('address')->nullable();
+            $table->unsignedInteger('registered_voters')->default(0);
             $table->unique(['code', 'ward_id']);
             $table->timestamps();
         });

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -87,5 +88,15 @@ class User extends Authenticatable
     public function supervisoryAgent(): HasOne
     {
         return $this->hasOne(SupervisoryAgent::class);
+    }
+
+    public function campaignTeamMembership(): HasOne
+    {
+        return $this->hasOne(CampaignTeamMember::class);
+    }   
+    
+    public function ledCampaignTeams(): HasMany
+    {
+        return $this->hasMany(CampaignTeam::class, 'team_lead_id');
     }
 }

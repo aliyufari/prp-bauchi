@@ -1,3 +1,5 @@
+export * from './campaign-team'
+export * from './polling-unit'
 export * from './aspirant'
 export * from './supervisory-agent'
 export * from './returning-officer'

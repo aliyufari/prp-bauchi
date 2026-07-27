@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { Head, router, useForm } from '@inertiajs/vue3'
-import { Plus } from 'lucide-vue-next'
+import { UserPlus } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
 import DataTable from '@/components/tables/DataTable.vue'
 import DataTableToolbar from '@/components/tables/DataTableToolbar.vue'
@@ -214,7 +214,7 @@ function toggleAll() {
           @click="openCreateModal"
           class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:w-auto sm:py-2 sm:text-sm flex-shrink-0"
         >
-          <Plus class="h-4 w-4" />
+          <UserPlus class="h-4 w-4" />
           Add Party Agent
         </button>
       </div>

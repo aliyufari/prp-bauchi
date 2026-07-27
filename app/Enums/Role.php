@@ -16,5 +16,6 @@ enum Role: string
     case SUPERVISORY_AGENT = 'supervisory_agent';
     case CAMPAIGN_TEAM = 'campaign_team';
     case MOBILIZERS = 'mobilizers';
+    case CAMPAIGN_TEAM_MEMBER = 'campaign_team_member';
     case USER = 'user'; // For the rest
 }

@@ -66,7 +66,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <input
             v-model="form.first_name"
             type="text"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
           <p v-if="form.errors.first_name" class="mt-1 text-xs text-red-600">{{ form.errors.first_name }}</p>
         </div>
@@ -76,7 +76,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <input
             v-model="form.middle_name"
             type="text"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
 
@@ -85,7 +85,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <input
             v-model="form.last_name"
             type="text"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
           <p v-if="form.errors.last_name" class="mt-1 text-xs text-red-600">{{ form.errors.last_name }}</p>
         </div>
@@ -97,7 +97,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <input
             v-model="form.email"
             type="email"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
           <p v-if="form.errors.email" class="mt-1 text-xs text-red-600">{{ form.errors.email }}</p>
         </div>
@@ -107,7 +107,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <input
             v-model="form.phone"
             type="tel"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
           <p v-if="form.errors.phone" class="mt-1 text-xs text-red-600">{{ form.errors.phone }}</p>
         </div>
@@ -123,7 +123,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
             v-model="form.password"
             type="password"
             autocomplete="new-password"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
           <p v-if="form.errors.password" class="mt-1 text-xs text-red-600">{{ form.errors.password }}</p>
         </div>
@@ -134,7 +134,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
             v-model="form.application_id"
             type="text"
             placeholder="Auto-generated if left blank"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
       </div>
@@ -149,7 +149,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <label class="mb-1 block text-xs font-medium text-gray-600">Coordinator level</label>
           <select
             v-model="form.type"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option value="" disabled>Select level</option>
             <option v-for="t in types" :key="t.value" :value="t.value">{{ t.label }}</option>
@@ -161,7 +161,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <label class="mb-1 block text-xs font-medium text-gray-600">Gender</label>
           <select
             v-model="form.gender"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option :value="null" disabled>Select gender</option>
             <option value="male">Male</option>
@@ -174,7 +174,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <input
             v-model="form.occupation"
             type="text"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
       </div>
@@ -185,7 +185,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <input
             v-model="form.education_status"
             type="text"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
       </div>
@@ -200,7 +200,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <label class="mb-1 block text-xs font-medium text-gray-600">State</label>
           <select
             v-model="form.state_id"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option :value="null" disabled>Select state</option>
             <option v-for="s in states" :key="s.id" :value="s.id">{{ s.name }}</option>
@@ -212,7 +212,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <label class="mb-1 block text-xs font-medium text-gray-600">Zone</label>
           <select
             v-model="form.zone_id"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option :value="null" disabled>Select zone</option>
             <option v-for="z in zones" :key="z.id" :value="z.id">{{ z.name }}</option>
@@ -223,7 +223,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <label class="mb-1 block text-xs font-medium text-gray-600">LGA</label>
           <select
             v-model="form.lga_id"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option :value="null" disabled>Select LGA</option>
             <option v-for="l in lgas" :key="l.id" :value="l.id">{{ l.name }}</option>
@@ -235,7 +235,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <label class="mb-1 block text-xs font-medium text-gray-600">Ward</label>
           <select
             v-model="form.ward_id"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option :value="null" disabled>Select ward</option>
             <option v-for="w in wards" :key="w.id" :value="w.id">{{ w.name }}</option>
@@ -246,7 +246,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
           <label class="mb-1 block text-xs font-medium text-gray-600">Polling unit</label>
           <select
             v-model="form.pu_id"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            class="w-full rounded-xl border border-gray-200 text-gray-700 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           >
             <option :value="null" disabled>Select polling unit</option>
             <option v-for="p in pus" :key="p.id" :value="p.id">{{ p.name }}</option>
