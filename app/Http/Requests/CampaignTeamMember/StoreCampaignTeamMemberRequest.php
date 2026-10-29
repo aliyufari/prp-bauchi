@@ -4,6 +4,7 @@ namespace App\Http\Requests\CampaignTeamMember;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 
 class StoreCampaignTeamMemberRequest extends FormRequest
 {
@@ -12,7 +13,7 @@ class StoreCampaignTeamMemberRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('manageRoster', $this->route('campaign_team'));
     }
 
     /**

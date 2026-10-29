@@ -59,8 +59,18 @@ class UserSeeder extends Seeder
     protected function seedSuperAdmins(): void
     {
         $admins = [
-            ['first' => 'Aliyu', 'last' => 'Sadisu', 'email' => 'aslere00005@gmail.com', 'password' => 'Aslere00005'],
-            ['first' => 'Aliyu', 'last' => 'Abubakar', 'email' => 'aliyufari@gmail.com', 'password' => 'Fari@3031.'],
+            [
+                'first' => 'Aliyu', 
+                'last' => 'Sadisu', 
+                'email' => 'aslere00005@gmail.com', 
+                'password' => 'Aslere00005'
+            ],
+            [
+                'first' => 'Aliyu', 
+                'last' => 'Abubakar', 
+                'email' => 'aliyufari@gmail.com', 
+                'password' => 'Fari@3031.'
+            ],
         ];
 
         foreach ($admins as $i => $admin) {

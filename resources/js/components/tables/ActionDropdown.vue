@@ -89,7 +89,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="root" class="relative inline-block text-left">
+  <div v-if="actions.length" ref="root" class="relative inline-block text-left">
     <button
       ref="triggerButton"
       type="button"

@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Traits\ExposesAbilities;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CoordinatorResource extends JsonResource
 {
+    use ExposesAbilities;
+    
     public function toArray(Request $request): array
     {
         return [

@@ -1,0 +1,18 @@
+<script setup lang="ts">
+import { computed, defineAsyncComponent } from 'vue'
+import { Head } from '@inertiajs/vue3'
+import AppLayout from '@/layouts/AppLayout.vue'
+
+const props = defineProps<{ view: 'admin' | 'state' | 'zone' | 'lga' | 'ward'; data: Record<string, unknown> }>()
+
+const AdminView = defineAsyncComponent(() => import('./levels/AdminView.vue'))
+const ScopedView = defineAsyncComponent(() => import('./levels/ScopedView.vue'))
+const Current = computed(() => (props.view === 'admin' ? AdminView : ScopedView))
+</script>
+
+<template>
+  <Head title="Dashboard" />
+  <AppLayout>
+    <component :is="Current" v-bind="data" />
+  </AppLayout>
+</template>

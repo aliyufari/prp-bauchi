@@ -2,60 +2,57 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Enums\Role;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Pu\StorePuRequest;
 use App\Http\Requests\Pu\UpdatePuRequest;
+use App\Http\Requests\Pu\StorePuRequest;
 use App\Http\Resources\PuResource;
 use App\Models\Pu;
-use App\Models\Ward;
+use App\Models\User;
+use App\Support\ScopedLocations;
+use App\Traits\AppliesJurisdiction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class PuController extends Controller
 {
+    use AppliesJurisdiction;
+
     public function index(Request $request)
     {
-        $query = Pu::query()
-            ->with('ward')
-            ->withCount(['profiles as agents_count' => function ($q) {
-                // Counts any user_profiles row pointing at this PU —
-                // a reasonable proxy for "agents/members deployed here"
-                // until/unless you want to scope this to party agents only.
-            }]);
+        Gate::authorize('viewAny', Pu::class);
+        $this->enforceFilters($request);
+        $user = $request->user();
 
+        $query = Pu::query()->visibleTo($user)->with('ward')->withCount([
+            'profiles as agents_count' => fn ($q) => $q->whereHas('user', fn ($u) => $u->role(Role::PARTY_AGENT->value)),
+        ]);
         $this->applyFilters($query, $request);
         $this->applySort($query, $request);
 
-        $pus = $query->paginate($request->integer('per_page', 15))
-            ->withQueryString();
+        $pus = $query->paginate($request->integer('per_page', 15))->withQueryString();
+        $wards = ScopedLocations::options($user)['wards'];
 
         return Inertia::render('dashboard/polling-units/Index', [
             'pus' => [
                 'data' => PuResource::collection($pus->items()),
                 'meta' => [
-                    'current_page' => $pus->currentPage(),
-                    'last_page' => $pus->lastPage(),
-                    'from' => $pus->firstItem(),
-                    'to' => $pus->lastItem(),
-                    'per_page' => $pus->perPage(),
-                    'total' => $pus->total(),
+                    'current_page' => $pus->currentPage(), 'last_page' => $pus->lastPage(),
+                    'from' => $pus->firstItem(), 'to' => $pus->lastItem(),
+                    'per_page' => $pus->perPage(), 'total' => $pus->total(),
                 ],
             ],
-            'statistics' => $this->statistics(),
-            'filterOptions' => [
-                'wards' => Ward::orderBy('name')->get(['id', 'name']),
-            ],
-            'formOptions' => [
-                'wards' => Ward::orderBy('name')->get(['id', 'name']),
-            ],
+            'statistics' => $this->statistics($user),
+            'filterOptions' => ['wards' => $wards],
+            'formOptions' => ['wards' => $wards],
             'filters' => $request->only(['search', 'ward']),
         ]);
     }
 
     public function store(StorePuRequest $request)
     {
-        Pu::create($request->validated());
+        Pu::create($request->validated() + ['registered_voters' => 0]);
 
         return back()->with('success', 'Polling unit created.');
     }
@@ -67,17 +64,14 @@ class PuController extends Controller
         return back()->with('success', 'Polling unit updated.');
     }
 
-    public function show(Pu $polling_unit)
-    {
-        $polling_unit->load('ward');
-
-        return Inertia::render('dashboard/polling-units/Show', [
-            'pu' => new PuResource($polling_unit),
-        ]);
-    }
-
     public function destroy(Pu $polling_unit)
     {
+        Gate::authorize('delete', $polling_unit);
+
+        if ($polling_unit->results()->exists()) {
+            return back()->with('error', 'This polling unit has results recorded and cannot be deleted.');
+        }
+
         $polling_unit->delete();
 
         return back()->with('success', 'Polling unit deleted.');
@@ -86,15 +80,23 @@ class PuController extends Controller
     public function bulkDestroy(Request $request)
     {
         $request->validate(['ids' => ['required', 'array'], 'ids.*' => ['uuid']]);
+        $actor = $request->user();
 
-        Pu::whereIn('id', $request->ids)->delete();
+        $deletable = Pu::query()->visibleTo($actor)->whereIn('pus.id', $request->ids)->get()
+            ->filter(fn (Pu $p) => Gate::forUser($actor)->allows('delete', $p) && !$p->results()->exists());
 
-        return back()->with('success', 'Selected polling units deleted.');
+        $deletable->each->delete();
+        $skipped = count($request->ids) - $deletable->count();
+
+        return back()->with('success', "{$deletable->count()} deleted" . ($skipped ? ", {$skipped} skipped (no permission or has results)." : '.'));
     }
 
     public function export(Request $request)
     {
-        $query = Pu::query()->with('ward');
+        Gate::authorize('viewAny', Pu::class);
+        $this->enforceFilters($request);
+
+        $query = Pu::query()->visibleTo($request->user())->with('ward');
         $this->applyFilters($query, $request);
 
         // return Excel::download(new PollingUnitsExport($query), 'polling-units.xlsx');
@@ -103,30 +105,31 @@ class PuController extends Controller
     protected function applyFilters($query, Request $request): void
     {
         $query
-            ->when($request->search, fn ($q, $search) => $q->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%")
-                    ->orWhere('address', 'like', "%{$search}%");
-            }))
-            ->when($request->ward, fn ($q, $v) => $q->where('ward_id', $v));
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
+                ->where('pus.name', 'like', "%{$s}%")
+                ->orWhere('pus.code', 'like', "%{$s}%")
+                ->orWhere('pus.address', 'like', "%{$s}%")))
+            ->when($request->ward, fn ($q, $v) => $q->where('pus.ward_id', $v));
     }
 
     protected function applySort($query, Request $request): void
     {
         $sortBy = $request->get('sort_by', 'name');
         $direction = $request->get('sort_direction', 'asc') === 'desc' ? 'desc' : 'asc';
-
         $sortable = ['name', 'code', 'registered_voters', 'created_at'];
-        $query->orderBy(in_array($sortBy, $sortable, true) ? $sortBy : 'name', $direction);
+
+        $query->orderBy('pus.' . (in_array($sortBy, $sortable, true) ? $sortBy : 'name'), $direction);
     }
 
-    protected function statistics(): array
+    protected function statistics(User $user): array
     {
+        $base = fn () => Pu::query()->visibleTo($user);
+
         return [
-            'total' => Pu::count(),
-            'total_registered_voters' => (int) Pu::sum('registered_voters'),
-            'wards_covered' => Pu::whereNotNull('ward_id')->distinct('ward_id')->count('ward_id'),
-            'unassigned' => Pu::whereNull('ward_id')->count(),
+            'total' => $base()->count(),
+            'total_registered_voters' => (int) $base()->sum('pus.registered_voters'),
+            'wards_covered' => $base()->whereNotNull('pus.ward_id')->distinct()->count('pus.ward_id'),
+            'unassigned' => $base()->whereNull('pus.ward_id')->count(),
         ];
     }
 }

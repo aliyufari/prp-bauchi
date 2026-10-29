@@ -3,14 +3,24 @@
 namespace App\Http\Requests\Coordinator;
 
 use App\Enums\CoordinatorType;
+use App\Enums\Role;
+use App\Traits\ValidatesAssignedLevel;
+use App\Traits\ValidatesLocation;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Validator;
 
 class StoreCoordinatorRequest extends FormRequest
 {
+    use ValidatesAssignedLevel;
+    use ValidatesLocation {
+        ValidatesLocation::withValidator as validateLocation;
+    }
+
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('coordinators:create');
     }
 
     public function rules(): array
@@ -27,11 +37,13 @@ class StoreCoordinatorRequest extends FormRequest
             'education_status' => ['nullable', 'string'],
             'application_id' => ['nullable', 'string', 'max:255'],
             'type' => ['required', new Enum(CoordinatorType::class)],
-            'state_id' => ['nullable', 'uuid', 'exists:states,id'],
-            'zone_id' => ['nullable', 'uuid', 'exists:zones,id'],
-            'lga_id' => ['nullable', 'uuid', 'exists:lgas,id'],
-            'ward_id' => ['nullable', 'uuid', 'exists:wards,id'],
-            'pu_id' => ['nullable', 'uuid', 'exists:pus,id'],
-        ];
+        ] + $this->locationRules();
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $this->validateLocation($validator);
+
+        $validator->after(fn (Validator $v) => $this->validateAssignedLevel($v, Role::COORDINATOR->value));
     }
 }

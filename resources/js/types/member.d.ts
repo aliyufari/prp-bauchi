@@ -1,3 +1,5 @@
+import { RowAbilities } from "./table"
+
 export interface LocationOption {
   id: string
   name: string
@@ -32,6 +34,7 @@ export interface Member {
   ward: string | null
   pu: string | null
   created_at: string
+  can: RowAbilities
 }
 
 export interface MemberStatistics {

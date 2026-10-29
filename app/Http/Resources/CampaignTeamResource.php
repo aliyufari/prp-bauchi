@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Gate;
 
 class CampaignTeamResource extends JsonResource
 {
@@ -35,9 +36,8 @@ class CampaignTeamResource extends JsonResource
 
             'member_count' => $this->members_count ?? $this->members()->count(),
 
-            'can_manage' => $request->user()
-                ? $this->canBeManagedBy($request->user())
-                : false,
+            'can_manage' => $request->user() ? Gate::forUser($request->user())->allows('manageRoster', $this->resource) : false,
+            'can' => $this->abilities($request),
 
             'created_at' => $this->created_at?->toISOString(),
         ];

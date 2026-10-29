@@ -8,19 +8,14 @@ use Illuminate\Database\Seeder;
 
 class WardSeeder extends Seeder
 {
+    private const PER_LGA = 5;
+
     public function run(): void
     {
-        foreach (Lga::all() as $lga) {
-
-            foreach (range(1,5) as $i) {
-
-                Ward::firstOrCreate([
-                    'name' => "Ward {$i}",
-                    'lga_id' => $lga->id,
-                ]);
-
+        Lga::all()->each(function (Lga $lga) {
+            foreach (range(1, self::PER_LGA) as $n) {
+                Ward::firstOrCreate(['lga_id' => $lga->id, 'name' => "Ward {$n}"]);
             }
-
-        }
+        });
     }
 }

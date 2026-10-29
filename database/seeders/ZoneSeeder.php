@@ -8,21 +8,14 @@ use Illuminate\Database\Seeder;
 
 class ZoneSeeder extends Seeder
 {
+    private const ZONES = ['Bauchi North', 'Bauchi Central', 'Bauchi South'];
+
     public function run(): void
     {
-        $state = State::first();
+        $state = State::where('name', 'Bauchi')->firstOrFail();
 
-        $zones = [
-            'Bauchi North',
-            'Bauchi Central',
-            'Bauchi South',
-        ];
-
-        foreach ($zones as $zone) {
-            Zone::firstOrCreate([
-                'name' => $zone,
-                'state_id' => $state->id,
-            ]);
+        foreach (self::ZONES as $name) {
+            Zone::firstOrCreate(['state_id' => $state->id, 'name' => $name]);
         }
     }
 }

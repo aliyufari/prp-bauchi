@@ -9,8 +9,6 @@ class StateSeeder extends Seeder
 {
     public function run(): void
     {
-        State::create([
-            'name' => 'Bauchi',
-        ]);
+        State::firstOrCreate(['name' => 'Bauchi']);
     }
 }

@@ -8,31 +8,37 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PartyAgent\StorePartyAgentRequest;
 use App\Http\Requests\PartyAgent\UpdatePartyAgentRequest;
 use App\Http\Resources\PartyAgentResource;
-use App\Models\Lga;
-use App\Models\PartyAgent;
 use App\Models\Pu;
-use App\Models\State;
 use App\Models\User;
-use App\Models\Ward;
-use App\Models\Zone;
+use App\Support\ScopedLocations;
+use App\Traits\AppliesJurisdiction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class PartyAgentController extends Controller
 {
+    use AppliesJurisdiction;
+
+    private const PROFILE_FIELDS = [
+        'phone', 'gender', 'occupation', 'education_status', 'application_id',
+        'state_id', 'zone_id', 'lga_id', 'ward_id', 'pu_id',
+    ];
+
     public function index(Request $request)
     {
-        $query = User::query()
-            ->role(Role::PARTY_AGENT->value)
-            ->with(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'partyAgent']);
+        Gate::authorize('party-agents:viewAny');
+        $this->enforceFilters($request);
+        $user = $request->user();
 
+        $query = $this->base($user)->with(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'partyAgent']);
         $this->applyFilters($query, $request);
         $this->applySort($query, $request);
 
-        $agents = $query->paginate($request->integer('per_page', 15))
-            ->withQueryString();
+        $agents = $query->paginate($request->integer('per_page', 15))->withQueryString();
+        $locations = ScopedLocations::options($user);
 
         return Inertia::render('dashboard/party-agents/Index', [
             'agents' => [
@@ -46,24 +52,13 @@ class PartyAgentController extends Controller
                     'total' => $agents->total(),
                 ],
             ],
-            'statistics' => $this->statistics(),
-            'filterOptions' => [
-                'states' => State::orderBy('name')->get(['id', 'name']),
-                'zones' => Zone::orderBy('name')->get(['id', 'name']),
-                'lgas' => Lga::orderBy('name')->get(['id', 'name']),
-                'wards' => Ward::orderBy('name')->get(['id', 'name']),
-                'statuses' => [
-                    ['value' => 'active', 'label' => 'Active'],
-                    ['value' => 'inactive', 'label' => 'Inactive'],
-                ],
+            'statistics' => $this->statistics($user),
+            'filterOptions' => $locations + [
+                'statuses' => [['value' => 'active', 'label' => 'Active'], ['value' => 'inactive', 'label' => 'Inactive']],
                 'types' => $this->typeOptions(),
             ],
-            'formOptions' => [
-                'states' => State::orderBy('name')->get(['id', 'name']),
-                'zones' => Zone::orderBy('name')->get(['id', 'name']),
-                'lgas' => Lga::orderBy('name')->get(['id', 'name']),
-                'wards' => Ward::orderBy('name')->get(['id', 'name']),
-                'pus' => Pu::orderBy('name')->get(['id', 'name']),
+            'formOptions' => $locations + [
+                'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
                 'types' => $this->typeOptions(),
             ],
             'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'status', 'type']),
@@ -84,23 +79,8 @@ class PartyAgentController extends Controller
             ]);
 
             $user->assignRole(Role::PARTY_AGENT->value);
-
-            $user->profile()->create([
-                'phone' => $data['phone'] ?? null,
-                'gender' => $data['gender'] ?? null,
-                'occupation' => $data['occupation'] ?? null,
-                'education_status' => $data['education_status'] ?? null,
-                'application_id' => $data['application_id'] ?? null,
-                'state_id' => $data['state_id'] ?? null,
-                'zone_id' => $data['zone_id'] ?? null,
-                'lga_id' => $data['lga_id'] ?? null,
-                'ward_id' => $data['ward_id'] ?? null,
-                'pu_id' => $data['pu_id'] ?? null,
-            ]);
-
-            $user->partyAgent()->create([
-                'type' => $data['type'],
-            ]);
+            $user->profile()->create($this->profileData($data)); // observer completes the location chain
+            $user->partyAgent()->create(['type' => $data['type']]);
         });
 
         return back()->with('success', 'Party agent created.');
@@ -119,22 +99,8 @@ class PartyAgentController extends Controller
                 ...(!empty($data['password']) ? ['password' => Hash::make($data['password'])] : []),
             ]);
 
-            $party_agent->profile()->updateOrCreate(['user_id' => $party_agent->id], [
-                'phone' => $data['phone'] ?? null,
-                'gender' => $data['gender'] ?? null,
-                'occupation' => $data['occupation'] ?? null,
-                'education_status' => $data['education_status'] ?? null,
-                'application_id' => $data['application_id'] ?? null,
-                'state_id' => $data['state_id'] ?? null,
-                'zone_id' => $data['zone_id'] ?? null,
-                'lga_id' => $data['lga_id'] ?? null,
-                'ward_id' => $data['ward_id'] ?? null,
-                'pu_id' => $data['pu_id'] ?? null,
-            ]);
-
-            $party_agent->partyAgent()->updateOrCreate(['user_id' => $party_agent->id], [
-                'type' => $data['type'],
-            ]);
+            $party_agent->profile()->updateOrCreate(['user_id' => $party_agent->id], $this->profileData($data));
+            $party_agent->partyAgent()->updateOrCreate(['user_id' => $party_agent->id], ['type' => $data['type']]);
         });
 
         return back()->with('success', 'Party agent updated.');
@@ -142,15 +108,17 @@ class PartyAgentController extends Controller
 
     public function show(User $party_agent)
     {
+        Gate::authorize('party-agents:view', $party_agent);
+
         $party_agent->load(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'partyAgent']);
 
-        return Inertia::render('dashboard/party-agents/Show', [
-            'agent' => new PartyAgentResource($party_agent),
-        ]);
+        return Inertia::render('dashboard/party-agents/Show', ['agent' => new PartyAgentResource($party_agent)]);
     }
 
     public function destroy(User $party_agent)
     {
+        Gate::authorize('party-agents:delete', $party_agent);
+
         $party_agent->delete();
 
         return back()->with('success', 'Party agent deleted.');
@@ -159,37 +127,57 @@ class PartyAgentController extends Controller
     public function bulkDestroy(Request $request)
     {
         $request->validate(['ids' => ['required', 'array'], 'ids.*' => ['uuid']]);
+        $actor = $request->user();
 
-        User::whereIn('id', $request->ids)->role(Role::PARTY_AGENT->value)->delete();
+        // Only in-scope rows are loaded; each is then policy-checked.
+        $deletable = $this->base($actor)->whereIn('users.id', $request->ids)->get()
+            ->filter(fn (User $t) => Gate::forUser($actor)->allows('party-agents:delete', $t));
 
-        return back()->with('success', 'Selected party agents deleted.');
+        $deletable->each->delete();
+
+        $skipped = count($request->ids) - $deletable->count();
+
+        return back()->with('success', "{$deletable->count()} deleted" . ($skipped ? ", {$skipped} skipped (not permitted)." : '.'));
     }
 
     public function export(Request $request)
     {
-        $query = User::query()->role(Role::PARTY_AGENT->value)->with(['profile', 'partyAgent']);
+        Gate::authorize('party-agents:export');
+        $this->enforceFilters($request);
+
+        $query = $this->base($request->user())->with(['profile', 'partyAgent']);
         $this->applyFilters($query, $request);
 
-        // Hand off to your export class of choice, e.g. Laravel Excel
         // return Excel::download(new PartyAgentsExport($query), 'party-agents.xlsx');
+    }
+
+    /* ------------------------------------------------------------------ */
+
+    private function base(User $viewer)
+    {
+        return User::query()->role(Role::PARTY_AGENT->value)->visibleTo($viewer);
+    }
+
+    private function profileData(array $data): array
+    {
+        return array_intersect_key($data, array_flip(self::PROFILE_FIELDS));
     }
 
     protected function applyFilters($query, Request $request): void
     {
         $query
-            ->when($request->search, fn ($q, $search) => $q->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhereHas('profile', fn ($q) => $q
-                        ->where('application_id', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%"));
-            }))
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
+                ->where('users.first_name', 'like', "%{$s}%")
+                ->orWhere('users.last_name', 'like', "%{$s}%")
+                ->orWhere('users.email', 'like', "%{$s}%")
+                ->orWhereHas('profile', fn ($q) => $q
+                    ->where('application_id', 'like', "%{$s}%")
+                    ->orWhere('phone', 'like', "%{$s}%"))))
             ->when($request->state, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('state_id', $v)))
             ->when($request->zone, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('zone_id', $v)))
             ->when($request->lga, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('ward_id', $v)))
-            ->when($request->status, fn ($q, $v) => $q->where('is_active', $v === 'active'))
+            ->when($request->status, fn ($q, $v) => $q->where('users.is_active', $v === 'active'))
             ->when($request->type, fn ($q, $v) => $q->whereHas('partyAgent', fn ($q) => $q->where('type', $v)));
     }
 
@@ -202,40 +190,38 @@ class PartyAgentController extends Controller
             $query->leftJoin('party_agents', 'party_agents.user_id', '=', 'users.id')
                 ->orderBy('party_agents.type', $direction)
                 ->select('users.*');
+
             return;
         }
 
-        if (in_array($sortBy, ['application_id'], true)) {
+        if ($sortBy === 'application_id') {
             $query->leftJoin('user_profiles', 'user_profiles.user_id', '=', 'users.id')
-                ->orderBy("user_profiles.{$sortBy}", $direction)
+                ->orderBy('user_profiles.application_id', $direction)
                 ->select('users.*');
+
             return;
         }
 
-        $sortableOnUsers = ['first_name', 'last_name', 'email', 'is_active', 'created_at'];
-        $query->orderBy(in_array($sortBy, $sortableOnUsers, true) ? $sortBy : 'created_at', $direction);
+        $sortable = ['first_name', 'last_name', 'email', 'is_active', 'created_at'];
+        $query->orderBy('users.' . (in_array($sortBy, $sortable, true) ? $sortBy : 'created_at'), $direction);
     }
 
-    protected function statistics(): array
+    protected function statistics(User $viewer): array
     {
-        $base = User::role(Role::PARTY_AGENT->value);
+        $base = fn () => $this->base($viewer);
 
         return [
-            'total' => (clone $base)->count(),
-            'active' => (clone $base)->where('is_active', true)->count(),
-            'deployed' => (clone $base)->whereHas('profile', fn ($q) => $q->whereNotNull('pu_id'))->count(),
-            'unassigned' => (clone $base)->whereDoesntHave('profile', fn ($q) => $q->whereNotNull('pu_id'))->count(),
+            'total' => $base()->count(),
+            'active' => $base()->where('users.is_active', true)->count(),
+            'deployed' => $base()->whereHas('profile', fn ($q) => $q->whereNotNull('pu_id'))->count(),
+            'unassigned' => $base()->whereDoesntHave('profile', fn ($q) => $q->whereNotNull('pu_id'))->count(),
         ];
     }
 
     protected function typeOptions(): array
     {
         return collect(PartyAgentType::cases())
-            ->map(fn ($case) => [
-                'value' => $case->value,
-                'label' => ucwords(str_replace('_', ' ', strtolower($case->value))),
-            ])
-            ->values()
-            ->all();
+            ->map(fn ($c) => ['value' => $c->value, 'label' => ucwords(str_replace('_', ' ', strtolower($c->value)))])
+            ->values()->all();
     }
 }

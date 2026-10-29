@@ -2,15 +2,25 @@
 
 namespace App\Http\Requests\SupervisoryAgent;
 
+use App\Enums\Role;
 use App\Enums\SupervisoryAgentType;
+use App\Traits\ValidatesAssignedLevel;
+use App\Traits\ValidatesLocation;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Validator;
 
 class StoreSupervisoryAgentRequest extends FormRequest
 {
+    use ValidatesAssignedLevel;
+    use ValidatesLocation {
+        ValidatesLocation::withValidator as validateLocation;
+    }
+
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('supervisory-agents:create');
     }
 
     public function rules(): array
@@ -28,11 +38,13 @@ class StoreSupervisoryAgentRequest extends FormRequest
             'application_id' => ['nullable', 'string', 'max:255'],
             'type' => ['required', new Enum(SupervisoryAgentType::class)],
             'agents_supervised' => ['nullable', 'integer', 'min:0'],
-            'state_id' => ['nullable', 'uuid', 'exists:states,id'],
-            'zone_id' => ['nullable', 'uuid', 'exists:zones,id'],
-            'lga_id' => ['nullable', 'uuid', 'exists:lgas,id'],
-            'ward_id' => ['nullable', 'uuid', 'exists:wards,id'],
-            'pu_id' => ['nullable', 'uuid', 'exists:pus,id'],
-        ];
+        ] + $this->locationRules();
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $this->validateLocation($validator);
+
+        $validator->after(fn (Validator $v) => $this->validateAssignedLevel($v, Role::SUPERVISORY_AGENT->value));
     }
 }

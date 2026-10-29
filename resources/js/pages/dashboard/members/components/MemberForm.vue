@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { LocationOption } from '@/types/member'
+import LocationCascade from '@/components/location/LocationCascade.vue'
+import { useLocationModel } from '@/composables/useLocationModel'
 
 interface FormShape {
   first_name: string
@@ -39,15 +41,19 @@ interface Props {
   wards?: LocationOption[]
   pus?: LocationOption[]
 }
-withDefaults(defineProps<Props>(), {
-  submitLabel: 'Save',
-  passwordOptional: false,
-  states: () => [],
-  zones: () => [],
-  lgas: () => [],
-  wards: () => [],
-  pus: () => [],
-})
+
+
+const props = withDefaults(defineProps<Props>(), {
+   submitLabel: 'Save',
+    passwordOptional: false,
+    states: () => [],
+    zones: () => [],
+    lgas: () => [],
+    wards: () => [],
+    pus: () => [],
+ })
+
+const location = useLocationModel(() => props.form)
 
 const emit = defineEmits<{ submit: []; cancel: [] }>()
 </script>
@@ -178,7 +184,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
     </fieldset>
 
     <!-- Location -->
-    <fieldset class="space-y-4">
+    <!-- <fieldset class="space-y-4">
       <legend class="text-xs font-bold uppercase tracking-wide text-gray-400">Location</legend>
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -244,8 +250,13 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
         Tip: filter the Zone/LGA/Ward/PU lists by the chosen State on the backend or with a
         computed property once your relations expose a parent id — right now all options are shown.
       </p>
+    </fieldset> -->
+        <!-- Location -->
+    <fieldset class="space-y-4">
+      <legend class="text-xs font-bold uppercase tracking-wide text-gray-400">Location</legend>
+      <LocationCascade v-model="location" up-to="pu" :errors="form.errors" />
     </fieldset>
-
+    
     <!-- Mentorship & training -->
     <fieldset class="space-y-4">
       <legend class="text-xs font-bold uppercase tracking-wide text-gray-400">Mentorship &amp; training</legend>

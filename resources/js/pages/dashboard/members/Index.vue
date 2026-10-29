@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import { UserPlus } from 'lucide-vue-next'
 import AppLayout from '@/layouts/AppLayout.vue'
+import Can from '@/components/access/Can.vue'
 import DataTable from '@/components/tables/DataTable.vue'
 import DataTableToolbar from '@/components/tables/DataTableToolbar.vue'
 import DataTablePagination from '@/components/tables/DataTablePagination.vue'
@@ -17,6 +18,8 @@ import EditMember from './EditMember.vue'
 import ViewMember from './ViewMember.vue'
 import { columns } from './columns'
 import { useDataTable } from '@/composables/table/useDataTable'
+import { usePermissions } from '@/composables/usePermissions'
+import { rowActions } from '@/lib/rowActions'
 import type { Member, MemberStatistics, MemberFilterOptions, LocationOption } from '@/types/member'
 import type { DataTableResponse } from '@/types/table'
 
@@ -42,6 +45,7 @@ const props = withDefaults(defineProps<Props>(), {
   formOptions: () => ({ states: [], zones: [], lgas: [], wards: [], pus: [] }),
 })
 
+const { can } = usePermissions()
 const table = useDataTable()
 
 table.search.value = props.filters?.search ?? ''
@@ -80,51 +84,23 @@ watch(table.filters, () => {
 }, { deep: true })
 watch([table.sortBy, table.sortDirection, table.page, table.perPage], query)
 
-/* ---------------------------------------------------------------------- */
-/* Panel state — Create, Edit, and View are now fully independent         */
-/* ---------------------------------------------------------------------- */
+/* Panel state: Create, Edit and View are independent */
 const creating = ref(false)
 const editingMember = ref<Member | null>(null)
-
 const viewingMemberId = ref<number | string | null>(null)
 const viewingMember = computed(() =>
-  viewingMemberId.value === null
-    ? null
-    : props.members.data.find((m) => m.id === viewingMemberId.value) ?? null,
+  viewingMemberId.value === null ? null : props.members.data.find((m) => m.id === viewingMemberId.value) ?? null,
 )
 
-function openCreate() {
-  creating.value = true
-}
+const openCreate = () => (creating.value = true)
+const closeCreate = () => (creating.value = false)
+const openEdit = (m: Member) => (editingMember.value = m)
+const closeEdit = () => (editingMember.value = null)
+const openView = (m: Member) => (viewingMemberId.value = m.id)
+const closeView = () => (viewingMemberId.value = null)
+function editFromView(m: Member) { closeView(); openEdit(m) }
 
-function closeCreate() {
-  creating.value = false
-}
-
-function openEdit(member: Member) {
-  editingMember.value = member
-}
-
-function closeEdit() {
-  editingMember.value = null
-}
-
-function openView(row: Member) {
-  viewingMemberId.value = row.id
-}
-
-function closeView() {
-  viewingMemberId.value = null
-}
-
-function editFromView(member: Member) {
-  closeView()
-  openEdit(member)
-}
-
-/* ---------------------------------------------------------------------- */
-/* Row / bulk actions                                                     */
-/* ---------------------------------------------------------------------- */
+/* Row / bulk actions */
 function handleRowAction(key: string, row: Member) {
   if (key === 'view') return openView(row)
   if (key === 'edit') return openEdit(row)
@@ -154,7 +130,6 @@ function toggleAll() {
   <Head title="Members" />
   <AppLayout>
     <div class="space-y-4 sm:space-y-6">
-      <!-- Header -->
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div class="min-w-0">
           <h2 class="text-lg font-black text-gray-900 sm:text-xl">Members</h2>
@@ -162,14 +137,16 @@ function toggleAll() {
             Manage registered members across states, LGAs and wards
           </p>
         </div>
-        <button
-          type="button"
-          @click="openCreate"
-          class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:w-auto sm:py-2 sm:text-sm flex-shrink-0"
-        >
-          <UserPlus class="h-4 w-4" />
-          Add Member
-        </button>
+        <Can permission="members.create">
+          <button
+            type="button"
+            @click="openCreate"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:w-auto sm:py-2 sm:text-sm flex-shrink-0"
+          >
+            <UserPlus class="h-4 w-4" />
+            Add Member
+          </button>
+        </Can>
       </div>
 
       <MemberStats :statistics="statistics" />
@@ -177,7 +154,7 @@ function toggleAll() {
       <DataTableToolbar
         v-model="table.search.value"
         placeholder="Search by name, email, phone or member no..."
-        show-export
+        :show-export="can('members.export')"
         show-refresh
         @refresh="query"
         @export="router.get(route('members.export'), { ...table.filters.value })"
@@ -188,6 +165,7 @@ function toggleAll() {
       </DataTableToolbar>
 
       <BulkActions
+        v-if="can('members.delete')"
         :selected="table.selected.value"
         @clear="table.clearSelection"
         @action="handleBulkAction"
@@ -198,6 +176,7 @@ function toggleAll() {
           <DataTable
             :columns="columns"
             :rows="members.data"
+            :selectable="can('members.delete')"
             :selected="table.selected.value"
             :sort-by="table.sortBy.value"
             :sort-direction="table.sortDirection.value"
@@ -215,8 +194,8 @@ function toggleAll() {
               />
             </template>
             <template #location="{ row }">
-              <div class="text-sm text-gray-700">{{ row.lga }} LGA</div>
-              <div class="text-xs text-gray-400">{{ row.ward }} Ward</div>
+              <div class="text-sm text-gray-700">{{ row.lga ? `${row.lga} LGA` : '—' }}</div>
+              <div class="text-xs text-gray-400">{{ row.ward ? `${row.ward} Ward` : '' }}</div>
             </template>
             <template #mentor="{ row }">
               <span class="text-sm text-gray-700">{{ row.mentor ?? '—' }}</span>
@@ -229,7 +208,7 @@ function toggleAll() {
             </template>
             <template #actions="{ row }">
               <div class="flex justify-end">
-                <ActionDropdown @action="(key) => handleRowAction(key, row)" />
+                <ActionDropdown :actions="rowActions(row.can)" @action="(key) => handleRowAction(key, row)" />
               </div>
             </template>
           </DataTable>
@@ -248,23 +227,8 @@ function toggleAll() {
       />
     </div>
 
-    <CreateMember
-      :open="creating"
-      :form-options="formOptions"
-      @close="closeCreate"
-    />
-
-    <EditMember
-      :member="editingMember"
-      :form-options="formOptions"
-      @close="closeEdit"
-    />
-
-    <ViewMember
-      v-if="viewingMember"
-      :member="viewingMember"
-      @close="closeView"
-      @edit="editFromView"
-    />
+    <CreateMember :open="creating" :form-options="formOptions" @close="closeCreate" />
+    <EditMember :member="editingMember" :form-options="formOptions" @close="closeEdit" />
+    <ViewMember v-if="viewingMember" :member="viewingMember" @close="closeView" @edit="editFromView" />
   </AppLayout>
 </template>

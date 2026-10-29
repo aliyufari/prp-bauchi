@@ -11,14 +11,13 @@ use App\Models\CampaignTeamMember;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 
 class CampaignTeamMemberController extends Controller
 {
     public function store(StoreCampaignTeamMemberRequest $request, CampaignTeam $campaign_team)
     {
-        abort_unless($campaign_team->canBeManagedBy($request->user()), 403);
-
         DB::transaction(function () use ($request, $campaign_team) {
             $data = $request->validated();
 
@@ -30,10 +29,7 @@ class CampaignTeamMemberController extends Controller
             ]);
 
             $user->assignRole(Role::CAMPAIGN_TEAM_MEMBER->value);
-
-            $user->profile()->create([
-                'phone' => $data['phone'] ?? null,
-            ]);
+            $user->profile()->create(['phone' => $data['phone'] ?? null]);
 
             $campaign_team->members()->create([
                 'user_id' => $user->id,
@@ -46,26 +42,22 @@ class CampaignTeamMemberController extends Controller
         return back()->with('success', 'Team member added.');
     }
 
-    public function update(UpdateCampaignTeamMemberRequest $request, CampaignTeam $campaign_team, CampaignTeamMember $member)
+    public function update(UpdateCampaignTeamMemberRequest $request, CampaignTeam $campaign_team, CampaignTeamMember $team_member)
     {
-        abort_unless($campaign_team->canBeManagedBy($request->user()), 403);
-        abort_unless($member->campaign_team_id === $campaign_team->id, 404);
+        abort_unless($team_member->campaign_team_id === $campaign_team->id, 404);
 
-        $member->update($request->validated());
+        $team_member->update($request->validated());
 
         return back()->with('success', 'Team member updated.');
     }
 
-    public function destroy(Request $request, CampaignTeam $campaign_team, CampaignTeamMember $member)
+    public function destroy(Request $request, CampaignTeam $campaign_team, CampaignTeamMember $team_member)
     {
-        abort_unless($campaign_team->canBeManagedBy($request->user()), 403);
-        abort_unless($member->campaign_team_id === $campaign_team->id, 404);
+        Gate::authorize('manageRoster', $campaign_team);
+        abort_unless($team_member->campaign_team_id === $campaign_team->id, 404);
 
-        // Removes the roster entry only; the underlying User account is
-        // left intact so their login/history isn't destroyed by a
-        // simple team reassignment. Delete the User separately if the
-        // account itself should be removed.
-        $member->delete();
+        // Removes the roster entry only. The login account is kept.
+        $team_member->delete();
 
         return back()->with('success', 'Team member removed from the team.');
     }

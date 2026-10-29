@@ -1,6 +1,8 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\LocationOptionsController;
+use App\Http\Controllers\Dashboard\PortalController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -8,14 +10,11 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-// Route::get('dashboard', function () {
-//     return Inertia::render('Dashboard');
-// })->middleware(['auth', 'verified'])->name('dashboard');
+require __DIR__.'/auth.php';
 
-Route::middleware(['auth'])->group(function () {
-    // Route::get('/', fn () => redirect('/dashboard'));
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::middleware('auth')->group(function () {
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::get('portal', [PortalController::class, 'home'])->name('portal.home');
 });
 
-require __DIR__.'/auth.php';
 require __DIR__.'/dashboard.php';

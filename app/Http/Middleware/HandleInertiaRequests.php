@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\{Access, Jurisdiction, NavigationBuilder};
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -38,19 +39,42 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+        $u = $request->user();
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
-            'auth' => [
-                'user' => $request->user(),
-            ],
+            'auth' => fn () => $u ? [
+            'user' => [
+                    'id' => $u->id, 'first_name' => $u->first_name, 'last_name' => $u->last_name,
+                    'email' => $u->email, 'avatar_url' => null,
+                ],
+                'roles' => $u->getRoleNames()->values(),
+                'permissions' => $u->getAllPermissions()->pluck('name')->values(),
+                'jurisdiction' => $this->jurisdiction($u),
+                'navigation' => NavigationBuilder::for($u),
+                'layout' => Access::layoutFor($u),
+                'home' => Access::homeFor($u),
+            ] : ['user' => null, 'roles' => [], 'permissions' => [], 'jurisdiction' => null, 'navigation' => [], 'layout' => 'app', 'home' => '/'],
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+        ];
+    }
+
+    private function jurisdiction($u): array
+    {
+        $j = Jurisdiction::for($u);
+
+        return [
+            'level' => $j->level,
+            'id' => $j->id,
+            'name' => $j->name(),
+            'unrestricted' => $j->unrestricted,
+            'locked' => (object) $j->locked(), // `{}` rather than `[]` when empty
         ];
     }
 }

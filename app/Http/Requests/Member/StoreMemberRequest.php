@@ -2,14 +2,17 @@
 
 namespace App\Http\Requests\Member;
 
+use App\Traits\ValidatesLocation;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Gate;
 
 class StoreMemberRequest extends FormRequest
 {
+    use ValidatesLocation;
+
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('members:create');
     }
 
     public function rules(): array
@@ -25,14 +28,9 @@ class StoreMemberRequest extends FormRequest
             'occupation' => ['nullable', 'string', 'max:255'],
             'education_status' => ['nullable', 'string'],
             'application_id' => ['nullable', 'string', 'max:255'],
-            'state_id' => ['nullable', 'uuid', 'exists:states,id'],
-            'zone_id' => ['nullable', 'uuid', 'exists:zones,id'],
-            'lga_id' => ['nullable', 'uuid', 'exists:lgas,id'],
-            'ward_id' => ['nullable', 'uuid', 'exists:wards,id'],
-            'pu_id' => ['nullable', 'uuid', 'exists:pus,id'],
             'mentor_name' => ['nullable', 'string', 'max:255'],
             'mentor_status' => ['boolean'],
             'training_status' => ['boolean'],
-        ];
+        ] + $this->locationRules();
     }
 }

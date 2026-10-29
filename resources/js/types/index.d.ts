@@ -1,3 +1,4 @@
+export * from './result'
 export * from './campaign-team'
 export * from './polling-unit'
 export * from './aspirant'

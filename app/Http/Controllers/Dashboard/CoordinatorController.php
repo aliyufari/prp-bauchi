@@ -8,30 +8,39 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Coordinator\StoreCoordinatorRequest;
 use App\Http\Requests\Coordinator\UpdateCoordinatorRequest;
 use App\Http\Resources\CoordinatorResource;
-use App\Models\Lga;
 use App\Models\Pu;
-use App\Models\State;
 use App\Models\User;
-use App\Models\Ward;
-use App\Models\Zone;
+use App\Support\Jurisdiction;
+use App\Support\RoleHierarchy;
+use App\Support\ScopedLocations;
+use App\Traits\AppliesJurisdiction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class CoordinatorController extends Controller
 {
+    use AppliesJurisdiction;
+
+    private const PROFILE_FIELDS = [
+        'phone', 'gender', 'occupation', 'education_status', 'application_id',
+        'state_id', 'zone_id', 'lga_id', 'ward_id', 'pu_id',
+    ];
+
     public function index(Request $request)
     {
-        $query = User::query()
-            ->role(Role::COORDINATOR->value)
-            ->with(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'coordinator']);
+        Gate::authorize('coordinators:viewAny');
+        $this->enforceFilters($request);
+        $user = $request->user();
 
+        $query = $this->base($user)->with(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'coordinator']);
         $this->applyFilters($query, $request);
         $this->applySort($query, $request);
 
-        $coordinators = $query->paginate($request->integer('per_page', 15))
-            ->withQueryString();
+        $coordinators = $query->paginate($request->integer('per_page', 15))->withQueryString();
+        $locations = ScopedLocations::options($user);
 
         return Inertia::render('dashboard/coordinators/Index', [
             'coordinators' => [
@@ -45,25 +54,14 @@ class CoordinatorController extends Controller
                     'total' => $coordinators->total(),
                 ],
             ],
-            'statistics' => $this->statistics(),
-            'filterOptions' => [
-                'states' => State::orderBy('name')->get(['id', 'name']),
-                'zones' => Zone::orderBy('name')->get(['id', 'name']),
-                'lgas' => Lga::orderBy('name')->get(['id', 'name']),
-                'wards' => Ward::orderBy('name')->get(['id', 'name']),
-                'statuses' => [
-                    ['value' => 'active', 'label' => 'Active'],
-                    ['value' => 'inactive', 'label' => 'Inactive'],
-                ],
+            'statistics' => $this->statistics($user),
+            'filterOptions' => $locations + [
+                'statuses' => [['value' => 'active', 'label' => 'Active'], ['value' => 'inactive', 'label' => 'Inactive']],
                 'types' => $this->typeOptions(),
             ],
-            'formOptions' => [
-                'states' => State::orderBy('name')->get(['id', 'name']),
-                'zones' => Zone::orderBy('name')->get(['id', 'name']),
-                'lgas' => Lga::orderBy('name')->get(['id', 'name']),
-                'wards' => Ward::orderBy('name')->get(['id', 'name']),
-                'pus' => Pu::orderBy('name')->get(['id', 'name']),
-                'types' => $this->typeOptions(),
+            'formOptions' => $locations + [
+                'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
+                'types' => $this->typeOptions($user), // only levels this user may assign
             ],
             'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'status', 'type']),
         ]);
@@ -83,23 +81,8 @@ class CoordinatorController extends Controller
             ]);
 
             $user->assignRole(Role::COORDINATOR->value);
-
-            $user->profile()->create([
-                'phone' => $data['phone'] ?? null,
-                'gender' => $data['gender'] ?? null,
-                'occupation' => $data['occupation'] ?? null,
-                'education_status' => $data['education_status'] ?? null,
-                'application_id' => $data['application_id'] ?? null,
-                'state_id' => $data['state_id'] ?? null,
-                'zone_id' => $data['zone_id'] ?? null,
-                'lga_id' => $data['lga_id'] ?? null,
-                'ward_id' => $data['ward_id'] ?? null,
-                'pu_id' => $data['pu_id'] ?? null,
-            ]);
-
-            $user->coordinator()->create([
-                'type' => $data['type'],
-            ]);
+            $user->profile()->create($this->profileData($data));
+            $user->coordinator()->create(['type' => $data['type']]);
         });
 
         return back()->with('success', 'Coordinator created.');
@@ -118,38 +101,29 @@ class CoordinatorController extends Controller
                 ...(!empty($data['password']) ? ['password' => Hash::make($data['password'])] : []),
             ]);
 
-            $coordinator->profile()->updateOrCreate(['user_id' => $coordinator->id], [
-                'phone' => $data['phone'] ?? null,
-                'gender' => $data['gender'] ?? null,
-                'occupation' => $data['occupation'] ?? null,
-                'education_status' => $data['education_status'] ?? null,
-                'application_id' => $data['application_id'] ?? null,
-                'state_id' => $data['state_id'] ?? null,
-                'zone_id' => $data['zone_id'] ?? null,
-                'lga_id' => $data['lga_id'] ?? null,
-                'ward_id' => $data['ward_id'] ?? null,
-                'pu_id' => $data['pu_id'] ?? null,
-            ]);
-
-            $coordinator->coordinator()->updateOrCreate(['user_id' => $coordinator->id], [
-                'type' => $data['type'],
-            ]);
+            $coordinator->profile()->updateOrCreate(['user_id' => $coordinator->id], $this->profileData($data));
+            $coordinator->coordinator()->updateOrCreate(['user_id' => $coordinator->id], ['type' => $data['type']]);
         });
+
+        // Their level or location may have changed; drop any cached jurisdiction.
+        Jurisdiction::flush();
 
         return back()->with('success', 'Coordinator updated.');
     }
 
     public function show(User $coordinator)
     {
+        Gate::authorize('coordinators:view', $coordinator);
+
         $coordinator->load(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'coordinator']);
 
-        return Inertia::render('dashboard/coordinators/Show', [
-            'coordinator' => new CoordinatorResource($coordinator),
-        ]);
+        return Inertia::render('dashboard/coordinators/Show', ['coordinator' => new CoordinatorResource($coordinator)]);
     }
 
     public function destroy(User $coordinator)
     {
+        Gate::authorize('coordinators:delete', $coordinator);
+
         $coordinator->delete();
 
         return back()->with('success', 'Coordinator deleted.');
@@ -158,37 +132,56 @@ class CoordinatorController extends Controller
     public function bulkDestroy(Request $request)
     {
         $request->validate(['ids' => ['required', 'array'], 'ids.*' => ['uuid']]);
+        $actor = $request->user();
 
-        User::whereIn('id', $request->ids)->role(Role::COORDINATOR->value)->delete();
+        $deletable = $this->base($actor)->whereIn('users.id', $request->ids)->get()
+            ->filter(fn (User $t) => Gate::forUser($actor)->allows('coordinators:delete', $t));
 
-        return back()->with('success', 'Selected coordinators deleted.');
+        $deletable->each->delete();
+
+        $skipped = count($request->ids) - $deletable->count();
+
+        return back()->with('success', "{$deletable->count()} deleted" . ($skipped ? ", {$skipped} skipped (not permitted)." : '.'));
     }
 
     public function export(Request $request)
     {
-        $query = User::query()->role(Role::COORDINATOR->value)->with(['profile', 'coordinator']);
+        Gate::authorize('coordinators:export');
+        $this->enforceFilters($request);
+
+        $query = $this->base($request->user())->with(['profile', 'coordinator']);
         $this->applyFilters($query, $request);
 
-        // Hand off to your export class of choice, e.g. Laravel Excel
         // return Excel::download(new CoordinatorsExport($query), 'coordinators.xlsx');
+    }
+
+    /* ------------------------------------------------------------------ */
+
+    private function base(User $viewer)
+    {
+        return User::query()->role(Role::COORDINATOR->value)->visibleTo($viewer);
+    }
+
+    private function profileData(array $data): array
+    {
+        return array_intersect_key($data, array_flip(self::PROFILE_FIELDS));
     }
 
     protected function applyFilters($query, Request $request): void
     {
         $query
-            ->when($request->search, fn ($q, $search) => $q->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%")
-                    ->orWhereHas('profile', fn ($q) => $q
-                        ->where('application_id', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%"));
-            }))
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
+                ->where('users.first_name', 'like', "%{$s}%")
+                ->orWhere('users.last_name', 'like', "%{$s}%")
+                ->orWhere('users.email', 'like', "%{$s}%")
+                ->orWhereHas('profile', fn ($q) => $q
+                    ->where('application_id', 'like', "%{$s}%")
+                    ->orWhere('phone', 'like', "%{$s}%"))))
             ->when($request->state, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('state_id', $v)))
             ->when($request->zone, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('zone_id', $v)))
             ->when($request->lga, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('ward_id', $v)))
-            ->when($request->status, fn ($q, $v) => $q->where('is_active', $v === 'active'))
+            ->when($request->status, fn ($q, $v) => $q->where('users.is_active', $v === 'active'))
             ->when($request->type, fn ($q, $v) => $q->whereHas('coordinator', fn ($q) => $q->where('type', $v)));
     }
 
@@ -201,40 +194,49 @@ class CoordinatorController extends Controller
             $query->leftJoin('coordinators', 'coordinators.user_id', '=', 'users.id')
                 ->orderBy('coordinators.type', $direction)
                 ->select('users.*');
+
             return;
         }
 
-        if (in_array($sortBy, ['application_id'], true)) {
+        if ($sortBy === 'application_id') {
             $query->leftJoin('user_profiles', 'user_profiles.user_id', '=', 'users.id')
-                ->orderBy("user_profiles.{$sortBy}", $direction)
+                ->orderBy('user_profiles.application_id', $direction)
                 ->select('users.*');
+
             return;
         }
 
-        $sortableOnUsers = ['first_name', 'last_name', 'email', 'is_active', 'created_at'];
-        $query->orderBy(in_array($sortBy, $sortableOnUsers, true) ? $sortBy : 'created_at', $direction);
+        $sortable = ['first_name', 'last_name', 'email', 'is_active', 'created_at'];
+        $query->orderBy('users.' . (in_array($sortBy, $sortable, true) ? $sortBy : 'created_at'), $direction);
     }
 
-    protected function statistics(): array
+    protected function statistics(User $viewer): array
     {
-        $base = User::role(Role::COORDINATOR->value);
+        $base = fn () => $this->base($viewer);
+
+        // Derive "state level" from the enum rather than hardcoding a case name.
+        $stateTypes = collect(CoordinatorType::cases())
+            ->filter(fn ($c) => Jurisdiction::levelFor($c->value) === 'state')
+            ->map->value->all();
 
         return [
-            'total' => (clone $base)->count(),
-            'active' => (clone $base)->where('is_active', true)->count(),
-            'state_level' => (clone $base)->whereHas('coordinator', fn ($q) => $q->where('type', CoordinatorType::STATE_COORDINATOR))->count(),
-            'assigned' => (clone $base)->whereHas('profile', fn ($q) => $q->whereNotNull('lga_id'))->count(),
+            'total' => $base()->count(),
+            'active' => $base()->where('users.is_active', true)->count(),
+            'state_level' => $base()->whereHas('coordinator', fn ($q) => $q->whereIn('type', $stateTypes))->count(),
+            'assigned' => $base()->whereHas('profile', fn ($q) => $q->whereNotNull('lga_id'))->count(),
         ];
     }
 
-    protected function typeOptions(): array
+    /** Pass an actor to list only the levels they are allowed to assign. */
+    protected function typeOptions(?User $actor = null): array
     {
         return collect(CoordinatorType::cases())
-            ->map(fn ($case) => [
-                'value' => $case->value,
-                'label' => ucwords(str_replace('_', ' ', strtolower($case->value))),
-            ])
-            ->values()
-            ->all();
+            ->filter(function ($c) use ($actor) {
+                $level = Jurisdiction::levelFor($c->value);
+
+                return !$actor || ($level && RoleHierarchy::canAssign($actor, Role::COORDINATOR->value, $level));
+            })
+            ->map(fn ($c) => ['value' => $c->value, 'label' => ucwords(str_replace('_', ' ', strtolower($c->value)))])
+            ->values()->all();
     }
 }

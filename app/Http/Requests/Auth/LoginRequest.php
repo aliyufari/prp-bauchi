@@ -50,6 +50,12 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        // $user = User::where('email', $this->email)->first();
+
+        // if ($user && !$user->is_active && Hash::check($this->password, $user->password)) {
+        //     throw ValidationException::withMessages(['email' => 'Your account is awaiting approval by an administrator.']);
+        // }
     }
 
     /**

@@ -3,14 +3,18 @@
 namespace App\Http\Requests\Stakeholder;
 
 use App\Enums\StakeholderType;
+use App\Traits\ValidatesLocation;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Enum;
 
 class StoreStakeholderRequest extends FormRequest
 {
+    use ValidatesLocation;
+
     public function authorize(): bool
     {
-        return true;
+        return Gate::allows('stakeholders:create');
     }
 
     public function rules(): array
@@ -29,11 +33,6 @@ class StoreStakeholderRequest extends FormRequest
             'type' => ['required', new Enum(StakeholderType::class)],
             'organization' => ['nullable', 'string', 'max:255'],
             'designation' => ['nullable', 'string', 'max:255'],
-            'state_id' => ['nullable', 'uuid', 'exists:states,id'],
-            'zone_id' => ['nullable', 'uuid', 'exists:zones,id'],
-            'lga_id' => ['nullable', 'uuid', 'exists:lgas,id'],
-            'ward_id' => ['nullable', 'uuid', 'exists:wards,id'],
-            'pu_id' => ['nullable', 'uuid', 'exists:pus,id'],
-        ];
+        ] + $this->locationRules();
     }
 }

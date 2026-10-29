@@ -26,3 +26,5 @@ export interface DataTableResponse<T> {
   data: T[]
   meta: PaginationMeta
 }
+
+export interface RowAbilities { view: boolean; update: boolean; delete: boolean }

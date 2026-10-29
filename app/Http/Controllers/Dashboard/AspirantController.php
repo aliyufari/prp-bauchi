@@ -6,12 +6,13 @@ use App\Enums\AspirantOffice;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Aspirant\StoreAspirantRequest;
-use App\Http\Requests\UpdateAspirantRequest;
+use App\Http\Requests\Aspirant\UpdateAspirantRequest;
 use App\Http\Resources\AspirantResource;
 use App\Models\Constituency;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
@@ -22,6 +23,8 @@ class AspirantController extends Controller
      */
     public function governor(Request $request)
     {
+        Gate::authorize('aspirants:viewAny');
+
         $user = User::query()
             ->whereHas('aspirant', fn ($q) => $q->where('office', AspirantOffice::GOVERNOR->value))
             ->with(['profile.state', 'aspirant.constituency'])
@@ -38,6 +41,8 @@ class AspirantController extends Controller
 
     public function index(Request $request)
     {
+        Gate::authorize('aspirants:viewAny');
+        
         $query = User::query()
             ->role(Role::ASPIRANT->value)
             ->with(['profile.state', 'aspirant.constituency']);
@@ -78,6 +83,8 @@ class AspirantController extends Controller
 
     public function store(StoreAspirantRequest $request)
     {
+        Gate::authorize('aspirants:manage');
+
         DB::transaction(function () use ($request) {
             $data = $request->validated();
 
@@ -116,6 +123,8 @@ class AspirantController extends Controller
 
     public function update(UpdateAspirantRequest $request, User $aspirant)
     {
+        Gate::authorize('aspirants:manage');
+
         DB::transaction(function () use ($request, $aspirant) {
             $data = $request->validated();
 
@@ -161,6 +170,8 @@ class AspirantController extends Controller
 
     public function destroy(User $aspirant)
     {
+        Gate::authorize('aspirants:manage');
+
         $aspirant->delete();
 
         return back()->with('success', 'Aspirant deleted.');
@@ -168,6 +179,8 @@ class AspirantController extends Controller
 
     public function bulkDestroy(Request $request)
     {
+        Gate::authorize('aspirants:manage');
+
         $request->validate(['ids' => ['required', 'array'], 'ids.*' => ['uuid']]);
 
         User::whereIn('id', $request->ids)->role(Role::ASPIRANT->value)->delete();
