@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\EducationStatus;
 use App\Support\{Access, Jurisdiction, NavigationBuilder};
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
@@ -44,11 +45,14 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'educationStatuses' => EducationStatus::options(),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => fn () => $u ? [
             'user' => [
                     'id' => $u->id, 'first_name' => $u->first_name, 'last_name' => $u->last_name,
-                    'email' => $u->email, 'avatar_url' => null,
+                    'email' => $u->email,
+                    'avatar' => $u->avatar,
+                    'avatar_url' => $u->avatar ? asset('storage/'.$u->avatar) : null,
                 ],
                 'roles' => $u->getRoleNames()->values(),
                 'permissions' => $u->getAllPermissions()->pluck('name')->values(),
@@ -62,6 +66,11 @@ class HandleInertiaRequests extends Middleware
                 'location' => $request->url(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'flash' => fn () => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+                'warning' => $request->session()->get('warning'),
+            ],
         ];
     }
 

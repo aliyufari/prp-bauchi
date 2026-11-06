@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\ReturningOfficer;
 
+use App\Enums\EducationStatus;
+use Illuminate\Validation\Rule;
+
 use App\Traits\ValidatesLocation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +21,7 @@ class StoreReturningOfficerRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -26,7 +30,7 @@ class StoreReturningOfficerRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20'],
             'gender' => ['nullable', 'string'],
             'occupation' => ['nullable', 'string', 'max:255'],
-            'education_status' => ['nullable', 'string'],
+            'education_status' => ['nullable', Rule::enum(EducationStatus::class)],
             'application_id' => ['nullable', 'string', 'max:255'],
             'institution' => ['required', 'string', 'max:255'],
             'posting_location' => ['required', 'string', 'max:255'],

@@ -4,7 +4,6 @@ import { Link, usePage } from '@inertiajs/vue3'
 import { Building2, ChevronRight, X } from 'lucide-vue-next'
 import { resolveIcon } from '@/lib/icons'
 import { usePermissions } from '@/composables/usePermissions'
-import ScopeBadge from './ScopeBadge.vue'
 import logoUrl from '@/assets/logo.jpg'
 import type { NavItem } from '@/types/navigation'
 
@@ -103,10 +102,9 @@ function linkClass(item: NavItem, compact: boolean) {
             style="color: #e8c44a; text-shadow: 0 1px 4px rgba(232,196,74,0.4);"
           >PRP</p>
           <p
-            class="font-bold text-[9px] uppercase mt-1 tracking-[0.25em]"
+            class="mt-1 font-bold text-[9px] uppercase tracking-[0.25em]"
             style="color: rgba(255,255,255,0.55);"
           >Bauchi State</p>
-          <ScopeBadge />
         </div>
       </Transition>
 

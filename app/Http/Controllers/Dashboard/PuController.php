@@ -14,6 +14,8 @@ use App\Traits\AppliesJurisdiction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
+use App\Exports\FormattedArrayExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PuController extends Controller
 {
@@ -46,7 +48,7 @@ class PuController extends Controller
             'statistics' => $this->statistics($user),
             'filterOptions' => ['wards' => $wards],
             'formOptions' => ['wards' => $wards],
-            'filters' => $request->only(['search', 'ward']),
+            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward']),
         ]);
     }
 
@@ -96,10 +98,19 @@ class PuController extends Controller
         Gate::authorize('viewAny', Pu::class);
         $this->enforceFilters($request);
 
-        $query = Pu::query()->visibleTo($request->user())->with('ward');
+        $query = Pu::query()->visibleTo($request->user())->with('ward.lga');
         $this->applyFilters($query, $request);
+        $this->applySort($query, $request);
+        $rows = $query->get()->map(fn (Pu $pu) => [
+            $pu->name, $pu->code, $pu->address, $pu->ward?->name,
+            $pu->ward?->lga?->name, (int) $pu->registered_voters,
+        ])->all();
 
-        // return Excel::download(new PollingUnitsExport($query), 'polling-units.xlsx');
+        return Excel::download(new FormattedArrayExport(
+            ['Polling unit', 'Code', 'Address', 'Ward', 'LGA', 'Registered voters'],
+            $rows,
+            'Polling Units',
+        ), 'polling-units.xlsx');
     }
 
     protected function applyFilters($query, Request $request): void
@@ -109,6 +120,9 @@ class PuController extends Controller
                 ->where('pus.name', 'like', "%{$s}%")
                 ->orWhere('pus.code', 'like', "%{$s}%")
                 ->orWhere('pus.address', 'like', "%{$s}%")))
+            ->when($request->state, fn ($q, $v) => $q->whereHas('ward.lga.zone', fn ($zone) => $zone->where('zones.state_id', $v)))
+            ->when($request->zone, fn ($q, $v) => $q->whereHas('ward.lga', fn ($lga) => $lga->where('lgas.zone_id', $v)))
+            ->when($request->lga, fn ($q, $v) => $q->whereHas('ward', fn ($ward) => $ward->where('wards.lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->where('pus.ward_id', $v));
     }
 

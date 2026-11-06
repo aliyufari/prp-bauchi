@@ -81,6 +81,12 @@ class AccessServiceProvider extends ServiceProvider
                         return false;
                     }
 
+                    // Coordinators may only view subordinate coordinators; peers and
+                    // higher-level coordinators are not exposed through guessed URLs.
+                    if ($module === 'coordinators' && $action === 'view') {
+                        return RoleHierarchy::canManage($actor, $target);
+                    }
+
                     return $action === 'view' || RoleHierarchy::canManage($actor, $target);
                 });
             }
@@ -92,6 +98,7 @@ class AccessServiceProvider extends ServiceProvider
     {
         Gate::define('aspirants:viewAny', fn (User $a) => $a->checkPermissionTo('aspirants.view'));
         Gate::define('aspirants:manage', fn (User $a) => $a->checkPermissionTo('aspirants.manage'));
+        Gate::define('aspirants:export', fn (User $a) => $a->checkPermissionTo('aspirants.export'));
         Gate::define('aspirants:view', fn (User $a, User $t) => $a->checkPermissionTo('aspirants.view') || $a->is($t));
     }
 

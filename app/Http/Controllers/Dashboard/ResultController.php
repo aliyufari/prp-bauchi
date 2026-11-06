@@ -49,7 +49,7 @@ class ResultController extends Controller
             'statistics' => $this->statistics($user),
             'filterOptions' => ['offices' => $this->officeOptions(), 'statuses' => $this->statusOptions(), 'states' => $states],
             'formOptions' => ['offices' => $this->officeOptions(), 'parties' => $this->partyOptions(), 'states' => $states],
-            'filters' => $request->only(['search', 'office', 'status', 'state']),
+            'filters' => $request->only(['search', 'office', 'status', 'state', 'zone', 'lga', 'ward', 'pu']),
             'canUpload' => $user->checkPermissionTo('results.upload'),
         ]);
     }
@@ -106,7 +106,11 @@ class ResultController extends Controller
                 ->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%")))
             ->when($request->office, fn ($q, $v) => $q->where('results.office', $v))
             ->when($request->status, fn ($q, $v) => $q->where('results.status', $v))
-            ->when($request->state, fn ($q, $v) => $q->where('results.state_id', $v));
+            ->when($request->state, fn ($q, $v) => $q->where('results.state_id', $v))
+            ->when($request->zone, fn ($q, $v) => $q->where('results.zone_id', $v))
+            ->when($request->lga, fn ($q, $v) => $q->where('results.lga_id', $v))
+            ->when($request->ward, fn ($q, $v) => $q->where('results.ward_id', $v))
+            ->when($request->pu, fn ($q, $v) => $q->where('results.pu_id', $v));
     }
 
     protected function applySort($query, Request $request): void

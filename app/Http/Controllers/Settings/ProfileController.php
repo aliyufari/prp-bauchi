@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,6 +20,7 @@ class ProfileController extends Controller
     public function edit(Request $request): Response
     {
         return Inertia::render('settings/Profile', [
+            'user' => $request->user()->only(['first_name', 'middle_name', 'last_name', 'email', 'avatar']),
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
         ]);
@@ -29,15 +31,38 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->hasFile('avatar')) {
+            $newAvatar = $request->file('avatar')->store('avatars', 'public');
+        } else {
+            $newAvatar = null;
         }
 
-        $request->user()->save();
+        $user->fill(collect($validated)->only(['first_name', 'middle_name', 'last_name', 'email'])->all());
 
-        return to_route('profile.edit');
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        if ($newAvatar !== null) {
+            $oldAvatar = $user->avatar;
+            $user->avatar = $newAvatar;
+        } elseif ($request->boolean('remove_avatar')) {
+            $oldAvatar = $user->avatar;
+            $user->avatar = null;
+        } else {
+            $oldAvatar = null;
+        }
+
+        $user->save();
+
+        if ($oldAvatar) {
+            Storage::disk('public')->delete($oldAvatar);
+        }
+
+        return to_route('profile.edit')->with('status', 'profile-updated');
     }
 
     /**
@@ -52,6 +77,10 @@ class ProfileController extends Controller
         $user = $request->user();
 
         Auth::logout();
+
+        if ($user->avatar) {
+            Storage::disk('public')->delete($user->avatar);
+        }
 
         $user->delete();
 

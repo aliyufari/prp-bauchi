@@ -3,6 +3,7 @@ import type { Member } from '@/types/member'
 export function emptyMemberFormValues() {
   return {
     first_name: '',
+    avatar: null as File | null,
     middle_name: '' as string | null,
     last_name: '',
     email: '',
@@ -26,6 +27,7 @@ export function emptyMemberFormValues() {
 export function memberToFormValues(member: Member) {
   return {
     first_name: member.first_name,
+    avatar: null,
     middle_name: member.middle_name,
     last_name: member.last_name,
     email: member.email,

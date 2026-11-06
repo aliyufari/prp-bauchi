@@ -26,24 +26,24 @@ const getInitials = (name?: string) =>
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 h-full flex flex-col overflow-hidden">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col overflow-hidden">
 
     <!-- Header -->
     <div class="mb-3">
-      <h3 class="text-[10px] sm:text-xs font-black uppercase tracking-wider text-gray-800">
+      <h3 class="text-[10px] sm:text-sm font-bold tracking-tight text-gray-900">
         Election Victory Strategy
       </h3>
-      <p class="text-[10px] text-gray-400 mt-0.5 font-medium">
+      <p class="text-xs text-gray-500 mt-1">
         Key strategic activities underway
       </p>
     </div>
 
     <!-- List -->
-    <ul class="flex-1 space-y-2 overflow-y-auto min-h-0">
+    <ul v-if="activities.length" class="flex-1 space-y-2 overflow-y-auto min-h-0">
 
       <li
-        v-for="a in activities"
-        :key="a.name || Math.random()"
+        v-for="(a, index) in activities"
+        :key="a.name || index"
         class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-gray-50 transition-colors"
       >
 
@@ -84,11 +84,10 @@ const getInitials = (name?: string) =>
       </li>
 
     </ul>
-
-    <!-- Footer button -->
-    <button class="mt-3 w-full text-[10px] font-bold text-green-700 hover:text-green-800 text-center py-1.5 border border-green-100 hover:border-green-200 rounded-lg transition-colors">
-      View All Activities →
-    </button>
+    <div v-if="!activities.length" class="flex flex-1 flex-col items-center justify-center rounded-xl bg-gray-50 px-4 py-8 text-center">
+      <p class="text-sm font-semibold text-gray-700">No strategy activities yet</p>
+      <p class="mt-1 text-xs text-gray-500">Approved campaign priorities will appear here.</p>
+    </div>
 
   </div>
 </template>

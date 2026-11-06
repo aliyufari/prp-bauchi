@@ -11,7 +11,7 @@ export interface Jurisdiction {
 }
 
 export interface AuthPayload {
-  user: { id: string; first_name: string; last_name: string; email: string; avatar_url: string | null }
+  user: { id: string; first_name: string; last_name: string; email: string; avatar: string | null; avatar_url: string | null }
   roles: string[]
   permissions: string[]
   jurisdiction: Jurisdiction

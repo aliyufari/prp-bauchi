@@ -1,3 +1,4 @@
+export * from './location'
 export * from './result'
 export * from './campaign-team'
 export * from './polling-unit'

@@ -17,10 +17,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use App\Traits\StoresUserAvatar;
+use App\Exports\FormattedArrayExport;
+use App\Support\ExportRows;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StakeholderController extends Controller
 {
-    use AppliesJurisdiction;
+    use AppliesJurisdiction, StoresUserAvatar;
 
     private const PROFILE_FIELDS = [
         'phone', 'gender', 'occupation', 'education_status', 'application_id',
@@ -61,7 +65,7 @@ class StakeholderController extends Controller
                 'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
                 'types' => $this->typeOptions(),
             ],
-            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'status', 'type']),
+            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status', 'type']),
         ]);
     }
 
@@ -81,6 +85,7 @@ class StakeholderController extends Controller
             $user->assignRole(Role::STAKEHOLDER->value);
             $user->profile()->create($this->profileData($data));
             $user->stakeholder()->create($this->stakeholderData($data));
+            $this->syncUserAvatar($user, $request);
         });
 
         return back()->with('success', 'Stakeholder created.');
@@ -101,6 +106,7 @@ class StakeholderController extends Controller
 
             $stakeholder->profile()->updateOrCreate(['user_id' => $stakeholder->id], $this->profileData($data));
             $stakeholder->stakeholder()->updateOrCreate(['user_id' => $stakeholder->id], $this->stakeholderData($data));
+            $this->syncUserAvatar($stakeholder, $request);
         });
 
         return back()->with('success', 'Stakeholder updated.');
@@ -144,10 +150,12 @@ class StakeholderController extends Controller
         Gate::authorize('stakeholders:export');
         $this->enforceFilters($request);
 
-        $query = $this->base($request->user())->with(['profile', 'stakeholder']);
+        $query = $this->base($request->user())->with(['profile.lga', 'profile.ward', 'profile.pu', 'stakeholder']);
         $this->applyFilters($query, $request);
+        $this->applySort($query, $request);
+        $rows = ExportRows::people($query->get(), 'stakeholder', ['type', 'organization', 'designation']);
 
-        // return Excel::download(new StakeholdersExport($query), 'stakeholders.xlsx');
+        return Excel::download(new FormattedArrayExport(['Full name', 'Email', 'Phone', 'Gender', 'Occupation', 'Education level', 'LGA', 'Ward', 'Polling unit', 'Status', 'Type', 'Organization', 'Designation'], $rows, 'Stakeholders'), 'stakeholders.xlsx');
     }
 
     /* ------------------------------------------------------------------ */
@@ -186,6 +194,7 @@ class StakeholderController extends Controller
             ->when($request->zone, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('zone_id', $v)))
             ->when($request->lga, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('ward_id', $v)))
+            ->when($request->pu, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('pu_id', $v)))
             ->when($request->status, fn ($q, $v) => $q->where('users.is_active', $v === 'active'))
             ->when($request->type, fn ($q, $v) => $q->whereHas('stakeholder', fn ($q) => $q->where('type', $v)));
     }

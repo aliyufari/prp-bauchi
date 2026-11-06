@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import VChart from 'vue-echarts'
+import { Users } from 'lucide-vue-next'
 
 const props = defineProps<{
   data: { lga: string; count: number }[]
 }>()
-
-const period = ref('This Month')
-const periods = ['This Week', 'This Month', 'This Quarter', 'This Year']
 
 const option = computed(() => ({
   tooltip: {
@@ -56,30 +54,30 @@ const option = computed(() => ({
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 h-full flex flex-col">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full min-h-[300px] flex flex-col">
 
     <!-- Header -->
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h3 class="text-xs font-black uppercase tracking-wider text-gray-800">
+        <h3 class="text-sm font-bold tracking-tight text-gray-900">
           Membership by LGA
         </h3>
-        <p class="text-[10px] text-gray-400 mt-0.5 font-medium">
+        <p class="text-xs text-gray-500 mt-1">
           Member distribution across local governments
         </p>
       </div>
 
-      <select
-        v-model="period"
-        class="text-[10px] font-semibold border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600"
-      >
-        <option v-for="p in periods" :key="p">{{ p }}</option>
-      </select>
+      <span class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">Bauchi State</span>
     </div>
 
     <!-- Chart -->
-    <div class="flex-1 min-h-0 h-[220px]">
+    <div v-if="data.length" class="flex-1 min-h-0 h-[240px]">
       <VChart class="w-full h-full" :option="option" autoresize />
+    </div>
+    <div v-else class="flex flex-1 flex-col items-center justify-center rounded-xl bg-gray-50 px-4 py-8 text-center">
+      <Users class="h-8 w-8 text-gray-300" />
+      <p class="mt-3 text-sm font-semibold text-gray-700">No membership data yet</p>
+      <p class="mt-1 text-xs text-gray-500">Member distribution by LGA will appear here.</p>
     </div>
 
   </div>

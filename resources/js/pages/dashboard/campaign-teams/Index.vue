@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useToast } from '@/composables/useToast'
+import ConfirmDialog from '@/components/ui/overlay/ConfirmDialog.vue'
 import { ref, computed, watch } from 'vue'
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { Plus, Users2 } from 'lucide-vue-next'
@@ -37,6 +39,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const table = useDataTable()
+const toast = useToast()
 table.search.value = props.filters?.search ?? ''
 table.filters.value = { aspirant: props.filters?.aspirant ?? '', status: props.filters?.status ?? '' }
 
@@ -88,7 +91,7 @@ function openEdit(row: CampaignTeam) {
 function closeModal() { modalMode.value = null; editingTeam.value = null; form.clearErrors() }
 
 function submitForm() {
-  const options = { preserveScroll: true, onSuccess: () => closeModal() }
+  const options = { preserveScroll: true, onSuccess: () => { closeModal(); toast.success('Changes saved successfully.'); router.reload() } }
   if (modalMode.value === 'create') form.post(route('campaign-teams.store'), options)
   else if (modalMode.value === 'edit' && editingTeam.value) form.patch(route('campaign-teams.update', editingTeam.value.id), options)
 }
@@ -96,10 +99,24 @@ function submitForm() {
 function handleRowAction(key: string, row: CampaignTeam) {
   if (key === 'view') return router.visit(route('campaign-teams.show', row.id))
   if (key === 'edit') return openEdit(row)
-  if (key === 'delete' && confirm(`Delete team "${row.name}"? This removes all roster entries too.`)) {
-    router.delete(route('campaign-teams.destroy', row.id), { preserveScroll: true })
+  if (key === 'delete') {
+    requestDelete(`Delete team "${row.name}"? This removes all roster entries too.`, () => {
+    router.delete(route('campaign-teams.destroy', row.id), { preserveScroll: true, onSuccess: () => { toast.success('Record deleted.'); router.reload() } });
+  
+    })
   }
 }
+
+const deleteDialog = ref<{ message: string; action: () => void } | null>(null)
+function requestDelete(message: string, action: () => void) {
+  deleteDialog.value = { message, action }
+}
+function confirmDelete() {
+  const pending = deleteDialog.value
+  deleteDialog.value = null
+  pending?.action()
+}
+function closeDeleteDialog() { deleteDialog.value = null }
 </script>
 
 <template>
@@ -189,5 +206,15 @@ function handleRowAction(key: string, row: CampaignTeam) {
         @submit="submitForm" @cancel="closeModal"
       />
     </SlideOver>
-  </AppLayout>
+      <ConfirmDialog
+      :open="deleteDialog !== null"
+      title="Confirm deletion"
+      :description="deleteDialog?.message ?? ''"
+      confirm-text="Delete"
+      variant="danger"
+      @confirm="confirmDelete"
+      @cancel="closeDeleteDialog"
+      @close="closeDeleteDialog"
+    />
+</AppLayout>
 </template>

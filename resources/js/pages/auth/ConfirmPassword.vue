@@ -1,6 +1,6 @@
 <script setup lang="ts">
 // import { Head, useForm } from '@inertiajs/vue3';
-// import { LoaderCircle } from 'lucide-vue-next';
+// import { Loader } from 'lucide-vue-next';
 
 // const form = useForm({
 //     password: '',
@@ -38,7 +38,7 @@
 
                 <div class="flex items-center">
                     <Button class="w-full" :disabled="form.processing">
-                        <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
+                        <Loader v-if="form.processing" class="h-4 w-4 animate-spin" />
                         Confirm Password
                     </Button>
                 </div>

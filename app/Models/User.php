@@ -7,12 +7,14 @@ namespace App\Models;
 use App\Support\Jurisdiction;
 use App\Traits\HasJurisdiction;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -29,6 +31,7 @@ class User extends Authenticatable
         'first_name',
         'middle_name',
         'last_name',
+        'avatar',
         'email',
         'email_verified_at',
         'password',
@@ -57,6 +60,11 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             // 'password' => 'hashed',
         ];
+    }
+
+    protected function constrainToOperatingState(Builder $query, string $stateId): Builder
+    {
+        return $query->whereHas('profile', fn ($profile) => $profile->where('state_id', $stateId));
     }
 
     protected function constrainToJurisdiction(Builder $query, Jurisdiction $j): Builder
@@ -107,5 +115,14 @@ class User extends Authenticatable
     public function ledCampaignTeams(): HasMany
     {
         return $this->hasMany(CampaignTeam::class, 'team_lead_id');
+    }
+
+    protected function avatarUrl(): Attribute
+    {
+        return Attribute::get(fn () => match (true) {
+            blank($this->avatar) => null,
+            str_starts_with($this->avatar, 'http') => $this->avatar,
+            default => Storage::disk('public')->url($this->avatar),
+        });
     }
 }

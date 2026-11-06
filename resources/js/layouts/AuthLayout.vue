@@ -77,7 +77,7 @@ const stats = computed(() => (page.props as any).publicStats as { value: string;
         </div>
       </div>
 
-      <div class="w-full max-w-sm">
+      <div class="w-full max-w-sm space-y-4">
         <slot />
       </div>
 

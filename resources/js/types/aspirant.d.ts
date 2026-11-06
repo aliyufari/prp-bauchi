@@ -5,6 +5,7 @@ export interface Aspirant {
   last_name: string
   email: string
   phone: string | null
+  education_status: string | null
   status: 'active' | 'inactive'
 
   office: string | null

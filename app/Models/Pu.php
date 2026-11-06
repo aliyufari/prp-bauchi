@@ -29,6 +29,14 @@ class Pu extends Model
         ];
     }
 
+    protected function constrainToOperatingState(Builder $query, string $stateId): Builder
+    {
+        return $query->whereIn(
+            $this->qualifyColumn('id'),
+            LocationChain::within('pu', 'state', $stateId),
+        );
+    }
+
     protected function constrainToJurisdiction(Builder $query, Jurisdiction $j): Builder
     {
         return $query->whereIn($this->qualifyColumn('id'), LocationChain::within('pu', $j->level, $j->id));

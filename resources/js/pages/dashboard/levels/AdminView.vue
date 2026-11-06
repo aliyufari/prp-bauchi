@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Download } from 'lucide-vue-next'
+import { ref, computed, watch } from 'vue'
+import { router } from '@inertiajs/vue3'
+import SearchSelect from '@/components/ui/form/SearchSelect.vue'
+import type { SelectOption } from '@/components/ui/form/types'
 import StatCard from '@/components/dashboard/StatCard.vue'
+import { Download } from 'lucide-vue-next'
 import MembershipChart from '@/components/dashboard/MembershipChart.vue'
 import CampaignActivities from '@/components/dashboard/CampaignActivities.vue'
 import GovernorshipAspirant from '@/components/dashboard/GovernorshipAspirant.vue'
@@ -26,22 +29,37 @@ const props = defineProps<{
   campaignActivities: { name: string; percentage: number; color: string }[]
   upcomingActivities: any[]
   electionStrategyActivities: any[]
-  lgaSupportData: { lga: string; supportLevel: string }[]
+  lgaSupportData: { lga: string; supportLevel: 'High' | 'Medium' | 'Low' }[]
   aspirant: any
   agentDeployment: any
   financialSummary: any
   announcements: any[]
   recentSupporters: any[]
-  lgas: string[]
-  wards: string[]
+  lgas: { id: string; name: string }[]
+  wards: { id: string; name: string; lga_id: string }[]
   selectedLga: string
   selectedWard: string
 }>()
 
 const { auth } = usePermissions()
 
-const selectedLga = ref(props.selectedLga ?? '')
-const selectedWard = ref(props.selectedWard ?? '')
+const selectedLga = ref<string | null>(props.selectedLga || null)
+const selectedWard = ref<string | null>(props.selectedWard || null)
+
+const lgaOptions = computed<SelectOption[]>(() => props.lgas.map((lga) => ({ value: lga.id, label: lga.name })))
+const wardOptions = computed<SelectOption[]>(() => props.wards.filter((ward) => !selectedLga.value || ward.lga_id === selectedLga.value).map((ward) => ({ value: ward.id, label: ward.name })))
+
+watch(selectedLga, (nextLga) => {
+  if (selectedWard.value && !props.wards.some((ward) => ward.id === selectedWard.value && (!nextLga || ward.lga_id === nextLga))) {
+    selectedWard.value = ''
+  }
+}, { flush: 'sync' })
+
+watch([selectedLga, selectedWard], ([lga, ward]) => {
+  router.get(route('dashboard'), { lga: lga || undefined, ward: ward || undefined }, {
+    preserveState: true, preserveScroll: true, replace: true,
+  })
+})
 
 const currentDateTime = computed(() =>
   new Date().toLocaleDateString('en-US', {
@@ -59,21 +77,28 @@ const currentDateTime = computed(() =>
         <p class="text-xs sm:text-sm text-gray-500 font-medium mt-1">{{ currentDateTime }}</p>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <select v-model="selectedLga" class="text-xs sm:text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 flex-1 min-w-[140px] sm:flex-none">
-          <option value="">All LGAs</option>
-          <option v-for="lga in lgas" :key="lga" :value="lga">{{ lga }}</option>
-        </select>
-
-        <select v-model="selectedWard" class="text-xs sm:text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 flex-1 min-w-[140px] sm:flex-none">
-          <option value="">All Wards</option>
-          <option v-for="ward in wards" :key="ward" :value="ward">{{ ward }}</option>
-        </select>
-
-        <button class="inline-flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 active:bg-green-900 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition w-full sm:w-auto">
-          <Download class="w-4 h-4" />
-          Download Reports
-        </button>
+      <div class="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:items-center">
+        <SearchSelect
+          v-model="selectedLga"
+          :options="lgaOptions"
+          placeholder="All LGAs"
+          search-placeholder="Search LGAs…"
+          class="w-full sm:min-w-44"
+        />
+        <SearchSelect
+          v-model="selectedWard"
+          :options="wardOptions"
+          placeholder="All wards"
+          search-placeholder="Search wards…"
+          class="w-full sm:min-w-44"
+        />
+        <a
+          :href="route('dashboard.export', { lga: selectedLga || undefined, ward: selectedWard || undefined })"
+          class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-green-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+        >
+          <Download class="h-4 w-4" />
+          Download report
+        </a>
       </div>
     </section>
 
@@ -88,21 +113,21 @@ const currentDateTime = computed(() =>
     </section>
 
     <!-- Main analytics -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-      <div class="lg:col-span-5"><MembershipChart :data="membershipByLga" /></div>
-      <div class="lg:col-span-4"><CampaignActivities :activities="campaignActivities" :total-activities="120" /></div>
-      <div class="lg:col-span-3"><GovernorshipAspirant :aspirant="aspirant" /></div>
+    <section class="grid grid-cols-1 items-stretch gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-12">
+      <div class="min-w-0 xl:col-span-4"><MembershipChart :data="membershipByLga" /></div>
+      <div class="min-w-0 xl:col-span-3"><CampaignActivities :activities="campaignActivities" :total-activities="campaignActivities.length" /></div>
+      <div class="min-w-0 md:col-span-2 xl:col-span-5"><GovernorshipAspirant :aspirant="aspirant" /></div>
     </section>
 
     <!-- Support insights -->
-    <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-      <div class="lg:col-span-3"><ElectionStrategy :activities="electionStrategyActivities" /></div>
-      <div class="lg:col-span-3"><UpcomingActivities :activities="upcomingActivities" /></div>
-      <div class="lg:col-span-6"><LgaSupportMap :data="lgaSupportData" /></div>
+    <section class="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-12">
+      <div class="min-w-0 xl:col-span-3"><ElectionStrategy :activities="electionStrategyActivities" /></div>
+      <div class="min-w-0 xl:col-span-3"><UpcomingActivities :activities="upcomingActivities" /></div>
+      <div class="min-w-0 xl:col-span-6"><LgaSupportMap :data="lgaSupportData" /></div>
     </section>
 
     <!-- Management -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6">
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
       <AgentDeployment :deployment="agentDeployment" />
       <FinancialSummary :summary="financialSummary" />
       <Announcements :announcements="announcements" />

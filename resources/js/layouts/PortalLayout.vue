@@ -43,6 +43,12 @@ const logout = () => router.post(route('logout'))
           >{{ item.label }}</Link>
         </nav>
 
+        <img
+          v-if="auth.user?.avatar_url"
+          :src="auth.user.avatar_url"
+          :alt="fullName"
+          class="h-8 w-8 rounded-full object-cover ring-1 ring-white/20"
+        />
         <button type="button" aria-label="Sign out" class="rounded-lg p-2 text-white/70 transition hover:bg-white/10 hover:text-white" @click="logout">
           <LogOut class="h-4 w-4" />
         </button>

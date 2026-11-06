@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Support\LocationChain;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\Model;
 
 /** Keeps state_id..pu_id consistent on UserProfile and Result. */
@@ -19,7 +20,16 @@ final class NormalizeLocationObserver
             return;
         }
 
-        foreach (LocationChain::complete($ids) as $column => $value) {
+        $complete = LocationChain::complete($ids);
+        $bauchiId = LocationChain::bauchiStateId();
+
+        if (!$bauchiId || ($complete['state_id'] ?? null) !== $bauchiId) {
+            throw ValidationException::withMessages([
+                'state_id' => 'This application is configured for Bauchi State. Select a location within Bauchi.',
+            ]);
+        }
+
+        foreach ($complete as $column => $value) {
             if ($value) {
                 $model->{$column} = $value;
             }

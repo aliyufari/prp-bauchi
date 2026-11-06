@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests\CampaignTeamMember;
 
+use App\Enums\EducationStatus;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+
+use Illuminate\Validation\Rule;
 
 class UpdateCampaignTeamMemberRequest extends FormRequest
 {
@@ -20,10 +23,20 @@ class UpdateCampaignTeamMemberRequest extends FormRequest
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
+    protected function prepareForValidation(): void
+    {
+        $educationStatus = $this->input('education_status');
+
+        if (is_string($educationStatus)) {
+            $this->merge(['education_status' => strtolower(trim($educationStatus)) ?: null]);
+        }
+    }
+
     public function rules(): array
     {
         return [
             'role_in_team' => ['required', 'string', 'max:255'],
+            'education_status' => ['nullable', Rule::enum(EducationStatus::class)],
             'joined_date' => ['nullable', 'date'],
             'is_active' => ['boolean'],
         ];

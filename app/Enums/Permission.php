@@ -2,10 +2,6 @@
 
 namespace App\Enums;
 
-<?php
-
-namespace App\Enums;
-
 enum Permission: string
 {
     // User Management

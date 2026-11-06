@@ -20,6 +20,7 @@ class CampaignTeamMemberResource extends JsonResource
             'first_name' => $this->user?->first_name,
             'last_name' => $this->user?->last_name,
             'email' => $this->user?->email,
+            'avatar_url' => $this->user?->avatar_url,
             'phone' => $this->user?->profile?->phone,
 
             'role_in_team' => $this->role_in_team,

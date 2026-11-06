@@ -1,17 +1,39 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { usePage } from '@inertiajs/vue3'
 import Sidebar from '@/components/layout/Sidebar.vue'
 import Topbar from '@/components/dashboard/Topbar.vue'
+import ToastHost from '@/components/ui/ToastHost.vue'
 import { useScopeLabel } from '@/composables/useScopeLabel'
 
 const { fullName, roleLabel, scopeName } = useScopeLabel()
+const page = usePage()
 const user = computed(() => ({
   name: fullName.value,
   role: scopeName.value ? `${roleLabel.value} · ${scopeName.value}` : roleLabel.value,
+  avatarUrl: (page.props as any).auth?.user?.avatar_url ?? undefined,
 }))
 
-const sidebarCollapsed = ref(false) // desktop collapse (lg+)
+const SIDEBAR_STORAGE_KEY = 'prp.sidebar.collapsed'
+
+function readSidebarPreference(): boolean {
+  try {
+    return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+const sidebarCollapsed = ref(readSidebarPreference()) // desktop collapse (lg+)
 const mobileSidebarOpen = ref(false) // mobile drawer (< lg)
+
+watch(sidebarCollapsed, (collapsed) => {
+  try {
+    window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed))
+  } catch {
+    // Keep the sidebar usable when browser storage is unavailable.
+  }
+})
 
 function toggleSidebar() {
   if (window.innerWidth >= 1024) sidebarCollapsed.value = !sidebarCollapsed.value
@@ -21,6 +43,7 @@ function toggleSidebar() {
 
 <template>
   <div class="min-h-screen bg-green-50 flex">
+    <ToastHost />
     <Sidebar :collapsed="sidebarCollapsed" :open="mobileSidebarOpen" @close="mobileSidebarOpen = false" />
 
     <div class="flex-1 flex flex-col min-h-screen w-full transition-all duration-300">

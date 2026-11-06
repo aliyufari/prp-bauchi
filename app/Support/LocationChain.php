@@ -14,9 +14,21 @@ final class LocationChain
         'state' => 'states', 'zone' => 'zones', 'lga' => 'lgas', 'ward' => 'wards', 'pu' => 'pus',
     ];
 
-    public static function index(string $level): int
+    /** The single operating state for this deployment. */
+    public static function bauchiStateId(): ?string
     {
-        return array_search($level, self::LEVELS, true);
+        return Cache::remember(
+            'operating-state:bauchi:id',
+            3600,
+            fn () => DB::table('states')->whereRaw('LOWER(name) = ?', ['bauchi'])->value('id'),
+        );
+    }
+
+    public static function index(string $level): ?int
+    {
+        $index = array_search($level, self::LEVELS, true);
+
+        return $index === false ? null : $index;
     }
 
     public static function parentOf(string $level): ?string

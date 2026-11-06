@@ -64,6 +64,7 @@ final class Jurisdiction
             str_contains($t, 'ZON') => 'zone',
             str_contains($t, 'LGA') => 'lga',
             str_contains($t, 'WARD') => 'ward',
+            str_contains($t, 'PU') || str_contains($t, 'POLLING') => 'pu',
             default => null,
         };
     }

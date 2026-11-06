@@ -17,10 +17,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use App\Traits\StoresUserAvatar;
+use App\Exports\FormattedArrayExport;
+use App\Support\ExportRows;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PartyAgentController extends Controller
 {
-    use AppliesJurisdiction;
+    use AppliesJurisdiction, StoresUserAvatar;
 
     private const PROFILE_FIELDS = [
         'phone', 'gender', 'occupation', 'education_status', 'application_id',
@@ -61,7 +65,7 @@ class PartyAgentController extends Controller
                 'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
                 'types' => $this->typeOptions(),
             ],
-            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'status', 'type']),
+            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status', 'type']),
         ]);
     }
 
@@ -81,6 +85,7 @@ class PartyAgentController extends Controller
             $user->assignRole(Role::PARTY_AGENT->value);
             $user->profile()->create($this->profileData($data)); // observer completes the location chain
             $user->partyAgent()->create(['type' => $data['type']]);
+            $this->syncUserAvatar($user, $request);
         });
 
         return back()->with('success', 'Party agent created.');
@@ -101,6 +106,7 @@ class PartyAgentController extends Controller
 
             $party_agent->profile()->updateOrCreate(['user_id' => $party_agent->id], $this->profileData($data));
             $party_agent->partyAgent()->updateOrCreate(['user_id' => $party_agent->id], ['type' => $data['type']]);
+            $this->syncUserAvatar($party_agent, $request);
         });
 
         return back()->with('success', 'Party agent updated.');
@@ -145,10 +151,12 @@ class PartyAgentController extends Controller
         Gate::authorize('party-agents:export');
         $this->enforceFilters($request);
 
-        $query = $this->base($request->user())->with(['profile', 'partyAgent']);
+        $query = $this->base($request->user())->with(['profile.lga', 'profile.ward', 'profile.pu', 'partyAgent']);
         $this->applyFilters($query, $request);
+        $this->applySort($query, $request);
+        $rows = ExportRows::people($query->get(), 'partyAgent', ['type']);
 
-        // return Excel::download(new PartyAgentsExport($query), 'party-agents.xlsx');
+        return Excel::download(new FormattedArrayExport(['Full name', 'Email', 'Phone', 'Gender', 'Occupation', 'Education level', 'LGA', 'Ward', 'Polling unit', 'Status', 'Type'], $rows, 'Party Agents'), 'party-agents.xlsx');
     }
 
     /* ------------------------------------------------------------------ */
@@ -177,6 +185,7 @@ class PartyAgentController extends Controller
             ->when($request->zone, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('zone_id', $v)))
             ->when($request->lga, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('ward_id', $v)))
+            ->when($request->pu, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('pu_id', $v)))
             ->when($request->status, fn ($q, $v) => $q->where('users.is_active', $v === 'active'))
             ->when($request->type, fn ($q, $v) => $q->whereHas('partyAgent', fn ($q) => $q->where('type', $v)));
     }

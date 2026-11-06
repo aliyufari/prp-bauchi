@@ -27,20 +27,20 @@ const option = computed(() => ({
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 h-full flex flex-col">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full min-h-[300px] flex flex-col">
 
     <!-- Header -->
     <div class="mb-3">
-      <h3 class="text-xs font-black uppercase tracking-wider text-gray-800">
+      <h3 class="text-sm font-bold tracking-tight text-gray-900">
         Campaign Activities Overview
       </h3>
-      <p class="text-[10px] text-gray-400 mt-0.5 font-medium">
+      <p class="text-xs text-gray-500 mt-1">
         Breakdown of ongoing campaign efforts
       </p>
     </div>
 
     <!-- Chart + Legend -->
-    <div class="flex flex-col sm:flex-row items-center gap-4 flex-1">
+    <div v-if="activities.length" class="flex flex-col items-center gap-4 flex-1 sm:flex-row">
 
       <!-- Chart -->
       <div class="relative w-[150px] h-[150px]">
@@ -70,6 +70,11 @@ const option = computed(() => ({
         </li>
       </ul>
 
+    </div>
+    <div v-else class="flex flex-1 flex-col items-center justify-center rounded-xl bg-gray-50 px-4 py-8 text-center">
+      <p class="text-3xl font-extrabold text-gray-300">{{ totalActivities }}</p>
+      <p class="mt-2 text-sm font-semibold text-gray-700">No campaign breakdown yet</p>
+      <p class="mt-1 text-xs text-gray-500">Activity categories will appear when data is available.</p>
     </div>
   </div>
 </template>

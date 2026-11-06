@@ -20,10 +20,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use App\Traits\StoresUserAvatar;
+use App\Exports\FormattedArrayExport;
+use App\Support\ExportRows;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SupervisoryAgentController extends Controller
 {
-    use AppliesJurisdiction;
+    use AppliesJurisdiction, StoresUserAvatar;
 
     private const PROFILE_FIELDS = [
         'phone', 'gender', 'occupation', 'education_status', 'application_id',
@@ -64,7 +68,7 @@ class SupervisoryAgentController extends Controller
                 'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
                 'types' => $this->typeOptions($user), // only levels this user may assign
             ],
-            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'status', 'type']),
+            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status', 'type']),
         ]);
     }
 
@@ -84,6 +88,7 @@ class SupervisoryAgentController extends Controller
             $user->assignRole(Role::SUPERVISORY_AGENT->value);
             $user->profile()->create($this->profileData($data));
             $user->supervisoryAgent()->create($this->agentData($data));
+            $this->syncUserAvatar($user, $request);
         });
 
         return back()->with('success', 'Supervisory agent created.');
@@ -104,6 +109,7 @@ class SupervisoryAgentController extends Controller
 
             $supervisory_agent->profile()->updateOrCreate(['user_id' => $supervisory_agent->id], $this->profileData($data));
             $supervisory_agent->supervisoryAgent()->updateOrCreate(['user_id' => $supervisory_agent->id], $this->agentData($data));
+            $this->syncUserAvatar($supervisory_agent, $request);
         });
 
         Jurisdiction::flush();
@@ -149,10 +155,12 @@ class SupervisoryAgentController extends Controller
         Gate::authorize('supervisory-agents:export');
         $this->enforceFilters($request);
 
-        $query = $this->base($request->user())->with(['profile', 'supervisoryAgent']);
+        $query = $this->base($request->user())->with(['profile.lga', 'profile.ward', 'profile.pu', 'supervisoryAgent']);
         $this->applyFilters($query, $request);
+        $this->applySort($query, $request);
+        $rows = ExportRows::people($query->get(), 'supervisoryAgent', ['type', 'agents_supervised']);
 
-        // return Excel::download(new SupervisoryAgentsExport($query), 'supervisory-agents.xlsx');
+        return Excel::download(new FormattedArrayExport(['Full name', 'Email', 'Phone', 'Gender', 'Occupation', 'Education level', 'LGA', 'Ward', 'Polling unit', 'Status', 'Type', 'Agents Supervised'], $rows, 'Supervisory Agents'), 'supervisory-agents.xlsx');
     }
 
     /* ------------------------------------------------------------------ */
@@ -186,6 +194,7 @@ class SupervisoryAgentController extends Controller
             ->when($request->zone, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('zone_id', $v)))
             ->when($request->lga, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('ward_id', $v)))
+            ->when($request->pu, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('pu_id', $v)))
             ->when($request->status, fn ($q, $v) => $q->where('users.is_active', $v === 'active'))
             ->when($request->type, fn ($q, $v) => $q->whereHas('supervisoryAgent', fn ($q) => $q->where('type', $v)));
     }

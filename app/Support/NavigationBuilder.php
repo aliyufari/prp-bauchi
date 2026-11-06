@@ -12,7 +12,7 @@ final class NavigationBuilder
         $key = Access::layoutFor($user) === 'app' ? 'management' : 'portal';
         $groups = [];
 
-        foreach (config("navigation.{$key}") as $group) {
+        foreach (config("navigation.{$key}", []) as $group) {
             $items = [];
 
             foreach ($group['items'] as $item) {

@@ -18,7 +18,7 @@ class MemberResource extends JsonResource
             'middle_name' => $this->middle_name,
             'last_name' => $this->last_name,
             'email' => $this->email,
-            'avatar_url' => null, // wire up if you add an avatar column/media library later
+            'avatar_url' => $this->avatar_url,
 
             'status' => $this->is_active ? 'active' : 'inactive',
 

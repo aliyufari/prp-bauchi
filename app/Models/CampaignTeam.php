@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Support\LocationChain;
 use Illuminate\Support\Facades\Gate;
 
 class CampaignTeam extends Model
@@ -44,6 +45,13 @@ class CampaignTeam extends Model
 
     public function scopeVisibleTo(Builder $q, User $u): Builder
     {
+        $stateId = LocationChain::bauchiStateId();
+        if (!$stateId) {
+            return $q->whereRaw('1 = 0');
+        }
+
+        $q->whereHas('aspirant.constituency', fn ($a) => $a->where('state_id', $stateId));
+
         if ($u->checkPermissionTo('campaign-teams.manage')) {
             return $q;
         }

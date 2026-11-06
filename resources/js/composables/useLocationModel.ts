@@ -1,14 +1,18 @@
 import { computed } from 'vue'
-import type { LocationKey } from '@/types/auth'
+import type { LocationModel, LocationLevel } from '@/types/location'
 
-const KEYS: LocationKey[] = ['state', 'zone', 'lga', 'ward', 'pu']
+const KEYS: LocationLevel[] = ['state', 'zone', 'lga', 'ward', 'pu']
 
+/** Bridges the shared location cascade to an Inertia useForm object. */
 export function useLocationModel(getForm: () => Record<string, any>) {
-  return computed({
-    get: () => Object.fromEntries(KEYS.map((k) => [`${k}_id`, getForm()[`${k}_id`] ?? null])),
-    set: (v: Record<string, string | null>) => {
+  return computed<LocationModel>({
+    get: () => Object.fromEntries(KEYS.map((key) => [`${key}_id`, getForm()[`${key}_id`] ?? null])) as LocationModel,
+    set: (value) => {
       const form = getForm()
-      for (const k of KEYS) if (`${k}_id` in v) form[`${k}_id`] = v[`${k}_id`]
+      for (const key of KEYS) {
+        const field = `${key}_id` as const
+        if (field in value) form[field] = value[field] ?? null
+      }
     },
   })
 }

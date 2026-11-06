@@ -12,6 +12,7 @@ use App\Models\Aspirant;
 use App\Models\CampaignTeam;
 use App\Models\CampaignTeamMember;
 use App\Models\User;
+use App\Support\LocationChain;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -58,6 +59,7 @@ class CampaignTeamController extends Controller
 
     public function update(UpdateCampaignTeamRequest $request, CampaignTeam $campaign_team)
     {
+        $this->ensureBauchiTeam($campaign_team);
         $campaign_team->update($request->validated());
 
         return back()->with('success', 'Campaign team updated.');
@@ -66,6 +68,7 @@ class CampaignTeamController extends Controller
     public function destroy(CampaignTeam $campaign_team)
     {
         Gate::authorize('delete', $campaign_team);
+        $this->ensureBauchiTeam($campaign_team);
 
         $campaign_team->delete();
 
@@ -75,6 +78,7 @@ class CampaignTeamController extends Controller
     public function show(CampaignTeam $campaign_team)
     {
         Gate::authorize('view', $campaign_team);
+        $this->ensureBauchiTeam($campaign_team);
 
         $campaign_team->load(['aspirant.user', 'teamLead']);
         $members = $campaign_team->members()->with('user.profile')->latest()->get();
@@ -113,10 +117,22 @@ class CampaignTeamController extends Controller
         ];
     }
 
+
+    private function ensureBauchiTeam(CampaignTeam $team): void
+    {
+        abort_unless(
+            $team->aspirant()->whereHas('constituency', fn ($q) => $q->whereNotNull('state_id')->where('state_id', LocationChain::bauchiStateId()))->exists(),
+            404,
+        );
+    }
+
     /** Managers see every campaign; an aspirant sees only their own. */
     protected function aspirantOptions(User $user): array
     {
+        if (!LocationChain::bauchiStateId()) return [];
+
         return Aspirant::with('user')
+            ->whereHas('constituency', fn ($q) => $q->whereNotNull('state_id')->where('state_id', LocationChain::bauchiStateId()))
             ->when(!$user->checkPermissionTo('campaign-teams.manage'), fn ($q) => $q->where('user_id', $user->id))
             ->get()
             ->map(fn (Aspirant $a) => [
@@ -129,7 +145,10 @@ class CampaignTeamController extends Controller
     /** Only campaign accounts, never the whole user table. */
     protected function potentialLeads(User $user): array
     {
+        if (!LocationChain::bauchiStateId()) return [];
+
         return User::role(Role::CAMPAIGN_TEAM_MEMBER->value)
+            ->whereHas('profile', fn ($p) => $p->whereNotNull('state_id')->where('state_id', LocationChain::bauchiStateId()))
             ->when(!$user->checkPermissionTo('campaign-teams.manage'), fn ($q) => $q
                 ->whereHas('campaignTeamMembership.team.aspirant', fn ($a) => $a->where('user_id', $user->id)))
             ->orderBy('first_name')->get(['id', 'first_name', 'last_name'])

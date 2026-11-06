@@ -4,7 +4,7 @@ import { DropdownMenuContent } from 'reka-ui'
 
 <template>
     <DropdownMenuContent
-        side-offset="8"
+        :side-offset="8"
         class="z-50 min-w-56 rounded-xl border border-border bg-background p-1 shadow-xl"
     >
         <slot />

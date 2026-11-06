@@ -17,7 +17,7 @@ class PermissionSeeder extends Seeder
         'campaign.view', 'finance.view',
         'polling-units.view', 'polling-units.manage',
         'results.view', 'results.upload', 'results.verify',
-        'aspirants.view', 'aspirants.manage',
+        'aspirants.view', 'aspirants.manage', 'aspirants.export',
         'campaign-teams.view', 'campaign-teams.manage',
         'users.manage', 'roles.manage', 'settings.manage', 'audit-logs.view', 'backups.manage',
     ];
@@ -43,17 +43,13 @@ class PermissionSeeder extends Seeder
         $grant = fn (Role $role, array $perms) => $roleModel::findOrCreate($role->value, 'web')->syncPermissions($perms);
 
         $grant(Role::SUPER_ADMIN, $permission::pluck('name')->all());
-        $grant(Role::ADMIN, $permission::whereNotIn('name', ['roles.manage', 'backups.manage'])->pluck('name')->all());
+        $grant(Role::ADMIN, $permission::pluck('name')->all());
 
-        // One coordinator role for every level. Reach comes from Jurisdiction, not from the role.
+        // Coordinators manage only coordinators below their own level.
+        // Their geographic reach is enforced separately by Jurisdiction and the managed-user gates.
         $grant(Role::COORDINATOR, array_merge(
-            ['dashboard.view', 'reports.view', 'campaign.view', 'polling-units.view', 'results.view', 'results.upload', 'aspirants.view'],
-            $this->crud('members'),
-            $this->crud('party-agents'),
-            $this->crud('coordinators', ['view', 'create', 'update', 'delete']),
-            $this->crud('stakeholders', ['view', 'create', 'update']),
-            $this->crud('supervisory-agents', ['view', 'create', 'update']),
-            $this->crud('returning-officers', ['view']),
+            ['dashboard.view'],
+            $this->crud('coordinators'),
         ));
 
         $grant(Role::SUPERVISORY_AGENT, [

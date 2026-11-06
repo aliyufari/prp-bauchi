@@ -7,12 +7,12 @@ return [
         ]],
 
         ['group' => 'People & Structure', 'items' => [
-            ['label' => 'Members', 'route' => 'members.index', 'icon' => 'Users', 'can' => 'members.view'],
             ['label' => 'Party Agents', 'route' => 'party-agents.index', 'icon' => 'UserCheck', 'can' => 'party-agents.view'],
             ['label' => 'Coordinators', 'route' => 'coordinators.index', 'icon' => 'Briefcase', 'can' => 'coordinators.view'],
             ['label' => 'Stakeholders', 'route' => 'stakeholders.index', 'icon' => 'Handshake', 'can' => 'stakeholders.view'],
             ['label' => 'Returning Officers', 'route' => 'returning-officers.index', 'icon' => 'RotateCcw', 'can' => 'returning-officers.view'],
             ['label' => 'Supervisory Agents', 'route' => 'supervisory-agents.index', 'icon' => 'Shield', 'can' => 'supervisory-agents.view'],
+            ['label' => 'Members', 'route' => 'members.index', 'icon' => 'Users', 'can' => 'members.view'],
         ]],
 
         ['group' => 'Election Management', 'items' => [
@@ -56,6 +56,15 @@ return [
             ['label' => 'Settings', 'route' => 'settings.index', 'path' => '/dashboard/settings', 'icon' => 'Settings', 'can' => 'settings.manage'],
             ['label' => 'Audit Logs', 'route' => 'audit-logs.index', 'path' => '/dashboard/audit-logs', 'icon' => 'ScrollText', 'can' => 'audit-logs.view'],
             ['label' => 'Backup & Restore', 'route' => 'backups.index', 'path' => '/dashboard/backups', 'icon' => 'HardDrive', 'can' => 'backups.manage'],
+        ]],
+    ],
+
+    'portal' => [
+        ['group' => null, 'items' => [
+            ['label' => 'Home', 'route' => 'portal.home', 'icon' => 'Home', 'can' => 'portal.access', 'exact' => true],
+            ['label' => 'My Team', 'route' => 'portal.team', 'icon' => 'Users2', 'can' => 'campaign-teams.view'],
+            ['label' => 'My Results', 'route' => 'portal.results', 'icon' => 'FileBarChart', 'can' => 'results.view'],
+            ['label' => 'Profile', 'route' => 'portal.profile', 'icon' => 'User', 'can' => 'portal.access'],
         ]],
     ],
 ];

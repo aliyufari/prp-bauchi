@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LoaderCircle } from 'lucide-vue-next'
+import { Loader } from 'lucide-vue-next'
 
 defineProps<{ processing: boolean; label: string; processingLabel: string; tabindex?: number }>()
 </script>
@@ -16,7 +16,7 @@ defineProps<{ processing: boolean; label: string; processingLabel: string; tabin
     ]"
     :style="!processing ? 'background: linear-gradient(90deg, #22c55e, #16a34a); box-shadow: 0 2px 8px rgba(34,197,94,0.25);' : ''"
   >
-    <LoaderCircle v-if="processing" class="w-4 h-4 animate-spin" />
+    <Loader v-if="processing" class="w-4 h-4 animate-spin" />
     {{ processing ? processingLabel : label }}
   </button>
 </template>

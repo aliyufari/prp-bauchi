@@ -19,10 +19,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use App\Traits\StoresUserAvatar;
+use App\Exports\FormattedArrayExport;
+use App\Support\ExportRows;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CoordinatorController extends Controller
 {
-    use AppliesJurisdiction;
+    use AppliesJurisdiction, StoresUserAvatar;
 
     private const PROFILE_FIELDS = [
         'phone', 'gender', 'occupation', 'education_status', 'application_id',
@@ -63,7 +67,7 @@ class CoordinatorController extends Controller
                 'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
                 'types' => $this->typeOptions($user), // only levels this user may assign
             ],
-            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'status', 'type']),
+            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status', 'type']),
         ]);
     }
 
@@ -83,6 +87,7 @@ class CoordinatorController extends Controller
             $user->assignRole(Role::COORDINATOR->value);
             $user->profile()->create($this->profileData($data));
             $user->coordinator()->create(['type' => $data['type']]);
+            $this->syncUserAvatar($user, $request);
         });
 
         return back()->with('success', 'Coordinator created.');
@@ -103,6 +108,7 @@ class CoordinatorController extends Controller
 
             $coordinator->profile()->updateOrCreate(['user_id' => $coordinator->id], $this->profileData($data));
             $coordinator->coordinator()->updateOrCreate(['user_id' => $coordinator->id], ['type' => $data['type']]);
+            $this->syncUserAvatar($coordinator, $request);
         });
 
         // Their level or location may have changed; drop any cached jurisdiction.
@@ -149,17 +155,34 @@ class CoordinatorController extends Controller
         Gate::authorize('coordinators:export');
         $this->enforceFilters($request);
 
-        $query = $this->base($request->user())->with(['profile', 'coordinator']);
+        $query = $this->base($request->user())->with(['profile.lga', 'profile.ward', 'profile.pu', 'coordinator']);
         $this->applyFilters($query, $request);
+        $this->applySort($query, $request);
+        $rows = ExportRows::people($query->get(), 'coordinator', ['type']);
 
-        // return Excel::download(new CoordinatorsExport($query), 'coordinators.xlsx');
+        return Excel::download(new FormattedArrayExport(['Full name', 'Email', 'Phone', 'Gender', 'Occupation', 'Education level', 'LGA', 'Ward', 'Polling unit', 'Status', 'Type'], $rows, 'Coordinators'), 'coordinators.xlsx');
     }
 
     /* ------------------------------------------------------------------ */
 
     private function base(User $viewer)
     {
-        return User::query()->role(Role::COORDINATOR->value)->visibleTo($viewer);
+        $query = User::query()
+            ->role(Role::COORDINATOR->value)
+            ->visibleTo($viewer)
+            ->whereKeyNot($viewer->getKey());
+
+        // Administrators retain the complete coordinator directory. Scoped
+        // coordinators only see lower-level coordinators they may manage.
+        if (!Jurisdiction::for($viewer)->unrestricted) {
+            $manageableTypes = collect($this->typeOptions($viewer))
+                ->pluck('value')
+                ->all();
+
+            $query->whereHas('coordinator', fn ($q) => $q->whereIn('type', $manageableTypes));
+        }
+
+        return $query;
     }
 
     private function profileData(array $data): array
@@ -181,6 +204,7 @@ class CoordinatorController extends Controller
             ->when($request->zone, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('zone_id', $v)))
             ->when($request->lga, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('ward_id', $v)))
+            ->when($request->pu, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('pu_id', $v)))
             ->when($request->status, fn ($q, $v) => $q->where('users.is_active', $v === 'active'))
             ->when($request->type, fn ($q, $v) => $q->whereHas('coordinator', fn ($q) => $q->where('type', $v)));
     }

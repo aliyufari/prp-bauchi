@@ -23,6 +23,7 @@ export interface CampaignTeamMember {
   first_name: string
   last_name: string
   email: string
+  avatar_url?: string | null
   phone: string | null
   role_in_team: string
   status: 'active' | 'inactive'

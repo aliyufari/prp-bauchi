@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import VChart from 'vue-echarts'
-import * as echarts from 'echarts'
 
 const props = defineProps<{
   deployment: {
@@ -24,9 +23,9 @@ const option = computed(() => ({
       type: 'pie',
       radius: ['55%', '75%'],
       data: [
-        { value: props.deployedPct, name: 'Deployed' },
-        { value: props.unassignedPct, name: 'Unassigned' },
-        { value: props.awaitingTrainingPct, name: 'Awaiting Training' },
+        { value: props.deployment.deployedPct, name: 'Deployed' },
+        { value: props.deployment.unassignedPct, name: 'Unassigned' },
+        { value: props.deployment.awaitingTrainingPct, name: 'Awaiting Training' },
       ],
       label: { show: false },
       color: ['#15803d', '#f59e0b', '#ef4444'],
@@ -36,26 +35,26 @@ const option = computed(() => ({
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3">
 
     <!-- Header -->
     <div>
-      <h3 class="text-xs font-black uppercase tracking-wider text-gray-800">
+      <h3 class="text-sm font-bold tracking-tight text-gray-900">
         Agent Deployment Status
       </h3>
-      <p class="text-[10px] text-gray-400 mt-0.5 font-medium">
+      <p class="text-xs text-gray-500 mt-1">
         Current field agent allocation
       </p>
     </div>
 
     <!-- Chart -->
-    <div class="relative mx-auto w-[120px] h-[120px]">
+    <div v-if="props.deployment.total > 0" class="relative mx-auto h-[120px] w-[120px]">
       <VChart class="w-full h-full" :option="option" autoresize />
 
       <!-- Center Text -->
       <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <p class="text-sm font-black text-gray-900">
-          {{ deployment.total.toLocaleString() }}
+          {{ props.deployment.total.toLocaleString() }}
         </p>
         <p class="text-[9px] text-gray-400 font-medium">
           Total Agents
@@ -64,7 +63,7 @@ const option = computed(() => ({
     </div>
 
     <!-- Breakdown -->
-    <ul class="space-y-1.5">
+    <ul v-if="props.deployment.total > 0" class="space-y-1.5">
 
       <li class="flex items-center justify-between">
         <div class="flex items-center gap-1.5">
@@ -72,7 +71,7 @@ const option = computed(() => ({
           <span class="text-[10px] text-gray-600">Deployed</span>
         </div>
         <span class="text-[10px] font-bold">
-          {{ deployment.deployed.toLocaleString() }} ({{ deployment.deployedPct }}%)
+          {{ props.deployment.deployed.toLocaleString() }} ({{ props.deployment.deployedPct }}%)
         </span>
       </li>
 
@@ -82,7 +81,7 @@ const option = computed(() => ({
           <span class="text-[10px] text-gray-600">Unassigned</span>
         </div>
         <span class="text-[10px] font-bold">
-          {{ deployment.unassigned.toLocaleString() }} ({{ deployment.unassignedPct }}%)
+          {{ props.deployment.unassigned.toLocaleString() }} ({{ props.deployment.unassignedPct }}%)
         </span>
       </li>
 
@@ -92,16 +91,16 @@ const option = computed(() => ({
           <span class="text-[10px] text-gray-600">Awaiting Training</span>
         </div>
         <span class="text-[10px] font-bold">
-          {{ deployment.awaitingTraining.toLocaleString() }} ({{ deployment.awaitingTrainingPct }}%)
+          {{ props.deployment.awaitingTraining.toLocaleString() }} ({{ props.deployment.awaitingTrainingPct }}%)
         </span>
       </li>
 
     </ul>
 
-    <!-- Button -->
-    <button class="w-full text-[10px] font-bold text-green-700 hover:text-green-800 py-1.5 border border-green-100 rounded-lg">
-      View Full Report →
-    </button>
+    <div v-else class="rounded-xl bg-gray-50 px-4 py-7 text-center">
+      <p class="text-sm font-semibold text-gray-700">No deployment data yet</p>
+      <p class="mt-1 text-xs text-gray-500">Agent assignments and training status will appear here.</p>
+    </div>
 
   </div>
 </template>

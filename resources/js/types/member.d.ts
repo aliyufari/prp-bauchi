@@ -1,53 +1,116 @@
-import { RowAbilities } from "./table"
+import type { RowAbilities } from './table'
 
 export interface LocationOption {
-  id: string
-  name: string
+    id: string
+    name: string
+}
+
+export interface EducationStatusOption {
+    value: string
+    label: string
 }
 
 export interface Member {
-  id: string
-  first_name: string
-  middle_name: string | null
-  last_name: string
-  email: string
-  avatar_url: string | null
-  status: 'active' | 'inactive'
-  member_no: string | null
-  phone: string | null
-  gender: string | null
-  occupation: string | null
-  education_status: string | null
-  training_status: boolean
-  training_status_label: 'completed' | 'pending'
-  mentor: string | null
-  mentor_name: string | null
-  mentor_status: boolean
-  state_id: string | null
-  zone_id: string | null
-  lga_id: string | null
-  ward_id: string | null
-  pu_id: string | null
-  state: string | null
-  zone: string | null
-  lga: string | null
-  ward: string | null
-  pu: string | null
-  created_at: string
-  can: RowAbilities
+    id: string
+    first_name: string
+    middle_name: string | null
+    last_name: string
+    email: string
+    avatar_url: string | null
+    status: 'active' | 'inactive'
+    member_no: string | null
+    phone: string | null
+    gender: string | null
+    occupation: string | null
+    education_status: string | null
+    training_status: boolean
+    training_status_label: 'completed' | 'pending'
+    mentor: string | null
+    mentor_name: string | null
+    mentor_status: boolean
+    state_id: string | null
+    zone_id: string | null
+    lga_id: string | null
+    ward_id: string | null
+    pu_id: string | null
+    state: string | null
+    zone: string | null
+    lga: string | null
+    ward: string | null
+    pu: string | null
+    created_at: string
+    can: RowAbilities
 }
 
 export interface MemberStatistics {
-  total: number
-  active: number
-  trained: number
-  mentored: number
+    total: number
+    active: number
+    trained: number
+    mentored: number
 }
 
 export interface MemberFilterOptions {
-  states: LocationOption[]
-  zones: LocationOption[]
-  lgas: LocationOption[]
-  wards: LocationOption[]
-  statuses: { value: string; label: string }[]
+    states: LocationOption[]
+    zones: LocationOption[]
+    lgas: LocationOption[]
+    wards: LocationOption[]
+    statuses: {
+        value: string
+        label: string
+    }[]
+}
+
+export interface MemberFormOptions {
+    states: LocationOption[]
+    zones: LocationOption[]
+    lgas: LocationOption[]
+    wards: LocationOption[]
+    pus: LocationOption[]
+    educationStatuses: EducationStatusOption[]
+}
+
+export interface FormOptions {
+    states: LocationOption[]
+    zones: LocationOption[]
+    lgas: LocationOption[]
+    wards: LocationOption[]
+    pus: LocationOption[]
+    educationStatuses: {
+        value: string
+        label: string
+    }[]
+}
+
+export interface FormShape {
+    first_name: string
+    avatar?: File | null
+    middle_name: string | null
+    last_name: string
+    email: string
+    password?: string
+    phone: string | null
+
+    gender: string | null
+    occupation: string | null
+    education_status: string | null
+
+    application_id: string | null
+
+    state_id: number | string | null
+    zone_id: number | string | null
+    lga_id: number | string | null
+    ward_id: number | string | null
+    pu_id: number | string | null
+
+    mentor_name: string | null
+    mentor_status: boolean
+    training_status: boolean
+
+    errors: Record<string, string>
+    processing: boolean
+}
+
+export interface EducationStatusOption {
+    value: string
+    label: string
 }

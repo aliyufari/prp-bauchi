@@ -49,28 +49,39 @@ class DashboardController extends Controller
     private function adminData(Request $request, User $user): array
     {
         $locations = ScopedLocations::options($user);
+        $filters = $request->validate(['lga' => ['nullable', 'uuid'], 'ward' => ['nullable', 'uuid']]);
+        $stateId = LocationChain::bauchiStateId();
+        abort_unless($stateId, 503, 'Bauchi State locations have not been seeded.');
+        $lgaId = $filters['lga'] ?? null;
+        $wardId = $filters['ward'] ?? null;
+
+        abort_unless(!$lgaId || DB::table('lgas')->where('id', $lgaId)
+            ->whereIn('zone_id', LocationChain::within('zone', 'state', $stateId))->exists(), 404);
+        abort_unless(!$wardId || DB::table('wards')->where('id', $wardId)
+            ->whereIn('lga_id', LocationChain::within('lga', 'state', $stateId))
+            ->when($lgaId, fn ($q) => $q->where('lga_id', $lgaId))->exists(), 404);
 
         return [
             'stats' => [
-                'totalMembers' => $this->count($user, Role::MEMBER),
-                'totalMembersGrowth' => $this->growth($user, Role::MEMBER),
-                'partyAgents' => $this->count($user, Role::PARTY_AGENT),
-                'partyAgentsGrowth' => $this->growth($user, Role::PARTY_AGENT),
-                'coordinators' => $this->count($user, Role::COORDINATOR),
-                'coordinatorsGrowth' => $this->growth($user, Role::COORDINATOR),
-                'stakeholders' => $this->count($user, Role::STAKEHOLDER),
-                'stakeholdersGrowth' => $this->growth($user, Role::STAKEHOLDER),
+                'totalMembers' => $this->count($user, Role::MEMBER, $lgaId, $wardId),
+                'totalMembersGrowth' => $this->growth($user, Role::MEMBER, $lgaId, $wardId),
+                'partyAgents' => $this->count($user, Role::PARTY_AGENT, $lgaId, $wardId),
+                'partyAgentsGrowth' => $this->growth($user, Role::PARTY_AGENT, $lgaId, $wardId),
+                'coordinators' => $this->count($user, Role::COORDINATOR, $lgaId, $wardId),
+                'coordinatorsGrowth' => $this->growth($user, Role::COORDINATOR, $lgaId, $wardId),
+                'stakeholders' => $this->count($user, Role::STAKEHOLDER, $lgaId, $wardId),
+                'stakeholdersGrowth' => $this->growth($user, Role::STAKEHOLDER, $lgaId, $wardId),
                 'upcomingActivities' => 0, // no events module yet
-                'lgasCovered' => $this->lgasCovered($user),
+                'lgasCovered' => $this->lgasCovered($user, $lgaId, $wardId),
                 'totalLgas' => $locations['lgas']->count(),
             ],
-            'membershipByLga' => $this->membershipByLga($user),
+            'membershipByLga' => $this->membershipByLga($user, $lgaId, $wardId),
             'aspirant' => $this->governor(),
-            'agentDeployment' => $this->agentDeployment($user),
-            'lgas' => $locations['lgas']->pluck('name')->values(),
-            'wards' => $locations['wards']->pluck('name')->values(),
-            'selectedLga' => (string) $request->input('lga', ''),
-            'selectedWard' => (string) $request->input('ward', ''),
+            'agentDeployment' => $this->agentDeployment($user, $lgaId, $wardId),
+            'lgas' => $locations['lgas']->map(fn ($lga) => ['id' => $lga->id, 'name' => $lga->name])->values(),
+            'wards' => $locations['wards']->map(fn ($ward) => ['id' => $ward->id, 'name' => $ward->name, 'lga_id' => $ward->lga_id])->values(),
+            'selectedLga' => (string) ($lgaId ?? ''),
+            'selectedWard' => (string) ($wardId ?? ''),
         ] + $this->emptyWidgets();
     }
 
@@ -95,15 +106,22 @@ class DashboardController extends Controller
         ];
     }
 
-    private function count(User $viewer, Role $role): int
+    private function peopleQuery(User $viewer, Role $role, ?string $lgaId = null, ?string $wardId = null)
     {
-        return User::role($role->value)->visibleTo($viewer)->count();
+        return User::role($role->value)->visibleTo($viewer)
+            ->when($lgaId, fn ($q) => $q->whereHas('profile', fn ($p) => $p->where('lga_id', $lgaId)))
+            ->when($wardId, fn ($q) => $q->whereHas('profile', fn ($p) => $p->where('ward_id', $wardId)));
+    }
+
+    private function count(User $viewer, Role $role, ?string $lgaId = null, ?string $wardId = null): int
+    {
+        return $this->peopleQuery($viewer, $role, $lgaId, $wardId)->count();
     }
 
     /** Percent change in sign-ups: last 30 days vs the 30 days before. */
-    private function growth(User $viewer, Role $role): float
+    private function growth(User $viewer, Role $role, ?string $lgaId = null, ?string $wardId = null): float
     {
-        $between = fn ($from, $to) => User::role($role->value)->visibleTo($viewer)
+        $between = fn ($from, $to) => $this->peopleQuery($viewer, $role, $lgaId, $wardId)
             ->whereBetween('users.created_at', [$from, $to])->count();
 
         $current = $between(now()->subDays(30), now());
@@ -116,21 +134,23 @@ class DashboardController extends Controller
         return round((($current - $previous) / $previous) * 100, 1);
     }
 
-    private function lgasCovered(User $viewer): int
+    private function lgasCovered(User $viewer, ?string $lgaId = null, ?string $wardId = null): int
     {
         return DB::table('user_profiles')
-            ->whereIn('user_id', User::role(Role::MEMBER->value)->visibleTo($viewer)->select('users.id'))
+            ->whereIn('user_id', $this->peopleQuery($viewer, Role::MEMBER, $lgaId, $wardId)->select('users.id'))
             ->whereNotNull('lga_id')
             ->distinct()
             ->count('lga_id');
     }
 
     /** @return array<int, array{lga: string, count: int}> */
-    private function membershipByLga(User $viewer): array
+    private function membershipByLga(User $viewer, ?string $lgaId = null, ?string $wardId = null): array
     {
         return DB::table('user_profiles as p')
             ->join('lgas as l', 'l.id', '=', 'p.lga_id')
-            ->whereIn('p.user_id', User::role(Role::MEMBER->value)->visibleTo($viewer)->select('users.id'))
+            ->whereIn('p.user_id', $this->peopleQuery($viewer, Role::MEMBER, $lgaId, $wardId)->select('users.id'))
+            ->when($lgaId, fn ($q) => $q->where('p.lga_id', $lgaId))
+            ->when($wardId, fn ($q) => $q->where('p.ward_id', $wardId))
             ->groupBy('l.id', 'l.name')
             ->selectRaw('l.name as lga, count(*) as count')
             ->orderByDesc('count')
@@ -140,9 +160,9 @@ class DashboardController extends Controller
             ->all();
     }
 
-    private function agentDeployment(User $viewer): array
+    private function agentDeployment(User $viewer, ?string $lgaId = null, ?string $wardId = null): array
     {
-        $agents = fn () => User::role(Role::PARTY_AGENT->value)->visibleTo($viewer);
+        $agents = fn () => $this->peopleQuery($viewer, Role::PARTY_AGENT, $lgaId, $wardId);
 
         $total = $agents()->count();
         $deployed = $agents()->whereHas('profile', fn ($q) => $q->whereNotNull('pu_id'))->count();
@@ -165,7 +185,7 @@ class DashboardController extends Controller
     private function governor(): ?array
     {
         $user = User::query()
-            ->whereHas('aspirant', fn ($q) => $q->where('office', AspirantOffice::GOVERNOR->value))
+            ->whereHas('aspirant', fn ($q) => $q->where('office', AspirantOffice::GOVERNOR->value)->whereHas('constituency', fn ($c) => $c->where('state_id', LocationChain::bauchiStateId())))
             ->with(['profile.state', 'aspirant'])
             ->first();
 
@@ -181,7 +201,7 @@ class DashboardController extends Controller
             'state' => $user->profile?->state?->name,
             'vision' => $a->vision,
             'mission' => $a->mission,
-            'imageUrl' => $a->picture ?? $a->avatar, // null -> have the card fall back to your bundled governor image
+            'imageUrl' => $a->picture ?? $a->avatar ?? $user->avatar_url, // null -> have the card fall back to your bundled governor image
             'overallProgress' => $a->overall_progress,
             'totalSupporters' => $a->total_supporters,
             'supportersGrowthThisWeek' => $a->supporters_growth_this_week,

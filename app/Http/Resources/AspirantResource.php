@@ -25,7 +25,7 @@ class AspirantResource extends JsonResource
             'title' => $this->aspirant?->title,
             'vision' => $this->aspirant?->vision,
             'mission' => $this->aspirant?->mission,
-            'image_url' => $this->aspirant?->picture ?? $this->aspirant?->avatar,
+            'image_url' => $this->aspirant?->picture ?? $this->aspirant?->avatar ?? $this->avatar_url,
 
             'overall_progress' => $this->aspirant?->overall_progress ?? 0,
             'total_supporters' => $this->aspirant?->total_supporters ?? 0,

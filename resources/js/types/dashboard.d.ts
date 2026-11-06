@@ -50,14 +50,14 @@ export interface LgaSupportData {
 export interface GovernorshipAspirant {
   name: string;
   title: string;
-  state: string;
-  vision: string;
-  mission: string;
-  imageUrl: string;
-  overallProgress: number;
-  totalSupporters: number;
-  supportersGrowthThisWeek: number;
-  campaignTeamMembers: number;
+  state: string | null;
+  vision: string | null;
+  mission: string | null;
+  imageUrl: string | null;
+  overallProgress: number | null;
+  totalSupporters: number | null;
+  supportersGrowthThisWeek: number | null;
+  campaignTeamMembers: number | null;
 }
 
 export interface AgentDeployment {
@@ -120,7 +120,7 @@ export interface DashboardPageProps {
   upcomingActivities: UpcomingActivity[];
   electionStrategyActivities: ElectionStrategyActivity[];
   lgaSupportData: LgaSupportData[];
-  aspirant: GovernorshipAspirant;
+  aspirant: GovernorshipAspirant | null;
   agentDeployment: AgentDeployment;
   financialSummary: FinancialSummary;
   announcements: Announcement[];

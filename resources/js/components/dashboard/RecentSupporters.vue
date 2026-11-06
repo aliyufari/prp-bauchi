@@ -16,13 +16,13 @@ const avatarColors = [
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3">
     <div>
-      <h3 class="text-xs font-black uppercase tracking-wider text-gray-800">Recent Supporters</h3>
-      <p class="text-[10px] text-gray-400 mt-0.5 font-medium">Latest financial contributors</p>
+      <h3 class="text-sm font-bold tracking-tight text-gray-900">Recent Supporters</h3>
+      <p class="text-xs text-gray-500 mt-1">Latest financial contributors</p>
     </div>
 
-    <ul class="flex-1 space-y-2">
+    <ul v-if="supporters.length" class="flex-1 space-y-2">
       <li
         v-for="(s, i) in supporters"
         :key="s.name"
@@ -55,8 +55,9 @@ const avatarColors = [
       </li>
     </ul>
 
-    <button class="w-full text-[10px] font-bold text-green-700 hover:text-green-800 text-center py-1.5 border border-green-100 hover:border-green-200 rounded-lg transition-colors">
-      View All Supporters →
-    </button>
+    <div v-else class="rounded-xl bg-gray-50 px-4 py-7 text-center">
+      <p class="text-sm font-semibold text-gray-700">No supporters recorded yet</p>
+      <p class="mt-1 text-xs text-gray-500">Recent campaign supporters will appear here.</p>
+    </div>
   </div>
 </template>

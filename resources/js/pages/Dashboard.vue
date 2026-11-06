@@ -33,7 +33,7 @@ const props = defineProps<{
   campaignActivities: { name: string; percentage: number; color: string }[]
   upcomingActivities: any[]
   electionStrategyActivities: any[]
-  lgaSupportData: { lga: string; supportLevel: string }[]
+  lgaSupportData: { lga: string; supportLevel: 'High' | 'Medium' | 'Low' }[]
   aspirant: any
   agentDeployment: any
   financialSummary: any

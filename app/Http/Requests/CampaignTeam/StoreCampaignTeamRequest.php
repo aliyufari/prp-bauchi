@@ -5,7 +5,10 @@ namespace App\Http\Requests\CampaignTeam;
 use App\Enums\Role;
 use App\Models\CampaignTeam;
 use App\Models\User;
+use App\Support\LocationChain;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Validator;
 
@@ -18,7 +21,7 @@ class StoreCampaignTeamRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['aspirant_id' => ['required', 'uuid', 'exists:aspirants,id']] + $this->commonRules();
+        return ['aspirant_id' => ['required', 'uuid', Rule::exists('aspirants', 'id')->where(fn ($query) => $query->whereIn('constituency_id', DB::table('constituencies')->select('id')->whereNotNull('state_id')->where('state_id', LocationChain::bauchiStateId())))]] + $this->commonRules();
     }
 
     protected function commonRules(): array

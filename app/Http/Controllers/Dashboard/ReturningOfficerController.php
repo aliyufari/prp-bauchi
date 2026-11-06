@@ -17,10 +17,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use App\Traits\StoresUserAvatar;
+use App\Exports\FormattedArrayExport;
+use App\Support\ExportRows;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReturningOfficerController extends Controller
 {
-    use AppliesJurisdiction;
+    use AppliesJurisdiction, StoresUserAvatar;
 
     private const PROFILE_FIELDS = [
         'phone', 'gender', 'occupation', 'education_status', 'application_id',
@@ -59,7 +63,7 @@ class ReturningOfficerController extends Controller
             'formOptions' => $locations + [
                 'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
             ],
-            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'status']),
+            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status']),
         ]);
     }
 
@@ -79,6 +83,7 @@ class ReturningOfficerController extends Controller
             $user->assignRole(Role::RETURNING_OFFICER->value);
             $user->profile()->create($this->profileData($data));
             $user->returningOfficer()->create($this->officerData($data));
+            $this->syncUserAvatar($user, $request);
         });
 
         return back()->with('success', 'Returning officer created.');
@@ -99,6 +104,7 @@ class ReturningOfficerController extends Controller
 
             $returning_officer->profile()->updateOrCreate(['user_id' => $returning_officer->id], $this->profileData($data));
             $returning_officer->returningOfficer()->updateOrCreate(['user_id' => $returning_officer->id], $this->officerData($data));
+            $this->syncUserAvatar($returning_officer, $request);
         });
 
         return back()->with('success', 'Returning officer updated.');
@@ -142,10 +148,12 @@ class ReturningOfficerController extends Controller
         Gate::authorize('returning-officers:export');
         $this->enforceFilters($request);
 
-        $query = $this->base($request->user())->with(['profile', 'returningOfficer']);
+        $query = $this->base($request->user())->with(['profile.lga', 'profile.ward', 'profile.pu', 'returningOfficer']);
         $this->applyFilters($query, $request);
+        $this->applySort($query, $request);
+        $rows = ExportRows::people($query->get(), 'returningOfficer', ['institution', 'posting_location']);
 
-        // return Excel::download(new ReturningOfficersExport($query), 'returning-officers.xlsx');
+        return Excel::download(new FormattedArrayExport(['Full name', 'Email', 'Phone', 'Gender', 'Occupation', 'Education level', 'LGA', 'Ward', 'Polling unit', 'Status', 'Institution', 'Posting Location'], $rows, 'Returning Officers'), 'returning-officers.xlsx');
     }
 
     /* ------------------------------------------------------------------ */
@@ -182,6 +190,7 @@ class ReturningOfficerController extends Controller
             ->when($request->zone, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('zone_id', $v)))
             ->when($request->lga, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('ward_id', $v)))
+            ->when($request->pu, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('pu_id', $v)))
             ->when($request->status, fn ($q, $v) => $q->where('users.is_active', $v === 'active'));
     }
 

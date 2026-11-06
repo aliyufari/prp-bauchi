@@ -20,6 +20,14 @@ class LocationOptionsController extends Controller
     {
         $table = LocationChain::TABLES[$level];
         $query = DB::table($table)->orderBy("{$table}.name");
+        $stateId = LocationChain::bauchiStateId();
+        abort_unless($stateId, 503, 'Bauchi state locations have not been seeded.');
+
+        if ($level === 'state') {
+            $query->where("{$table}.id", $stateId);
+        } elseif ($level !== 'state') {
+            $query->whereIn("{$table}.id", LocationChain::within($level, 'state', $stateId));
+        }
 
         if ($parent = LocationChain::parentOf($level)) {
             $param = "{$parent}_id";

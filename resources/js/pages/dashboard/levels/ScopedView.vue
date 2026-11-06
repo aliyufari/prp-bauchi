@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { AlertTriangle, MapPin } from 'lucide-vue-next'
+import { AlertTriangle, Download, MapPin } from 'lucide-vue-next'
 import StatCard from '@/components/dashboard/StatCard.vue'
 import { usePermissions } from '@/composables/usePermissions'
 import { useScopeLabel } from '@/composables/useScopeLabel'
@@ -29,12 +29,18 @@ const pct = (n: number) => (props.stats.results.total ? Math.round((n / props.st
 
 <template>
   <div class="space-y-6 sm:space-y-8">
-    <section>
-      <h2 class="text-lg sm:text-xl font-black text-gray-900">Welcome back, {{ auth.user?.first_name }}</h2>
-      <p class="mt-1 flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-500">
-        <MapPin class="h-3.5 w-3.5" />
-        {{ roleLabel }}<span v-if="scope.name"> · {{ scope.name }}</span>
-      </p>
+    <section class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 class="text-lg sm:text-xl font-black text-gray-900">Welcome back, {{ auth.user?.first_name }}</h2>
+        <p class="mt-1 flex items-center gap-1.5 text-xs sm:text-sm font-medium text-gray-500">
+          <MapPin class="h-3.5 w-3.5" />
+          {{ roleLabel }}<span v-if="scope.name"> · {{ scope.name }}</span>
+        </p>
+      </div>
+      <a :href="route('dashboard.export')" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-green-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">
+        <Download class="h-4 w-4" />
+        Download report
+      </a>
     </section>
 
     <div v-if="notice" class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
@@ -43,11 +49,11 @@ const pct = (n: number) => (props.stats.results.total ? Math.round((n / props.st
     </div>
 
     <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5">
-      <StatCard :value="stats.members" label="Members" icon="Users" icon-bg="bg-green-100" icon-color="text-green-700" />
       <StatCard :value="stats.party_agents" label="Party Agents" icon="UserCheck" icon-bg="bg-blue-100" icon-color="text-blue-700" />
       <StatCard :value="stats.coordinators" label="Coordinators" icon="Briefcase" icon-bg="bg-purple-100" icon-color="text-purple-700" />
       <StatCard :value="stats.polling_units" label="Polling Units" icon="MapPin" icon-bg="bg-amber-100" icon-color="text-amber-700" />
       <StatCard :value="stats.registered_voters" label="Registered Voters" icon="Users" icon-bg="bg-teal-100" icon-color="text-teal-700" />
+      <StatCard :value="stats.members" label="Members" icon="Users" icon-bg="bg-green-100" icon-color="text-green-700" />
     </section>
 
     <section class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">

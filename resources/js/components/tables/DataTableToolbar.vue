@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { Search, Download, Upload, RefreshCw } from 'lucide-vue-next'
+import { computed } from 'vue'
+import { Download, Upload, RefreshCw } from 'lucide-vue-next'
+import SearchInput from '@/components/shared/SearchInput.vue'
 
 interface Props {
   modelValue: string
@@ -8,7 +10,7 @@ interface Props {
   showImport?: boolean
   showRefresh?: boolean
 }
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   placeholder: 'Search...',
   showExport: false,
   showImport: false,
@@ -18,22 +20,18 @@ withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   'update:modelValue': [value: string]
   refresh: []
-  export: []
+  export: [format: 'csv' | 'xlsx']
   import: []
 }>()
+
+
+const searchValue = computed({ get: () => props.modelValue, set: (value: string) => emit('update:modelValue', value) })
 </script>
 
 <template>
   <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-    <div class="relative w-full lg:max-w-xs">
-      <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-      <input
-        :value="modelValue"
-        @input="emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-        type="text"
-        :placeholder="placeholder"
-        class="w-full rounded-xl border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-      />
+    <div class="w-full lg:max-w-xs">
+      <SearchInput v-model="searchValue" :placeholder="placeholder" aria-label="Search records" />
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
@@ -43,7 +41,7 @@ const emit = defineEmits<{
         v-if="showRefresh"
         type="button"
         @click="emit('refresh')"
-        class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
       >
         <RefreshCw class="h-3.5 w-3.5" />
         Refresh
@@ -53,7 +51,7 @@ const emit = defineEmits<{
         v-if="showImport"
         type="button"
         @click="emit('import')"
-        class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
+        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
       >
         <Upload class="h-3.5 w-3.5" />
         Import
@@ -62,11 +60,20 @@ const emit = defineEmits<{
       <button
         v-if="showExport"
         type="button"
-        @click="emit('export')"
+        @click="emit('export', 'csv')"
         class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
       >
         <Download class="h-3.5 w-3.5" />
-        Export
+        CSV
+      </button>
+      <button
+        v-if="showExport"
+        type="button"
+        @click="emit('export', 'xlsx')"
+        class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
+      >
+        <Download class="h-3.5 w-3.5" />
+        Excel
       </button>
 
       <slot name="actions" />

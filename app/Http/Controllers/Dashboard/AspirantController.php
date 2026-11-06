@@ -10,30 +10,36 @@ use App\Http\Requests\Aspirant\UpdateAspirantRequest;
 use App\Http\Resources\AspirantResource;
 use App\Models\Constituency;
 use App\Models\User;
+use App\Support\LocationChain;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use App\Traits\StoresUserAvatar;
+use App\Exports\FormattedArrayExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AspirantController extends Controller
 {
+    use StoresUserAvatar;
     /**
      * Single-profile page for the party's governorship candidate.
      */
     public function governor(Request $request)
     {
         Gate::authorize('aspirants:viewAny');
+        $this->ensureOperatingState();
 
         $user = User::query()
-            ->whereHas('aspirant', fn ($q) => $q->where('office', AspirantOffice::GOVERNOR->value))
+            ->whereHas('aspirant', fn ($q) => $q->where('office', AspirantOffice::GOVERNOR->value)->whereHas('constituency', fn ($c) => $c->where('state_id', LocationChain::bauchiStateId())))
             ->with(['profile.state', 'aspirant.constituency'])
             ->first();
 
         return Inertia::render('dashboard/aspirants/Governor', [
             'aspirant' => $user ? new AspirantResource($user) : null,
             'formOptions' => [
-                'constituencies' => Constituency::orderBy('name')->get(['id', 'name']),
+                'constituencies' => Constituency::where('state_id', LocationChain::bauchiStateId())->orderBy('name')->get(['id', 'name']),
                 'offices' => $this->officeOptions(),
             ],
         ]);
@@ -42,9 +48,11 @@ class AspirantController extends Controller
     public function index(Request $request)
     {
         Gate::authorize('aspirants:viewAny');
-        
+        $this->ensureOperatingState();
+
         $query = User::query()
             ->role(Role::ASPIRANT->value)
+            ->whereHas('aspirant.constituency', fn ($q) => $q->whereNotNull('state_id')->where('state_id', LocationChain::bauchiStateId()))
             ->with(['profile.state', 'aspirant.constituency']);
 
         $this->applyFilters($query, $request);
@@ -74,7 +82,7 @@ class AspirantController extends Controller
                 ],
             ],
             'formOptions' => [
-                'constituencies' => Constituency::orderBy('name')->get(['id', 'name']),
+                'constituencies' => Constituency::where('state_id', LocationChain::bauchiStateId())->orderBy('name')->get(['id', 'name']),
                 'offices' => $this->officeOptions(),
             ],
             'filters' => $request->only(['search', 'office', 'status']),
@@ -102,6 +110,7 @@ class AspirantController extends Controller
                 'phone' => $data['phone'] ?? null,
                 'gender' => $data['gender'] ?? null,
                 'education_status' => $data['education_status'] ?? null,
+                'state_id' => Constituency::whereKey($data['constituency_id'])->value('state_id'),
             ]);
 
             $user->aspirant()->create([
@@ -116,6 +125,7 @@ class AspirantController extends Controller
                 'supporters_growth_this_week' => $data['supporters_growth_this_week'] ?? 0,
                 'campaign_team_members' => $data['campaign_team_members'] ?? 0,
             ]);
+            $this->syncUserAvatar($user, $request);
         });
 
         return back()->with('success', 'Aspirant created.');
@@ -124,6 +134,7 @@ class AspirantController extends Controller
     public function update(UpdateAspirantRequest $request, User $aspirant)
     {
         Gate::authorize('aspirants:manage');
+        $this->ensureBauchiAspirant($aspirant);
 
         DB::transaction(function () use ($request, $aspirant) {
             $data = $request->validated();
@@ -140,6 +151,7 @@ class AspirantController extends Controller
                 'phone' => $data['phone'] ?? null,
                 'gender' => $data['gender'] ?? null,
                 'education_status' => $data['education_status'] ?? null,
+                'state_id' => Constituency::whereKey($data['constituency_id'])->value('state_id'),
             ]);
 
             $aspirant->aspirant()->updateOrCreate(['user_id' => $aspirant->id], [
@@ -154,6 +166,7 @@ class AspirantController extends Controller
                 'supporters_growth_this_week' => $data['supporters_growth_this_week'] ?? 0,
                 'campaign_team_members' => $data['campaign_team_members'] ?? 0,
             ]);
+            $this->syncUserAvatar($aspirant, $request);
         });
 
         return back()->with('success', 'Aspirant updated.');
@@ -161,6 +174,7 @@ class AspirantController extends Controller
 
     public function show(User $aspirant)
     {
+        $this->ensureBauchiAspirant($aspirant);
         $aspirant->load(['profile.state', 'aspirant.constituency']);
 
         return Inertia::render('dashboard/aspirants/Show', [
@@ -171,6 +185,7 @@ class AspirantController extends Controller
     public function destroy(User $aspirant)
     {
         Gate::authorize('aspirants:manage');
+        $this->ensureBauchiAspirant($aspirant);
 
         $aspirant->delete();
 
@@ -180,20 +195,56 @@ class AspirantController extends Controller
     public function bulkDestroy(Request $request)
     {
         Gate::authorize('aspirants:manage');
+        $this->ensureOperatingState();
 
         $request->validate(['ids' => ['required', 'array'], 'ids.*' => ['uuid']]);
 
-        User::whereIn('id', $request->ids)->role(Role::ASPIRANT->value)->delete();
+        User::whereIn('id', $request->ids)->role(Role::ASPIRANT->value)
+            ->whereHas('aspirant.constituency', fn ($q) => $q->whereNotNull('state_id')->where('state_id', LocationChain::bauchiStateId()))
+            ->delete();
 
         return back()->with('success', 'Selected aspirants deleted.');
     }
 
     public function export(Request $request)
     {
-        $query = User::query()->role(Role::ASPIRANT->value)->with(['profile', 'aspirant']);
+        Gate::authorize('aspirants:export');
+        $this->ensureOperatingState();
+        $query = User::query()->role(Role::ASPIRANT->value)
+            ->whereHas('aspirant.constituency', fn ($q) => $q->where('state_id', LocationChain::bauchiStateId()))
+            ->with(['profile', 'aspirant.constituency']);
         $this->applyFilters($query, $request);
+        $this->applySort($query, $request);
+        $rows = $query->get()->map(fn (User $user) => [
+            trim($user->first_name.' '.$user->middle_name.' '.$user->last_name),
+            $user->email,
+            $user->profile?->phone,
+            $user->aspirant?->office?->value,
+            $user->aspirant?->constituency?->name,
+            $user->aspirant?->title,
+            $user->is_active ? 'Active' : 'Inactive',
+        ])->all();
 
-        // return Excel::download(new AspirantsExport($query), 'aspirants.xlsx');
+        return Excel::download(new FormattedArrayExport(
+            ['Full name', 'Email', 'Phone', 'Office', 'Constituency', 'Title', 'Status'],
+            $rows,
+            'Aspirants',
+        ), 'aspirants.xlsx');
+    }
+
+
+    private function ensureOperatingState(): void
+    {
+        abort_unless(LocationChain::bauchiStateId(), 503, 'Bauchi State locations have not been seeded.');
+    }
+
+    private function ensureBauchiAspirant(User $aspirant): void
+    {
+        $this->ensureOperatingState();
+        abort_unless(
+            $aspirant->aspirant()->whereHas('constituency', fn ($q) => $q->whereNotNull('state_id')->where('state_id', LocationChain::bauchiStateId()))->exists(),
+            404,
+        );
     }
 
     protected function applyFilters($query, Request $request): void
@@ -226,7 +277,8 @@ class AspirantController extends Controller
 
     protected function statistics(): array
     {
-        $base = User::role(Role::ASPIRANT->value);
+        $base = User::role(Role::ASPIRANT->value)
+            ->whereHas('aspirant.constituency', fn ($q) => $q->whereNotNull('state_id')->where('state_id', LocationChain::bauchiStateId()));
 
         return [
             'total' => (clone $base)->count(),

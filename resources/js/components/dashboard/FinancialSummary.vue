@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { TrendingUp } from 'lucide-vue-next'
 
-defineProps<{
+const props = defineProps<{
   summary: {
     totalDonations: number
     donationsGrowth: number
@@ -12,6 +13,10 @@ defineProps<{
   }
 }>()
 
+const hasFinancialData = computed(() => Boolean(
+  props.summary.totalDonations || props.summary.totalExpenditures || props.summary.balance,
+))
+
 const fmt = (n: number) =>
   '₦' + (n >= 1_000_000
     ? (n / 1_000_000).toFixed(1) + 'M'
@@ -21,14 +26,14 @@ const fmt = (n: number) =>
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col gap-3">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3">
     <div>
-      <h3 class="text-xs font-black uppercase tracking-wider text-gray-800">Fundraising & Financial Summary</h3>
-      <p class="text-[10px] text-gray-400 mt-0.5 font-medium">Campaign financial overview</p>
+      <h3 class="text-sm font-bold tracking-tight text-gray-900">Fundraising & Financial Summary</h3>
+      <p class="text-xs text-gray-500 mt-1">Campaign financial overview</p>
     </div>
 
     <!-- 3 stat blocks -->
-    <div class="grid grid-cols-1 gap-2">
+    <div v-if="hasFinancialData" class="grid grid-cols-1 gap-2">
       <!-- Donations -->
       <div class="bg-green-50 rounded-lg p-2.5">
         <p class="text-[9px] font-bold text-green-700 uppercase tracking-wider">Total Donations</p>
@@ -60,8 +65,9 @@ const fmt = (n: number) =>
       </div>
     </div>
 
-    <button class="w-full text-[10px] font-bold text-green-700 hover:text-green-800 text-center py-1.5 border border-green-100 hover:border-green-200 rounded-lg transition-colors">
-      View Financial Report →
-    </button>
+    <div v-else class="rounded-xl bg-gray-50 px-4 py-7 text-center">
+      <p class="text-sm font-semibold text-gray-700">Financial data is not connected yet</p>
+      <p class="mt-1 text-xs text-gray-500">Donations, expenditure and balance summaries will appear here.</p>
+    </div>
   </div>
 </template>

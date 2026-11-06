@@ -12,16 +12,16 @@ defineProps<{
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 h-full flex flex-col">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-full flex flex-col">
     <div class="flex items-center justify-between mb-3">
       <div>
-        <h3 class="text-xs font-black uppercase tracking-wider text-gray-800">Upcoming Activities</h3>
-        <p class="text-[10px] text-gray-400 mt-0.5 font-medium">Scheduled events this period</p>
+        <h3 class="text-sm font-bold tracking-tight text-gray-900">Upcoming Activities</h3>
+        <p class="text-xs text-gray-500 mt-1">Scheduled events this period</p>
       </div>
-      <button class="text-[10px] font-bold text-green-700 hover:underline">View Calendar</button>
+
     </div>
 
-    <ul class="flex-1 space-y-2 overflow-y-auto">
+    <ul v-if="activities.length" class="flex-1 space-y-2 overflow-y-auto">
       <li
         v-for="a in activities"
         :key="a.title"
@@ -47,8 +47,10 @@ defineProps<{
       </li>
     </ul>
 
-    <button class="mt-3 w-full text-[10px] font-bold text-green-700 hover:text-green-800 text-center py-1.5 border border-green-100 hover:border-green-200 rounded-lg transition-colors">
-      View All Activities →
-    </button>
+    <div v-else class="flex flex-1 flex-col items-center justify-center rounded-xl bg-gray-50 px-4 py-8 text-center">
+      <Clock class="h-7 w-7 text-gray-300" />
+      <p class="mt-3 text-sm font-semibold text-gray-700">Nothing scheduled</p>
+      <p class="mt-1 text-xs text-gray-500">Upcoming campaign activities will appear here.</p>
+    </div>
   </div>
 </template>

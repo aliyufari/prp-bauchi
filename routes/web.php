@@ -18,3 +18,5 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/dashboard.php';
+
+require __DIR__.'/settings.php';

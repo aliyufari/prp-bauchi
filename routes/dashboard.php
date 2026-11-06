@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Dashboard\AspirantController;
+use App\Http\Controllers\Dashboard\DashboardReportController;
 use App\Http\Controllers\Dashboard\CampaignTeamController;
 use App\Http\Controllers\Dashboard\CampaignTeamMemberController;
 use App\Http\Controllers\Dashboard\LocationOptionsController;
@@ -16,6 +17,7 @@ use App\Http\Controllers\Dashboard\{
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('dashboard/export', DashboardReportController::class)->name('dashboard.export');
     Route::prefix('dashboard/members')->name('members.')->group(function () {
         Route::get('/', [MemberController::class, 'index'])->name('index');
         Route::post('/', [MemberController::class, 'store'])->name('store');
@@ -50,11 +52,11 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('dashboard/aspirants')->name('aspirants.')->group(function () {
         Route::get('/', [AspirantController::class, 'index'])->name('index');
         Route::post('/', [AspirantController::class, 'store'])->name('store');
+        Route::get('/export', [AspirantController::class, 'export'])->name('export');
+        Route::post('/bulk-destroy', [AspirantController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::patch('/{aspirant}', [AspirantController::class, 'update'])->name('update');
         Route::get('/{aspirant}', [AspirantController::class, 'show'])->name('show');
         Route::delete('/{aspirant}', [AspirantController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-destroy', [AspirantController::class, 'bulkDestroy'])->name('bulk-destroy');
-        Route::get('/export', [AspirantController::class, 'export'])->name('export');
     });
 
     Route::prefix('dashboard/polling-units')->name('polling-units.')->group(function () {
@@ -78,6 +80,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('dashboard/location-options')->name('location-options.')->group(function () {
+        Route::get('states', [LocationOptionsController::class, 'states'])->name('states');
         Route::get('zones', [LocationOptionsController::class, 'zones'])->name('zones');
         Route::get('lgas', [LocationOptionsController::class, 'lgas'])->name('lgas');
         Route::get('wards', [LocationOptionsController::class, 'wards'])->name('wards');

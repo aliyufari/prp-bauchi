@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Enums\EducationStatus;
 use App\Enums\Role;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Member\UpdateMemberRequest;
 use App\Http\Requests\Member\StoreMemberRequest;
+use App\Http\Requests\Member\UpdateMemberRequest;
 use App\Http\Resources\MemberResource;
 use App\Models\Pu;
 use App\Models\User;
@@ -16,10 +17,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
+use App\Traits\StoresUserAvatar;
+use App\Exports\FormattedArrayExport;
+use App\Support\ExportRows;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MemberController extends Controller
 {
-    use AppliesJurisdiction;
+    use AppliesJurisdiction, StoresUserAvatar;
 
     private const PROFILE_FIELDS = [
         'phone', 'gender', 'occupation', 'education_status', 'application_id',
@@ -58,8 +63,9 @@ class MemberController extends Controller
             ],
             'formOptions' => $locations + [
                 'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
+                'educationStatuses' => EducationStatus::options(),
             ],
-            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'status']),
+            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status']),
         ]);
     }
 
@@ -78,6 +84,7 @@ class MemberController extends Controller
 
             $user->assignRole(Role::MEMBER->value);
             $user->profile()->create($this->profileData($data)); // observer completes the chain
+            $this->syncUserAvatar($user, $request);
         });
 
         return back()->with('success', 'Member created.');
@@ -97,6 +104,7 @@ class MemberController extends Controller
             ]);
 
             $member->profile()->updateOrCreate(['user_id' => $member->id], $this->profileData($data));
+            $this->syncUserAvatar($member, $request);
         });
 
         return back()->with('success', 'Member updated.');
@@ -141,10 +149,12 @@ class MemberController extends Controller
         Gate::authorize('members:export');
         $this->enforceFilters($request);
 
-        $query = $this->base($request->user())->with('profile');
+        $query = $this->base($request->user())->with(['profile.lga', 'profile.ward', 'profile.pu']);
         $this->applyFilters($query, $request);
+        $this->applySort($query, $request);
+        $rows = ExportRows::people($query->get(), '', []);
 
-        // return Excel::download(new MembersExport($query), 'members.xlsx');
+        return Excel::download(new FormattedArrayExport(['Full name', 'Email', 'Phone', 'Gender', 'Occupation', 'Education level', 'LGA', 'Ward', 'Polling unit', 'Status'], $rows, 'Members'), 'members.xlsx');
     }
 
     /* ------------------------------------------------------------------ */
@@ -176,6 +186,7 @@ class MemberController extends Controller
             ->when($request->zone, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('zone_id', $v)))
             ->when($request->lga, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('ward_id', $v)))
+            ->when($request->pu, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('pu_id', $v)))
             ->when($request->status, fn ($q, $v) => $q->where('is_active', $v === 'active'));
     }
 

@@ -2,6 +2,9 @@
 
 namespace App\Http\Requests\PartyAgent;
 
+use App\Enums\EducationStatus;
+use Illuminate\Validation\Rule;
+
 use App\Enums\PartyAgentType;
 use App\Traits\ValidatesLocation;
 use Illuminate\Foundation\Http\FormRequest;
@@ -20,6 +23,7 @@ class StorePartyAgentRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'first_name' => ['required', 'string', 'max:255'],
             'middle_name' => ['nullable', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -28,7 +32,7 @@ class StorePartyAgentRequest extends FormRequest
             'phone' => ['nullable', 'string', 'max:20'],
             'gender' => ['nullable', 'string'],
             'occupation' => ['nullable', 'string', 'max:255'],
-            'education_status' => ['nullable', 'string'],
+            'education_status' => ['nullable', Rule::enum(EducationStatus::class)],
             'application_id' => ['nullable', 'string', 'max:255'],
             'type' => ['required', new Enum(PartyAgentType::class)],
         ] + $this->locationRules();

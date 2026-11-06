@@ -134,7 +134,7 @@ function logout() {
             <!-- Menu items -->
             <div class="py-1">
               <Link
-                href="/profile"
+                :href="route('profile.edit')"
                 @click="closeDropdown"
                 class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors font-semibold"
               >
@@ -143,12 +143,12 @@ function logout() {
               </Link>
 
               <Link
-                href="/settings"
+                :href="route('password.edit')"
                 @click="closeDropdown"
                 class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors font-semibold"
               >
                 <Settings class="w-4 h-4 text-gray-400 flex-shrink-0" />
-                Settings
+                Password & security
               </Link>
             </div>
 

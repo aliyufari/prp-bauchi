@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useToast } from '@/composables/useToast'
+import { usePermissions } from '@/composables/usePermissions'
+import ConfirmDialog from '@/components/ui/overlay/ConfirmDialog.vue'
 import { ref, watch } from 'vue'
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { Plus } from 'lucide-vue-next'
@@ -39,11 +42,23 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const table = useDataTable()
+const toast = useToast()
+const { can } = usePermissions()
 
 table.search.value = props.filters?.search ?? ''
 table.filters.value = {
   office: props.filters?.office ?? '',
   status: props.filters?.status ?? '',
+}
+
+function exportReport() {
+    const params = {
+        search: table.search.value || undefined,
+        ...table.filters.value,
+        sort_by: table.sortBy.value,
+        sort_direction: table.sortDirection.value,
+    }
+    window.location.href = route('aspirants.export', params)
 }
 
 function query() {
@@ -81,6 +96,7 @@ const editingAspirant = ref<Aspirant | null>(null)
 function emptyFormValues() {
   return {
     first_name: '',
+    avatar: null as File | null,
     middle_name: '' as string | null,
     last_name: '',
     email: '',
@@ -116,6 +132,7 @@ function openEditModal(row: Aspirant) {
   form.clearErrors()
   const values = {
     first_name: row.first_name,
+    avatar: null,
     middle_name: row.middle_name,
     last_name: row.last_name,
     email: row.email,
@@ -147,7 +164,7 @@ function closeModal() {
 }
 
 function submitForm() {
-  const options = { preserveScroll: true, onSuccess: () => closeModal() }
+  const options = { preserveScroll: true, onSuccess: () => { closeModal(); toast.success('Changes saved successfully.'); router.reload() } }
   if (modalMode.value === 'create') {
     form.post(route('aspirants.store'), options)
   } else if (modalMode.value === 'edit' && editingAspirant.value) {
@@ -162,26 +179,42 @@ function viewAspirant(row: Aspirant) {
 function handleRowAction(key: string, row: Aspirant) {
   if (key === 'view') return viewAspirant(row)
   if (key === 'edit') return openEditModal(row)
-  if (key === 'delete' && confirm(`Delete ${row.first_name} ${row.last_name}?`)) {
-    router.delete(route('aspirants.destroy', row.id), { preserveScroll: true })
+  if (key === 'delete') {
+    requestDelete(`Delete ${row.first_name} ${row.last_name}?`, () => {
+    router.delete(route('aspirants.destroy', row.id), { preserveScroll: true, onSuccess: () => { toast.success('Record deleted.'); router.reload() } });
+  
+    })
   }
 }
 
 function handleBulkAction(key: string) {
-  if (key === 'delete' && confirm(`Delete ${table.selected.value.length} aspirants?`)) {
+  if (key === 'delete') {
+    requestDelete(`Delete ${table.selected.value.length} aspirants?`, () => {
     router.post(
       route('aspirants.bulk-destroy'),
       { ids: table.selected.value },
-      { preserveScroll: true, onSuccess: table.clearSelection },
+      { preserveScroll: true, onSuccess: () => { table.clearSelection(); toast.success('Selected records deleted.'); router.reload() } },
     )
+  
+    })
   }
 }
 
 function toggleAll() {
   const ids = props.aspirants.data.map((a) => a.id)
-  const allSelected = ids.every((id) => table.selected.value.includes(id))
-  table.selected.value = allSelected ? [] : ids
+  table.togglePage(ids)
 }
+
+const deleteDialog = ref<{ message: string; action: () => void } | null>(null)
+function requestDelete(message: string, action: () => void) {
+  deleteDialog.value = { message, action }
+}
+function confirmDelete() {
+  const pending = deleteDialog.value
+  deleteDialog.value = null
+  pending?.action()
+}
+function closeDeleteDialog() { deleteDialog.value = null }
 </script>
 
 <template>
@@ -210,10 +243,10 @@ function toggleAll() {
       <DataTableToolbar
         v-model="table.search.value"
         placeholder="Search by name or email..."
-        show-export
+        :show-export="can('aspirants.export')"
         show-refresh
         @refresh="query"
-        @export="router.get(route('aspirants.export'), { ...table.filters.value })"
+        @export="exportReport"
       >
         <template #filters>
           <AspirantFilters v-model="table.filters.value" :options="filterOptions" />
@@ -298,5 +331,15 @@ function toggleAll() {
         @cancel="closeModal"
       />
     </SlideOver>
-  </AppLayout>
+      <ConfirmDialog
+      :open="deleteDialog !== null"
+      title="Confirm deletion"
+      :description="deleteDialog?.message ?? ''"
+      confirm-text="Delete"
+      variant="danger"
+      @confirm="confirmDelete"
+      @cancel="closeDeleteDialog"
+      @close="closeDeleteDialog"
+    />
+</AppLayout>
 </template>
