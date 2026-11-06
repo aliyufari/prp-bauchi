@@ -11,7 +11,7 @@ class BauchiLocationsSeeder extends Seeder
 {
     public function run(): void
     {
-        $filePath = database_path('seeders/data/Bauchi_zones.xlsx');
+        $filePath = database_path('seeders/data/bauchi_zones.xlsx');
 
         if (! File::exists($filePath)) {
             $this->command?->error(

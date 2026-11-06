@@ -2,6 +2,7 @@
 import { Loader } from 'lucide-vue-next';
 import Alert from '@/components/ui/Alert.vue'
 import Input from '@/components/ui/form/Input.vue'
+import FileUpload from '@/components/ui/form/FileUpload.vue'
 import Select from '@/components/ui/form/Select.vue'
 import Checkbox from '@/components/ui/form/Checkbox.vue'
 import LocationCascade from '@/components/location/LocationCascade.vue'
@@ -35,6 +36,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
     </Alert>
     <fieldset class="space-y-4">
       <legend class="text-xs font-bold uppercase tracking-wide text-gray-400">Personal information</legend>
+            <FileUpload v-model="form.avatar" label="Profile photo (optional)" accept="image/jpeg,image/png,image/webp" hint="JPG, PNG or WebP · maximum 2 MB" :error="form.errors.avatar" />
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Input v-model="form.first_name" label="First name" placeholder="Enter first name" :error="form.errors.first_name" />
         <Input v-model="form.middle_name" label="Middle name" placeholder="Enter middle name" :error="form.errors.middle_name" />

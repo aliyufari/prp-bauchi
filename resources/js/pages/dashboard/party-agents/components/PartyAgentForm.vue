@@ -3,9 +3,11 @@ import { Loader } from 'lucide-vue-next';
 import LocationCascade from '@/components/location/LocationCascade.vue';
 import Alert from '@/components/ui/Alert.vue';
 import Input from '@/components/ui/form/Input.vue';
+import FileUpload from '@/components/ui/form/FileUpload.vue'
 import SearchSelect from '@/components/ui/form/SearchSelect.vue';
 import Select from '@/components/ui/form/Select.vue';
 import { useLocationModel } from '@/composables/useLocationModel';
+import { useEducationStatuses } from '@/composables/useEducationStatuses';
 
 import type { LocationOption } from '@/types/member';
 import type { PartyAgentTypeOption } from '@/types/party-agent';
@@ -17,6 +19,7 @@ const genderOptions = [
 
 interface FormShape {
     first_name: string;
+    avatar: File | null;
     middle_name: string | null;
     last_name: string;
     email: string;
@@ -63,6 +66,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const location = useLocationModel(() => props.form);
+const educationStatuses = useEducationStatuses();
 
 const emit = defineEmits<{ submit: []; cancel: [] }>();
 </script>
@@ -75,6 +79,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>();
         <!-- Personal information -->
         <fieldset class="space-y-4">
             <legend class="text-xs font-bold tracking-wide text-gray-400 uppercase">Personal information</legend>
+            <FileUpload v-model="form.avatar" label="Profile photo (optional)" accept="image/jpeg,image/png,image/webp" hint="JPG, PNG or WebP · maximum 2 MB" :error="form.errors.avatar" />
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
@@ -158,11 +163,11 @@ const emit = defineEmits<{ submit: []; cancel: [] }>();
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <Input
+                    <Select
                         v-model="form.education_status"
                         label="Education status"
-                        type="text"
-                        placeholder="Enter education status"
+                        placeholder="Select education status"
+                        :options="educationStatuses"
                         :error="form.errors.education_status"
                     />
                 </div>

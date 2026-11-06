@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { Loader } from 'lucide-vue-next';
 import ActionDropdown from '@/components/tables/ActionDropdown.vue';
 import StatusBadge from '@/components/tables/StatusBadge.vue';
 import SlideOver from '@/components/ui/SlideOver.vue';
 import Checkbox from '@/components/ui/form/Checkbox.vue';
 import DatePicker from '@/components/ui/form/DatePicker.vue';
 import Input from '@/components/ui/form/Input.vue';
+import FileUpload from '@/components/ui/form/FileUpload.vue';
 import ConfirmDialog from '@/components/ui/overlay/ConfirmDialog.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { CampaignTeam, CampaignTeamMember } from '@/types/campaign-team';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { Plus, UserCog } from 'lucide-vue-next';
+import { Loader, Plus, UserCog } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface Props {
@@ -25,6 +25,7 @@ const editingMember = ref<CampaignTeamMember | null>(null);
 function emptyForm() {
     return {
         first_name: '',
+        avatar: null as File | null,
         last_name: '',
         email: '',
         password: '',
@@ -115,7 +116,8 @@ function closeRemoveDialog() {
                 <div v-if="members.length === 0" class="p-8 text-center text-sm text-gray-400">No members on this team yet.</div>
                 <div v-for="member in members" :key="member.id" class="flex items-center justify-between border-b border-gray-50 p-4 last:border-0">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 text-green-700">
+                        <img v-if="member.avatar_url" :src="member.avatar_url" :alt="`${member.first_name} ${member.last_name}`" class="h-9 w-9 rounded-full object-cover" />
+                        <div v-else class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 text-green-700">
                             <UserCog class="h-4 w-4" />
                         </div>
                         <div>
@@ -141,6 +143,7 @@ function closeRemoveDialog() {
         <SlideOver :open="modalOpen" :title="editingMember ? 'Edit Member' : 'Add Member'" size="md" side="right" @close="closeModal">
             <form @submit.prevent="submit" class="space-y-4">
                 <template v-if="!editingMember">
+                    <FileUpload v-model="form.avatar" label="Profile photo (optional)" accept="image/jpeg,image/png,image/webp" hint="JPG, PNG or WebP · maximum 2 MB" :error="form.errors.avatar" />
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <Input
