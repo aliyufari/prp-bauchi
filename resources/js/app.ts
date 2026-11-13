@@ -1,11 +1,13 @@
 import '../css/app.css'
 
-import { createInertiaApp, router } from '@inertiajs/vue3'
+import { createInertiaApp } from '@inertiajs/vue3'
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers'
 import type { DefineComponent } from 'vue'
 import { createApp, h } from 'vue'
 import AppLoader from '@/components/ui/AppLoader.vue'
+import ToastHost from '@/components/ui/ToastHost.vue'
 import { useLoader } from '@/composables/useLoader'
+import { setupPageLoader } from '@/lib/pageLoader'
 import { ZiggyVue } from 'ziggy-js'
 import { initializeTheme } from './composables/useAppearance'
 import AppLayout from '@/layouts/AppLayout.vue'
@@ -20,58 +22,20 @@ import ECharts from 'vue-echarts'
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel'
 const dashboardIndexPage = () => import('./pages/dashboard/Index.vue')
 
-// The global overlay is reserved for full page navigation. Forms and table
-// refreshes retain their own local loading indicators.
+// The global overlay is reserved for page navigations only (see lib/pageLoader.ts).
+// Buttons, forms and table refreshes keep their own local loading indicators.
 const loader = useLoader()
-const SILENT_LOADER_SCOPES = ['form', 'datatable'] as const
-let loaderTimer: ReturnType<typeof setTimeout> | null = null
-
-const clearLoaderTimer = () => {
-    if (loaderTimer) {
-        clearTimeout(loaderTimer)
-        loaderTimer = null
-    }
-}
-
-const isSilentRequest = (visit: any): boolean => {
-    const headers = visit?.headers ?? {}
-    const scope = headers['x-loader-scope'] ?? headers['X-Loader-Scope']
-    const datatable = headers['x-datatable'] ?? headers['X-Datatable']
-
-    return visit?.silent === true || datatable === 'true' || SILENT_LOADER_SCOPES.includes(scope)
-}
-
-router.on('before', (event) => {
-    clearLoaderTimer()
-    if (isSilentRequest(event.detail.visit)) return
-
-    loaderTimer = setTimeout(() => loader.start(), 120)
-})
-
-const finishVisit = () => {
-    clearLoaderTimer()
-    loader.finish()
-}
-
-// `finish` is the guaranteed cleanup path for success, validation errors,
-// cancellations and failed visits. The other events also clean up immediately
-// before Inertia performs its fallback navigation/error handling.
-router.on('finish', finishVisit)
-router.on('invalid', finishVisit)
-router.on('exception', finishVisit)
+setupPageLoader()
 
 const layoutFor = (name: string) => {
     if (name.startsWith('auth/')) return AuthLayout
     if (name.startsWith('portal/')) return PortalLayout
     if (name.startsWith('settings/')) return AccountLayout
-    return undefined 
+    return undefined
 }
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-
-
-
 
     resolve: async (name) => {
         // Keep a single canonical dashboard entry point. The legacy Dashboard.vue
@@ -96,25 +60,11 @@ createInertiaApp({
         return page
     },
 
-    // resolve: async (name) => {
-    //     const page: any = await resolvePageComponent(
-    //         `./pages/${name}.vue`,
-    //         import.meta.glob<DefineComponent>('./pages/**/*.vue')
-    //     )
-    //     // A page can opt out with `defineOptions({ layout: null })`
-    //     if (page.default.layout === undefined) {
-    //         page.default.layout = name.startsWith('auth/') ? AuthLayout
-    //             : name.startsWith('portal/') ? PortalLayout
-    //             : name.startsWith('errors/') ? null
-    //             : AppLayout
-    //     }
-    //     return page
-    // },
-
     setup({ el, App, props, plugin }) {
         const app = createApp({
             render: () => h('div', { class: 'min-h-screen bg-background' }, [
                 h(App, props),
+                h(ToastHost),
                 loader.isLoading.value ? h(AppLoader) : null,
             ]),
         })

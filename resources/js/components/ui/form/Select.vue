@@ -33,7 +33,7 @@ function update(event: Event) {
       <div class="relative">
         <select
           :id="resolvedId" :name="name" :value="modelValue == null ? '' : String(modelValue)"
-          :required="required" :disabled="disabled" :class="[controlClasses(error, disabled), 'h-10 appearance-none pr-9']"
+          :required="required" :disabled="disabled" :class="[controlClasses(error, disabled), 'appearance-none pr-9']"
           @change="update"
         >
           <option value="" disabled>{{ placeholder }}</option>

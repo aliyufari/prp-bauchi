@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ReturningOfficer\StoreReturningOfficerRequest;
 use App\Http\Requests\ReturningOfficer\UpdateReturningOfficerRequest;
 use App\Http\Resources\ReturningOfficerResource;
-use App\Models\Pu;
 use App\Models\ReturningOfficer;
 use App\Models\User;
 use App\Support\ScopedLocations;
@@ -60,8 +59,7 @@ class ReturningOfficerController extends Controller
             'filterOptions' => $locations + [
                 'statuses' => [['value' => 'active', 'label' => 'Active'], ['value' => 'inactive', 'label' => 'Inactive']],
             ],
-            'formOptions' => $locations + [
-                'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
+            'formOptions' => [
             ],
             'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status']),
         ]);

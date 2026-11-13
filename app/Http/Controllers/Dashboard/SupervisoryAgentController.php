@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SupervisoryAgent\StoreSupervisoryAgentRequest;
 use App\Http\Requests\SupervisoryAgent\UpdateSupervisoryAgentRequest;
 use App\Http\Resources\SupervisoryAgentResource;
-use App\Models\Pu;
 use App\Models\SupervisoryAgent;
 use App\Models\User;
 use App\Support\Jurisdiction;
@@ -64,8 +63,7 @@ class SupervisoryAgentController extends Controller
                 'statuses' => [['value' => 'active', 'label' => 'Active'], ['value' => 'inactive', 'label' => 'Inactive']],
                 'types' => $this->typeOptions(),
             ],
-            'formOptions' => $locations + [
-                'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
+            'formOptions' => [
                 'types' => $this->typeOptions($user), // only levels this user may assign
             ],
             'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status', 'type']),

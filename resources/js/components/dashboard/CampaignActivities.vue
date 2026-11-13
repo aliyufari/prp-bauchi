@@ -40,10 +40,10 @@ const option = computed(() => ({
     </div>
 
     <!-- Chart + Legend -->
-    <div v-if="activities.length" class="flex flex-col items-center gap-4 flex-1 sm:flex-row">
+    <div v-if="activities.length" class="flex flex-1 flex-wrap items-center justify-center gap-4">
 
       <!-- Chart -->
-      <div class="relative w-[150px] h-[150px]">
+      <div class="relative h-[150px] w-[150px] shrink-0">
         <VChart class="w-full h-full" :option="option" autoresize />
 
         <!-- Center -->
@@ -56,11 +56,11 @@ const option = computed(() => ({
       </div>
 
       <!-- Legend -->
-      <ul class="flex-1 space-y-1.5 min-w-0">
+      <ul class="min-w-[9rem] flex-1 basis-40 space-y-1.5">
         <li
           v-for="a in activities"
           :key="a.name"
-          class="flex items-center justify-between"
+          class="flex items-center justify-between gap-2"
         >
           <div class="flex items-center gap-2 min-w-0">
             <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: a.color }" />

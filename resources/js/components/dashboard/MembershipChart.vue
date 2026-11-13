@@ -67,7 +67,7 @@ const option = computed(() => ({
         </p>
       </div>
 
-      <span class="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700">Bauchi State</span>
+      <span class="rounded-full bg-green-50 px-3 py-1 text-[11px] font-semibold text-green-700">Bauchi State</span>
     </div>
 
     <!-- Chart -->

@@ -1,28 +1,24 @@
 <script setup lang="ts">
-import { Loader } from 'lucide-vue-next';
+import FormActions from '@/components/forms/FormActions.vue';
 import Alert from '@/components/ui/Alert.vue'
 import Input from '@/components/ui/form/Input.vue'
-import FileUpload from '@/components/ui/form/FileUpload.vue'
+import AvatarUpload from '@/components/ui/form/AvatarUpload.vue'
 import Select from '@/components/ui/form/Select.vue'
 import Checkbox from '@/components/ui/form/Checkbox.vue'
 import LocationCascade from '@/components/location/LocationCascade.vue'
 import { useLocationModel } from '@/composables/useLocationModel'
-import type { EducationStatusOption, FormShape, LocationOption } from '@/types/member'
+import type { EducationStatusOption, FormShape } from '@/types/member'
 
 interface Props {
   form: FormShape
   submitLabel?: string
+  /** Existing photo shown in edit mode. */
+  avatarUrl?: string | null
   passwordOptional?: boolean
-  states?: LocationOption[]
-  zones?: LocationOption[]
-  lgas?: LocationOption[]
-  wards?: LocationOption[]
-  pus?: LocationOption[]
   educationStatuses?: EducationStatusOption[]
 }
 const props = withDefaults(defineProps<Props>(), {
-  submitLabel: 'Save', passwordOptional: false, states: () => [], zones: () => [],
-  lgas: () => [], wards: () => [], pus: () => [], educationStatuses: () => [],
+  submitLabel: 'Save', passwordOptional: false, educationStatuses: () => [],
 })
 const location = useLocationModel(() => props.form)
 const genderOptions = [{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }]
@@ -36,7 +32,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
     </Alert>
     <fieldset class="space-y-4">
       <legend class="text-xs font-bold uppercase tracking-wide text-gray-400">Personal information</legend>
-            <FileUpload v-model="form.avatar" label="Profile photo (optional)" accept="image/jpeg,image/png,image/webp" hint="JPG, PNG or WebP · maximum 2 MB" :error="form.errors.avatar" />
+            <AvatarUpload v-model="form.avatar" :current-url="avatarUrl" :error="form.errors.avatar" />
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Input v-model="form.first_name" label="First name" placeholder="Enter first name" :error="form.errors.first_name" />
         <Input v-model="form.middle_name" label="Middle name" placeholder="Enter middle name" :error="form.errors.middle_name" />
@@ -58,8 +54,10 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Select v-model="form.gender" label="Gender" placeholder="Select gender" :options="genderOptions" :error="form.errors.gender" />
         <Input v-model="form.occupation" label="Occupation" placeholder="Enter occupation" :error="form.errors.occupation" />
-        <Select v-model="form.education_status" label="Education status" placeholder="Select education status"
+        <div class="sm:col-span-full">
+          <Select v-model="form.education_status" label="Education status" placeholder="Select education status"
           :options="educationStatuses" :error="form.errors.education_status" />
+        </div>
       </div>
     </fieldset>
     <fieldset class="space-y-4">
@@ -76,12 +74,6 @@ const emit = defineEmits<{ submit: []; cancel: [] }>()
         </div>
       </div>
     </fieldset>
-    <div class="flex items-center justify-end gap-2 pt-2">
-      <button type="button" class="h-10 rounded-lg border border-gray-200 px-4 text-sm font-semibold text-gray-600 transition hover:bg-gray-50" @click="emit('cancel')">Cancel</button>
-      <button type="submit" :disabled="form.processing" class="h-10 rounded-lg bg-green-700 px-5 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60">
-        <Loader v-if="form.processing" class="h-4 w-4 animate-spin" />
-                {{ form.processing ? 'Saving…' : submitLabel }}
-      </button>
-    </div>
+    <FormActions :processing="form.processing" :submit-label="submitLabel" @cancel="emit('cancel')" />
   </form>
 </template>

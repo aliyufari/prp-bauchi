@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Download } from 'lucide-vue-next'
+import { controlClasses } from '@/components/ui/form/controlClasses'
 
 import AppLayout from '@/layouts/AppLayout.vue'
 import StatCard from '@/components/dashboard/StatCard.vue'
@@ -80,7 +81,7 @@ const currentDateTime = computed(() => {
 
           <select
             v-model="selectedLga"
-            class="text-xs sm:text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 flex-1 min-w-[140px] sm:flex-none"
+            :class="[controlClasses(), 'w-auto min-w-[140px] flex-1 sm:flex-none']"
           >
             <option value="">All LGAs</option>
             <option v-for="lga in lgas" :key="lga" :value="lga">
@@ -90,7 +91,7 @@ const currentDateTime = computed(() => {
 
           <select
             v-model="selectedWard"
-            class="text-xs sm:text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 flex-1 min-w-[140px] sm:flex-none"
+            :class="[controlClasses(), 'w-auto min-w-[140px] flex-1 sm:flex-none']"
           >
             <option value="">All Wards</option>
             <option v-for="ward in wards" :key="ward" :value="ward">
@@ -99,7 +100,7 @@ const currentDateTime = computed(() => {
           </select>
 
           <button
-            class="inline-flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 active:bg-green-900 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition w-full sm:w-auto"
+            class="inline-flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 active:bg-green-900 text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition w-full sm:w-auto"
           >
             <Download class="w-4 h-4" />
             Download Reports
@@ -126,8 +127,8 @@ const currentDateTime = computed(() => {
             label="Party Agents"
             icon="UserCheck"
             :growth="stats.partyAgentsGrowth"
-            icon-bg="bg-blue-100"
-            icon-color="text-blue-700"
+            icon-bg="bg-green-50"
+            icon-color="text-green-900"
           />
 
           <StatCard
@@ -135,8 +136,8 @@ const currentDateTime = computed(() => {
             label="Coordinators"
             icon="Briefcase"
             :growth="stats.coordinatorsGrowth"
-            icon-bg="bg-purple-100"
-            icon-color="text-purple-700"
+            icon-bg="bg-gray-100"
+            icon-color="text-gray-700"
           />
 
           <StatCard
@@ -163,7 +164,7 @@ const currentDateTime = computed(() => {
             icon="BarChart3"
             :subtitle="`Out of ${stats.totalLgas} LGAs`"
             icon-bg="bg-teal-100"
-            icon-color="text-teal-700"
+            icon-color="text-green-700"
           />
         </div>
       </section>

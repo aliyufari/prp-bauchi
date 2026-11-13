@@ -63,7 +63,7 @@ function keydown(event: KeyboardEvent) {
     <template #default="{ id: resolvedId }">
       <div ref="root" class="relative">
         <button :id="resolvedId" type="button" :disabled="disabled" :aria-expanded="open"
-          aria-haspopup="listbox" :class="[controlClasses(error, disabled), 'flex min-h-10 items-center justify-between gap-2 text-left']"
+          aria-haspopup="listbox" :class="[controlClasses(error, disabled), 'flex items-center justify-between gap-2 text-left']"
           @click="toggle" @keydown="keydown">
           <span :class="selected ? 'truncate text-[#111827]' : 'truncate text-[#9ca3af]'">{{ selected?.label ?? placeholder }}</span>
           <span class="flex shrink-0 items-center gap-1">
@@ -71,11 +71,11 @@ function keydown(event: KeyboardEvent) {
             <ChevronDown class="h-4 w-4 text-[#6b7280]" />
           </span>
         </button>
-        <div v-if="open" class="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-[#d1d5db] bg-white shadow-xl">
+        <div v-if="open" class="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-[#e5e7eb] bg-white shadow-lg">
           <div class="relative border-b border-[#e5e7eb] p-2">
             <Search class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9ca3af]" />
             <input ref="searchEl" v-model="search" :placeholder="searchPlaceholder"
-              class="h-9 w-full rounded-md border border-[#e5e7eb] pl-9 pr-3 text-sm outline-none focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/15"
+              class="h-9 w-full rounded-lg border border-[#e5e7eb] pl-9 pr-3 text-sm outline-none transition-all placeholder:text-[#d1d5db] hover:border-[#d1d5db] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/30"
               @keydown="keydown" />
           </div>
           <ul role="listbox" class="max-h-60 overflow-y-auto py-1">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-vue-next'
+import { controlClasses } from '@/components/ui/form/controlClasses'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 interface Props {
   currentPage: number
@@ -35,6 +36,13 @@ const pages = computed(() => {
   })
   return result
 })
+// Same border / radius / focus ring as the form controls and buttons.
+const focusRing = 'outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-green-600/30'
+const navBtn = `inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-white text-sm font-semibold text-[#374151] hover:border-[#d1d5db] hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[#e5e7eb] disabled:hover:bg-white ${focusRing}`
+const pageBtn = `h-9 min-w-9 rounded-lg border px-2 text-sm font-semibold disabled:cursor-not-allowed ${focusRing}`
+const pageIdle = 'border-transparent text-[#374151] hover:bg-green-50 hover:text-green-800'
+const pageActive = 'border-green-700 bg-green-700 text-white'
+
 function go(page: number) {
   if (props.disabled) return
   emit('update:currentPage', Math.min(Math.max(1, page), safeLastPage.value))
@@ -42,46 +50,64 @@ function go(page: number) {
 </script>
 
 <template>
-  <nav class="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Table pagination">
-    <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs text-gray-500">
-      <span>
-        Showing <strong class="font-semibold text-gray-800">{{ from ?? 0 }}</strong>–<strong class="font-semibold text-gray-800">{{ to ?? 0 }}</strong>
-        of <strong class="font-semibold text-gray-800">{{ total }}</strong>
-      </span>
+  <nav
+    class="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:px-5 md:flex-row md:items-center md:justify-between"
+    aria-label="Table pagination"
+  >
+    <!-- Summary + rows per page -->
+    <div class="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-xs text-gray-500 md:justify-start">
+      <p>
+        Showing <span class="font-semibold text-gray-900">{{ from ?? 0 }}</span> to
+        <span class="font-semibold text-gray-900">{{ to ?? 0 }}</span> of
+        <span class="font-semibold text-gray-900">{{ total.toLocaleString() }}</span> results
+      </p>
       <label class="inline-flex items-center gap-2">
-        <span class="text-gray-500">Rows per page</span>
-        <select :value="perPage" :disabled="disabled"
-          class="min-h-8 rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-600/15 disabled:cursor-not-allowed disabled:bg-gray-50"
-          @change="emit('update:perPage', Number(($event.target as HTMLSelectElement).value))">
+        <span>Rows per page</span>
+        <select
+          :value="perPage"
+          :disabled="disabled"
+          aria-label="Rows per page"
+          :class="[controlClasses(null, disabled, 'sm'), 'w-auto cursor-pointer pr-1']"
+          @change="emit('update:perPage', Number(($event.target as HTMLSelectElement).value))"
+        >
           <option v-for="n in perPageOptions" :key="n" :value="n">{{ n }}</option>
         </select>
       </label>
     </div>
 
-    <div class="flex items-center gap-1 self-end sm:self-auto">
-      <button type="button" aria-label="First page" :disabled="disabled || currentPage <= 1" @click="go(1)"
-        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-green-50 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent">
-        <ChevronsLeft class="h-4 w-4" />
-      </button>
-      <button type="button" aria-label="Previous page" :disabled="disabled || currentPage <= 1" @click="go(currentPage - 1)"
-        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-green-50 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent">
+    <!-- Pager -->
+    <div class="flex items-center justify-between gap-2 md:justify-end">
+      <button type="button" aria-label="Previous page" :disabled="disabled || currentPage <= 1" :class="[navBtn, 'px-2.5 sm:px-3']" @click="go(currentPage - 1)">
         <ChevronLeft class="h-4 w-4" />
+        <span class="hidden sm:inline">Previous</span>
       </button>
-      <template v-for="(page, index) in pages" :key="`${page}-${index}`">
-        <span v-if="page === 'ellipsis'" class="px-1.5 text-xs text-gray-400" aria-hidden="true">…</span>
-        <button v-else type="button" :aria-label="`Page ${page}`" :aria-current="page === currentPage ? 'page' : undefined"
-          :disabled="disabled"
-          class="h-8 min-w-8 rounded-lg px-2 text-xs font-semibold transition disabled:cursor-not-allowed"
-          :class="page === currentPage ? 'bg-green-700 text-white shadow-sm' : 'text-gray-600 hover:bg-green-50 hover:text-green-800'"
-          @click="go(page)">{{ page }}</button>
-      </template>
-      <button type="button" aria-label="Next page" :disabled="disabled || currentPage >= safeLastPage" @click="go(currentPage + 1)"
-        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-green-50 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent">
+
+      <!-- Phones: compact "Page 2 of 12" -->
+      <span class="text-xs font-medium text-gray-500 sm:hidden">
+        Page <span class="font-semibold text-gray-900">{{ currentPage }}</span> of {{ safeLastPage }}
+      </span>
+
+      <!-- sm and up: numbered pages -->
+      <div class="hidden items-center gap-1 sm:flex">
+        <template v-for="(page, index) in pages" :key="`${page}-${index}`">
+          <span v-if="page === 'ellipsis'" class="flex h-9 w-7 items-end justify-center pb-2 text-gray-400" aria-hidden="true">…</span>
+          <button
+            v-else
+            type="button"
+            :aria-label="`Page ${page}`"
+            :aria-current="page === currentPage ? 'page' : undefined"
+            :disabled="disabled"
+            :class="[pageBtn, page === currentPage ? pageActive : pageIdle]"
+            @click="go(page)"
+          >
+            {{ page }}
+          </button>
+        </template>
+      </div>
+
+      <button type="button" aria-label="Next page" :disabled="disabled || currentPage >= safeLastPage" :class="[navBtn, 'px-2.5 sm:px-3']" @click="go(currentPage + 1)">
+        <span class="hidden sm:inline">Next</span>
         <ChevronRight class="h-4 w-4" />
-      </button>
-      <button type="button" aria-label="Last page" :disabled="disabled || currentPage >= safeLastPage" @click="go(safeLastPage)"
-        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-green-50 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent">
-        <ChevronsRight class="h-4 w-4" />
       </button>
     </div>
   </nav>

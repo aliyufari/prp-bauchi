@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loader } from 'lucide-vue-next';
+import FormActions from '@/components/forms/FormActions.vue';
 import Alert from '@/components/ui/Alert.vue';
 import Input from '@/components/ui/form/Input.vue';
 import SearchSelect from '@/components/ui/form/SearchSelect.vue';
@@ -76,22 +76,6 @@ const wardOptions = computed(() => props.wards.map((ward) => ({ value: ward.id, 
             </div>
         </fieldset>
 
-        <div class="flex items-center justify-end gap-3 pt-2">
-            <button
-                type="button"
-                @click="emit('cancel')"
-                class="rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-100"
-            >
-                Cancel
-            </button>
-            <button
-                type="submit"
-                :disabled="form.processing"
-                class="rounded-xl bg-green-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 active:bg-green-900 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-                <Loader v-if="form.processing" class="h-4 w-4 animate-spin" />
-                {{ form.processing ? 'Saving…' : submitLabel }}
-            </button>
-        </div>
+        <FormActions :processing="form.processing" :submit-label="submitLabel" @cancel="emit('cancel')" />
     </form>
 </template>

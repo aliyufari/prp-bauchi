@@ -10,10 +10,13 @@ use App\Traits\ValidatesLocation;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Validator;
 
 class StorePartyAgentRequest extends FormRequest
 {
-    use ValidatesLocation;
+    use ValidatesLocation {
+        ValidatesLocation::withValidator as validateLocation;
+    }
 
     public function authorize(): bool
     {
@@ -36,5 +39,17 @@ class StorePartyAgentRequest extends FormRequest
             'application_id' => ['nullable', 'string', 'max:255'],
             'type' => ['required', new Enum(PartyAgentType::class)],
         ] + $this->locationRules();
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $this->validateLocation($validator);
+
+        // Party agents work at a ward or a polling unit; nothing higher grants them access.
+        $validator->after(function (Validator $v) {
+            if (!$this->filled('ward_id') && !$this->filled('pu_id')) {
+                $v->errors()->add('ward_id', 'Select the ward or polling unit this agent will cover.');
+            }
+        });
     }
 }

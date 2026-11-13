@@ -21,15 +21,15 @@ defineProps<Props>()
       :value="statistics.active"
       label="Active"
       icon="UserCheck"
-      icon-bg="bg-blue-100"
-      icon-color="text-blue-700"
+      icon-bg="bg-green-50"
+      icon-color="text-green-900"
     />
     <StatCard
       :value="statistics.total_agents_supervised"
       label="Agents Supervised"
       icon="Users"
-      icon-bg="bg-purple-100"
-      icon-color="text-purple-700"
+      icon-bg="bg-gray-100"
+      icon-color="text-gray-700"
     />
     <StatCard
       :value="statistics.unassigned"

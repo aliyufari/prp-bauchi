@@ -4,6 +4,7 @@ import { Lock, Mail } from 'lucide-vue-next'
 import AuthField from '@/components/auth/AuthField.vue'
 import AuthNotice from '@/components/auth/AuthNotice.vue'
 import AuthSubmit from '@/components/auth/AuthSubmit.vue'
+import Checkbox from '@/components/ui/form/Checkbox.vue'
 import { useAuthPanel } from '@/composables/useAuthPanel'
 
 defineProps<{ status?: string; canResetPassword: boolean }>()
@@ -43,10 +44,7 @@ const submit = () => form.post(route('login'), { onFinish: () => form.reset('pas
       </template>
     </AuthField>
 
-    <label class="flex w-fit cursor-pointer select-none items-center gap-2.5">
-      <input v-model="form.remember" type="checkbox" :tabindex="3" class="h-4 w-4 rounded border-gray-300 text-[#16a34a] focus:ring-[#16a34a]" />
-      <span class="text-sm text-[#374151]">Remember me for 30 days</span>
-    </label>
+    <Checkbox v-model="form.remember" label="Remember me for 30 days" :tabindex="3" />
 
     <AuthSubmit :processing="form.processing" label="Sign in" processing-label="Signing in…" :tabindex="4" />
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Button from '@/components/ui/Button.vue';
 import { useToast } from '@/composables/useToast'
 import ActionDropdown from '@/components/tables/ActionDropdown.vue';
 import BulkActions from '@/components/tables/BulkActions.vue';
@@ -240,14 +241,10 @@ function closeDeleteDialog() {
                         Manage deployed party agents across states, LGAs and polling units
                     </p>
                 </div>
-                <button
-                    type="button"
-                    @click="openCreateModal"
-                    class="inline-flex w-full flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:w-auto sm:py-2 sm:text-sm"
-                >
+                <Button @click="openCreateModal" class="w-full sm:w-auto">
                     <UserPlus class="h-4 w-4" />
                     Add Party Agent
-                </button>
+                </Button>
             </div>
 
             <!-- Stats -->
@@ -272,7 +269,7 @@ function closeDeleteDialog() {
 
             <!-- Table -->
             <div class="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
-                <div class="min-w-[720px] sm:min-w-0">
+                <div class="min-w-0">
                     <DataTable
                         :columns="columns"
                         :rows="agents.data"
@@ -341,14 +338,10 @@ function closeDeleteDialog() {
         >
             <PartyAgentForm
                 v-if="modalMode"
+                :avatar-url="editingAgent?.avatar_url"
                 :form="form"
                 :submit-label="modalMode === 'create' ? 'Create agent' : 'Save changes'"
                 :password-optional="modalMode === 'edit'"
-                :states="formOptions.states"
-                :zones="formOptions.zones"
-                :lgas="formOptions.lgas"
-                :wards="formOptions.wards"
-                :pus="formOptions.pus"
                 :types="formOptions.types"
                 @submit="submitForm"
                 @cancel="closeModal"

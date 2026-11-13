@@ -16,31 +16,52 @@ class LocationOptionsController extends Controller
     public function wards(Request $r)  { return $this->options($r, 'ward'); }
     public function pus(Request $r)    { return $this->options($r, 'pu'); }
 
+    /**
+     * Flat option list for one level, limited to Bauchi and the signed-in user's jurisdiction.
+     *
+     * Parent ids are OPTIONAL narrowing filters (`zone_id` on lgas, `lga_id` on wards,
+     * `ward_id` on pus, ...). Without them the whole level is returned, so a ward-level
+     * person can be created by picking a ward directly, with no zone/LGA selection.
+     */
     private function options(Request $request, string $level)
     {
-        $table = LocationChain::TABLES[$level];
-        $query = DB::table($table)->orderBy("{$table}.name");
         $stateId = LocationChain::bauchiStateId();
         abort_unless($stateId, 503, 'Bauchi state locations have not been seeded.');
 
+        $request->validate(array_fill_keys(
+            array_map(fn ($l) => "{$l}_id", LocationChain::LEVELS),
+            ['nullable', 'uuid'],
+        ));
+
+        $table = LocationChain::TABLES[$level];
+        $query = DB::table($table)->orderBy("{$table}.name");
+
         if ($level === 'state') {
             $query->where("{$table}.id", $stateId);
-        } elseif ($level !== 'state') {
+        } else {
             $query->whereIn("{$table}.id", LocationChain::within($level, 'state', $stateId));
         }
 
-        if ($parent = LocationChain::parentOf($level)) {
-            $param = "{$parent}_id";
-            $request->validate([$param => ['required', 'uuid']]);
-            $query->where("{$table}.{$param}", $request->input($param));
+        // Optional narrowing by any ancestor that was supplied (state_id is already implied).
+        $index = LocationChain::index($level);
+        foreach (array_slice(LocationChain::LEVELS, 1, max(0, $index - 1)) as $ancestor) {
+            if ($id = $request->input("{$ancestor}_id")) {
+                $query->whereIn("{$table}.id", LocationChain::within($level, $ancestor, $id));
+            }
         }
 
         // Ancestors collapse to the user's own node; descendants are limited to their subtree.
         Jurisdiction::for($request->user())->constrainTable($level, $query);
 
-        $columns = $level === 'pu'
-            ? ['pus.id', 'pus.name', 'pus.code', 'pus.registered_voters']
-            : ["{$table}.id", "{$table}.name"];
+        // Each row also carries its direct parent id so the client can complete the chain.
+        $parent = LocationChain::parentOf($level);
+        $columns = ["{$table}.id", "{$table}.name"];
+        if ($level === 'pu') {
+            array_push($columns, 'pus.code', 'pus.registered_voters');
+        }
+        if ($parent && $level !== 'zone') {
+            $columns[] = "{$table}.{$parent}_id";
+        }
 
         return response()->json($query->get($columns));
     }

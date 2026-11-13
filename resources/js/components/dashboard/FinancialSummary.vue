@@ -56,7 +56,7 @@ const fmt = (n: number) =>
 
       <!-- Balance -->
       <div class="bg-blue-50 rounded-lg p-2.5">
-        <p class="text-[9px] font-bold text-blue-700 uppercase tracking-wider">Balance</p>
+        <p class="text-[9px] font-bold text-green-900 uppercase tracking-wider">Balance</p>
         <p class="text-base font-black text-blue-900 mt-0.5">{{ fmt(summary.balance) }}</p>
         <div class="flex items-center gap-1 mt-0.5">
           <TrendingUp class="w-3 h-3 text-blue-600" />

@@ -1,17 +1,29 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
-// Module-level state makes the loader available to the Inertia bootstrap and
-// any component that needs to coordinate with a genuine page transition.
-const isLoading = ref(false)
+/**
+ * Global page loader state.
+ *
+ * Several navigations can overlap (a new visit interrupts the previous one, and
+ * Inertia still fires `finish` for the interrupted visit). A counter keeps the
+ * overlay up until every tracked navigation has settled, instead of a boolean
+ * that the first `finish` would switch off too early.
+ */
+const pending = ref(0)
+const isLoading = computed(() => pending.value > 0)
 
 export function useLoader() {
     const start = (): void => {
-        isLoading.value = true
+        pending.value += 1
     }
 
     const finish = (): void => {
-        isLoading.value = false
+        pending.value = Math.max(0, pending.value - 1)
     }
 
-    return { isLoading, start, finish }
+    /** Hard reset - used by the failsafe and when the page is restored from bfcache. */
+    const reset = (): void => {
+        pending.value = 0
+    }
+
+    return { isLoading, start, finish, reset }
 }

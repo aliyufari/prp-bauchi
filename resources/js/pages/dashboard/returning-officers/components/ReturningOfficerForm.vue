@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { Loader } from 'lucide-vue-next';
-import LocationCascade from '@/components/location/LocationCascade.vue';
+import FormActions from '@/components/forms/FormActions.vue';
+import LocationSelect from '@/components/location/LocationSelect.vue';
 import Alert from '@/components/ui/Alert.vue';
 import Input from '@/components/ui/form/Input.vue';
-import FileUpload from '@/components/ui/form/FileUpload.vue'
+import AvatarUpload from '@/components/ui/form/AvatarUpload.vue'
 import Select from '@/components/ui/form/Select.vue';
 import { useLocationModel } from '@/composables/useLocationModel';
 import { useEducationStatuses } from '@/composables/useEducationStatuses';
 
-import type { LocationOption } from '@/types/member';
 
 const genderOptions = [
     { value: 'male', label: 'Male' },
@@ -45,21 +44,13 @@ interface FormShape {
 interface Props {
     form: FormShape;
     submitLabel?: string;
+    /** Existing photo shown in edit mode. */
+    avatarUrl?: string | null;
     passwordOptional?: boolean;
-    states?: LocationOption[];
-    zones?: LocationOption[];
-    lgas?: LocationOption[];
-    wards?: LocationOption[];
-    pus?: LocationOption[];
 }
 const props = withDefaults(defineProps<Props>(), {
     submitLabel: 'Save',
     passwordOptional: false,
-    states: () => [],
-    zones: () => [],
-    lgas: () => [],
-    wards: () => [],
-    pus: () => [],
 });
 
 const location = useLocationModel(() => props.form);
@@ -76,7 +67,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>();
         <!-- Personal information -->
         <fieldset class="space-y-4">
             <legend class="text-xs font-bold tracking-wide text-gray-400 uppercase">Personal information</legend>
-            <FileUpload v-model="form.avatar" label="Profile photo (optional)" accept="image/jpeg,image/png,image/webp" hint="JPG, PNG or WebP · maximum 2 MB" :error="form.errors.avatar" />
+            <AvatarUpload v-model="form.avatar" :current-url="avatarUrl" :error="form.errors.avatar" />
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
@@ -162,7 +153,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>();
                     <Input v-model="form.occupation" label="Occupation" type="text" placeholder="Enter occupation" :error="form.errors.occupation" />
                 </div>
 
-                <div>
+                <div class="sm:col-span-full">
                     <Select
                         v-model="form.education_status"
                         label="Education status"
@@ -177,25 +168,9 @@ const emit = defineEmits<{ submit: []; cancel: [] }>();
         <!-- Location -->
         <fieldset class="space-y-4">
             <legend class="text-xs font-bold tracking-wide text-gray-400 uppercase">Location</legend>
-            <LocationCascade v-model="location" up-to="pu" :errors="form.errors" />
+            <LocationSelect v-model="location" level="lga" :errors="form.errors" />
         </fieldset>
 
-        <div class="flex items-center justify-end gap-3 pt-2">
-            <button
-                type="button"
-                @click="emit('cancel')"
-                class="rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-100"
-            >
-                Cancel
-            </button>
-            <button
-                type="submit"
-                :disabled="form.processing"
-                class="rounded-xl bg-green-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 active:bg-green-900 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-                <Loader v-if="form.processing" class="h-4 w-4 animate-spin" />
-                {{ form.processing ? 'Saving…' : submitLabel }}
-            </button>
-        </div>
+        <FormActions :processing="form.processing" :submit-label="submitLabel" @cancel="emit('cancel')" />
     </form>
 </template>

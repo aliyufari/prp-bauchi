@@ -27,7 +27,7 @@ function paste(event: ClipboardEvent) {
     <input v-for="(_, index) in digits" :key="index" :ref="el => setRef(el, index)" :value="digits[index]"
       inputmode="numeric" autocomplete="one-time-code" maxlength="1" :disabled="disabled"
       :aria-label="`Verification digit ${index + 1}`"
-      :class="['h-12 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-[#0d3b26] outline-none focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/20', error ? 'border-[#dc2626]' : 'border-[#d1d5db]', disabled && 'bg-[#f9fafb] opacity-50']"
+      :class="['h-12 w-10 rounded-lg border bg-white text-center text-lg font-semibold text-[#111827] outline-none transition-all duration-150 focus:ring-2', error ? 'border-[#dc2626] bg-[#fef2f2] focus:border-[#dc2626] focus:ring-[#dc2626]/20' : 'border-[#e5e7eb] hover:border-[#d1d5db] focus:border-[#16a34a] focus:ring-[#16a34a]/30', disabled && 'bg-[#f9fafb] opacity-50']"
       @input="update(index, $event)" @keydown="keydown(index, $event)" />
   </div>
 </template>

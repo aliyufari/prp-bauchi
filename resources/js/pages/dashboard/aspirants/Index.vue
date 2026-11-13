@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Button from '@/components/ui/Button.vue';
 import { useToast } from '@/composables/useToast'
 import { usePermissions } from '@/composables/usePermissions'
 import ConfirmDialog from '@/components/ui/overlay/ConfirmDialog.vue'
@@ -228,14 +229,10 @@ function closeDeleteDialog() { deleteDialog.value = null }
             Manage aspirants across all elective offices and constituencies
           </p>
         </div>
-        <button
-          type="button"
-          @click="openCreateModal"
-          class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:w-auto sm:py-2 sm:text-sm flex-shrink-0"
-        >
+        <Button @click="openCreateModal" class="w-full sm:w-auto">
           <Plus class="h-4 w-4" />
           Add Aspirant
-        </button>
+        </Button>
       </div>
 
       <AspirantStats :statistics="statistics" />
@@ -256,7 +253,7 @@ function closeDeleteDialog() { deleteDialog.value = null }
       <BulkActions :selected="table.selected.value" @clear="table.clearSelection" @action="handleBulkAction" />
 
       <div class="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
-        <div class="min-w-[720px] sm:min-w-0">
+        <div class="min-w-0">
           <DataTable
             :columns="columns"
             :rows="aspirants.data"
@@ -322,6 +319,7 @@ function closeDeleteDialog() { deleteDialog.value = null }
     >
       <AspirantForm
         v-if="modalMode"
+        :avatar-url="editingAspirant?.image_url"
         :form="form"
         :submit-label="modalMode === 'create' ? 'Create aspirant' : 'Save changes'"
         :password-optional="modalMode === 'edit'"

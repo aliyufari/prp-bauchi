@@ -15,8 +15,16 @@ defineProps<{
 const emit = defineEmits<{ (e: 'close'): void }>()
 
 const page = usePage()
-const { auth } = usePermissions()
-const groups = computed(() => auth.value.navigation ?? [])
+const { auth, isRole } = usePermissions()
+
+/* Aspirants follow progress only: unfinished ("Soon") modules and empty groups are hidden for them. */
+const groups = computed(() => {
+  const all = auth.value.navigation ?? []
+  if (!isRole('aspirant')) return all
+  return all
+    .map((g) => ({ ...g, items: g.items.filter((i) => i.ready) }))
+    .filter((g) => g.items.length > 0)
+})
 
 function isActive(item: NavItem): boolean {
   const path = page.url.split('?')[0]
@@ -51,7 +59,7 @@ function linkClass(item: NavItem, compact: boolean) {
 
   <aside
     :class="[
-      'fixed inset-y-0 left-0 z-50 flex flex-col transition-all duration-300 lg:static lg:translate-x-0',
+      'fixed inset-y-0 left-0 z-50 flex h-dvh shrink-0 flex-col transition-all duration-300 lg:static lg:translate-x-0',
       open ? 'translate-x-0' : '-translate-x-full',
       collapsed ? 'w-60 lg:w-16' : 'w-60',
     ]"

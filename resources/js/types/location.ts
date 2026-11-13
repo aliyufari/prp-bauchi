@@ -10,6 +10,11 @@ export interface LocationApiOption {
   name: string
   code?: string | null
   registered_voters?: number | null
+  /** Optional ancestor ids; copied onto the record when the API provides them. */
+  state_id?: string | number | null
+  zone_id?: string | number | null
+  lga_id?: string | number | null
+  ward_id?: string | number | null
 }
 
 export type LocationSelectOption = SelectOption & {

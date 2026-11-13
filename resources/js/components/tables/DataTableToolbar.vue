@@ -41,7 +41,7 @@ const searchValue = computed({ get: () => props.modelValue, set: (value: string)
         v-if="showRefresh"
         type="button"
         @click="emit('refresh')"
-        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
+        class="inline-flex h-10 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
       >
         <RefreshCw class="h-3.5 w-3.5" />
         Refresh
@@ -51,7 +51,7 @@ const searchValue = computed({ get: () => props.modelValue, set: (value: string)
         v-if="showImport"
         type="button"
         @click="emit('import')"
-        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
+        class="inline-flex h-10 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
       >
         <Upload class="h-3.5 w-3.5" />
         Import
@@ -61,7 +61,7 @@ const searchValue = computed({ get: () => props.modelValue, set: (value: string)
         v-if="showExport"
         type="button"
         @click="emit('export', 'csv')"
-        class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
+        class="inline-flex h-10 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
       >
         <Download class="h-3.5 w-3.5" />
         CSV
@@ -70,7 +70,7 @@ const searchValue = computed({ get: () => props.modelValue, set: (value: string)
         v-if="showExport"
         type="button"
         @click="emit('export', 'xlsx')"
-        class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
+        class="inline-flex h-10 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm transition hover:bg-gray-50"
       >
         <Download class="h-3.5 w-3.5" />
         Excel

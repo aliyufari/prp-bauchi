@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Button from '@/components/ui/Button.vue';
 import { useToast } from '@/composables/useToast'
 import Can from '@/components/access/Can.vue';
 import ActionDropdown from '@/components/tables/ActionDropdown.vue';
@@ -160,14 +161,10 @@ function closeDeleteDialog() {
                     <p class="mt-1 text-xs font-medium text-gray-500 sm:text-sm">Manage registered members across states, LGAs and wards</p>
                 </div>
                 <Can permission="members.create">
-                    <button
-                        type="button"
-                        @click="openCreate"
-                        class="inline-flex w-full flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:w-auto sm:py-2 sm:text-sm"
-                    >
+                    <Button @click="openCreate" class="w-full sm:w-auto">
                         <UserPlus class="h-4 w-4" />
                         Add Member
-                    </button>
+                    </Button>
                 </Can>
             </div>
 
@@ -189,7 +186,7 @@ function closeDeleteDialog() {
             <BulkActions v-if="can('members.delete')" :selected="table.selected.value" @clear="table.clearSelection" @action="handleBulkAction" />
 
             <div class="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
-                <div class="min-w-[720px] sm:min-w-0">
+                <div class="min-w-0">
                     <DataTable
                         :columns="columns"
                         :rows="members.data"

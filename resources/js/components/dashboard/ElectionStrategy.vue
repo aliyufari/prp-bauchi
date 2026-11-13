@@ -13,7 +13,7 @@ defineProps<{
 const statusStyle: Record<Status, string> = {
   Ongoing: 'bg-green-50 text-green-700',
   Planned: 'bg-amber-50 text-amber-700',
-  Completed: 'bg-blue-50 text-blue-700',
+  Completed: 'bg-blue-50 text-green-900',
 }
 
 const getInitials = (name?: string) =>

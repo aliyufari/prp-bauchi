@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Button from '@/components/ui/Button.vue';
 import { useToast } from '@/composables/useToast'
 import StatCard from '@/components/dashboard/StatCard.vue';
 import ActionDropdown from '@/components/tables/ActionDropdown.vue';
@@ -220,20 +221,15 @@ function closeDeleteDialog() {
                     <h2 class="text-lg font-black text-gray-900 sm:text-xl">Results Management</h2>
                     <p class="mt-1 text-xs font-medium text-gray-500 sm:text-sm">Upload and verify election results by polling unit</p>
                 </div>
-                <button
-                    v-if="canUpload"
-                    type="button"
-                    @click="openUpload"
-                    class="inline-flex w-full flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:w-auto sm:py-2 sm:text-sm"
-                >
+                <Button v-if="canUpload" @click="openUpload" class="w-full sm:w-auto">
                     <Plus class="h-4 w-4" />
                     Upload Result
-                </button>
+                </Button>
             </div>
 
             <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
                 <StatCard :value="statistics.total" label="Total Results" icon="FileBarChart" icon-bg="bg-green-100" icon-color="text-green-700" />
-                <StatCard :value="statistics.verified" label="Verified" icon="CheckCircle2" icon-bg="bg-blue-100" icon-color="text-blue-700" />
+                <StatCard :value="statistics.verified" label="Verified" icon="CheckCircle2" icon-bg="bg-green-50" icon-color="text-green-900" />
                 <StatCard :value="statistics.pending" label="Pending" icon="Clock" icon-bg="bg-amber-100" icon-color="text-amber-700" />
                 <StatCard :value="statistics.disputed" label="Disputed" icon="AlertTriangle" icon-bg="bg-red-100" icon-color="text-red-700" />
             </div>

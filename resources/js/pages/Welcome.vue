@@ -50,26 +50,28 @@ const features = [
           </div>
         </div>
 
-        <nav class="flex items-center gap-2 sm:gap-6">
+        <nav class="flex min-w-0 items-center gap-3 sm:gap-6">
           <template v-if="$page.props.auth.user">
             <Link
               :href="route('dashboard')"
-              class="px-5 py-2.5 rounded-lg text-sm font-bold text-white transition-all"
+              class="whitespace-nowrap rounded-lg px-4 py-2 text-xs font-bold text-white transition-all sm:px-5 sm:py-2.5 sm:text-sm"
               style="background: linear-gradient(90deg, #22c55e, #16a34a); box-shadow: 0 4px 12px rgba(22,163,74,0.3);"
             >
-              Access Dashboard
+              <span class="sm:hidden">Dashboard</span>
+              <span class="hidden sm:inline">Access Dashboard</span>
             </Link>
           </template>
           <template v-else>
-            <Link :href="route('login')" class="text-sm font-bold text-white hover:text-[#e8c44a] transition-colors">
+            <Link :href="route('login')" class="whitespace-nowrap text-xs font-bold text-white transition-colors hover:text-[#e8c44a] sm:text-sm">
               Sign In
             </Link>
             <Link
               :href="route('register')"
-              class="px-5 py-2.5 rounded-lg text-sm font-bold text-[#0d3b26] transition-all hover:scale-105"
+              class="whitespace-nowrap rounded-lg px-4 py-2 text-xs font-bold text-[#0d3b26] transition-all hover:scale-105 sm:px-5 sm:py-2.5 sm:text-sm"
               style="background: linear-gradient(135deg, #e8c44a 0%, #c9960a 100%);"
             >
-              Request Access
+              <span class="sm:hidden">Join</span>
+              <span class="hidden sm:inline">Request Access</span>
             </Link>
           </template>
         </nav>
@@ -77,77 +79,77 @@ const features = [
 
       <main class="flex-1 flex flex-col">
 
-        <section class="flex-1 grid lg:grid-cols-2 gap-12 items-center px-6 lg:px-12 py-16 lg:py-20 max-w-7xl mx-auto w-full">
+        <section class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 xl:gap-16 2xl:gap-20 items-center px-6 lg:px-12 py-12 sm:py-16 lg:py-20 2xl:py-24 w-full">
 
-          <div class="text-left animate-fade-in">
+          <div class="text-left animate-fade-in min-w-0 lg:justify-self-end w-full">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#e8c44a]/30 bg-[#e8c44a]/10 mb-8">
               <span class="w-2 h-2 rounded-full bg-[#e8c44a] animate-pulse"></span>
               <span class="text-[10px] font-black uppercase tracking-[0.2em] text-[#e8c44a]">Official State Portal 2026</span>
             </div>
 
-            <h2 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.1]">
+            <h2 class="text-[2.1rem] leading-[1.1] sm:text-5xl lg:text-5xl xl:text-6xl 2xl:text-7xl min-[1920px]:text-8xl font-black tracking-tight text-white">
               Justice, Unity <br />
               <span style="color: #4ade80; text-shadow: 0 0 30px rgba(74,222,128,0.2);">Progress for Bauchi</span>
             </h2>
 
-            <p class="mt-6 max-w-xl text-base md:text-lg text-white/70 leading-relaxed font-medium">
+            <p class="mt-6 max-w-xl xl:max-w-2xl 2xl:max-w-3xl text-base md:text-lg 2xl:text-xl text-white/70 leading-relaxed font-medium">
               The centralized digital command center for the People's Redemption Party —
               streamlining member registration, election monitoring, and grassroots
               mobilization across all 20 LGAs.
             </p>
 
-            <div class="mt-10 flex flex-col sm:flex-row gap-4 w-full max-w-md">
+            <div class="mt-10 flex w-full max-w-xl xl:max-w-2xl 2xl:max-w-3xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
               <Link
                 v-if="!$page.props.auth.user"
                 :href="route('register')"
-                class="group px-8 py-4 text-sm font-black rounded-xl text-[#0d3b26] transition-all flex items-center justify-center gap-2"
+                class="group min-h-12 w-full px-5 py-3.5 text-center text-xs font-black leading-tight sm:w-auto sm:min-w-[12.5rem] sm:flex-1 sm:px-6 sm:text-sm rounded-xl text-[#0d3b26] transition-all flex items-center justify-center gap-2"
                 style="background: linear-gradient(135deg, #e8c44a 0%, #c9960a 100%); box-shadow: 0 10px 20px rgba(0,0,0,0.2);"
               >
                 JOIN THE MOVEMENT
-                <ArrowRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight class="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-1" />
               </Link>
 
               <Link
                 v-if="$page.props.auth.user"
                 :href="route('dashboard')"
-                class="px-8 py-4 text-sm font-black rounded-xl text-white transition-all flex items-center justify-center gap-2"
+                class="min-h-12 w-full px-5 py-3.5 text-center text-xs font-black leading-tight sm:w-auto sm:min-w-[12.5rem] sm:flex-1 sm:px-6 sm:text-sm rounded-xl text-white transition-all flex items-center justify-center gap-2"
                 style="background: linear-gradient(90deg, #22c55e, #16a34a);"
               >
                 GO TO DASHBOARD
-                <ArrowRight class="w-4 h-4" />
+                <ArrowRight class="h-4 w-4 shrink-0" />
               </Link>
 
-              <a href="#leadership" class="px-8 py-4 text-sm font-black rounded-xl text-white border border-white/20 hover:border-[#e8c44a]/50 hover:bg-white/5 transition-all flex items-center justify-center gap-2">
+              <a href="#leadership" class="min-h-12 w-full px-5 py-3.5 text-center text-xs font-black leading-tight sm:w-auto sm:min-w-[12.5rem] sm:flex-1 sm:px-6 sm:text-sm rounded-xl text-white border border-white/20 hover:border-[#e8c44a]/50 hover:bg-white/5 transition-all flex items-center justify-center gap-2">
                 MEET OUR ASPIRANT
               </a>
             </div>
 
-            <div class="mt-14 grid grid-cols-3 gap-6 max-w-md border-t border-white/10 pt-8">
+            <div class="mt-10 sm:mt-14 grid grid-cols-3 gap-4 sm:gap-6 max-w-md xl:max-w-xl 2xl:max-w-2xl border-t border-white/10 pt-8">
               <div>
-                <p class="text-2xl md:text-3xl font-black text-[#e8c44a]">20</p>
-                <p class="text-[10px] uppercase tracking-widest text-white/50 font-bold mt-1">LGAs Covered</p>
+                <p class="text-2xl md:text-3xl 2xl:text-4xl font-black text-[#e8c44a]">20</p>
+                <p class="text-[10px] 2xl:text-xs uppercase tracking-widest text-white/50 font-bold mt-1">LGAs Covered</p>
               </div>
               <div>
-                <p class="text-2xl md:text-3xl font-black text-[#e8c44a]">100%</p>
-                <p class="text-[10px] uppercase tracking-widest text-white/50 font-bold mt-1">Verified Data</p>
+                <p class="text-2xl md:text-3xl 2xl:text-4xl font-black text-[#e8c44a]">100%</p>
+                <p class="text-[10px] 2xl:text-xs uppercase tracking-widest text-white/50 font-bold mt-1">Verified Data</p>
               </div>
               <div>
-                <p class="text-2xl md:text-3xl font-black text-[#e8c44a]">24/7</p>
-                <p class="text-[10px] uppercase tracking-widest text-white/50 font-bold mt-1">Live Monitoring</p>
+                <p class="text-2xl md:text-3xl 2xl:text-4xl font-black text-[#e8c44a]">24/7</p>
+                <p class="text-[10px] 2xl:text-xs uppercase tracking-widest text-white/50 font-bold mt-1">Live Monitoring</p>
               </div>
             </div>
           </div>
 
-          <div class="relative flex justify-center lg:justify-end animate-fade-in">
+          <div class="relative flex justify-center lg:justify-start animate-fade-in min-w-0 w-full">
             <div
               class="absolute -inset-4 rounded-[2rem] opacity-40 blur-2xl"
               style="background: radial-gradient(circle, rgba(232,196,74,0.35), transparent 70%);"
             ></div>
-            <div class="relative w-full max-w-md rounded-[1.75rem] overflow-hidden border border-[#e8c44a]/30" style="box-shadow: 0 25px 60px rgba(0,0,0,0.45);">
-              <img :src="aspirantImage" alt="PRP Governorship Aspirant" class="w-full h-full object-cover" />
-              <div class="absolute inset-x-0 bottom-0 p-6" style="background: linear-gradient(0deg, rgba(6,26,17,0.95) 10%, transparent 100%);">
+            <div class="relative w-full max-w-md sm:max-w-lg lg:max-w-none aspect-[4/5] sm:aspect-[5/6] lg:aspect-[4/5] lg:max-h-[min(80vh,60rem)] rounded-[1.75rem] overflow-hidden border border-[#e8c44a]/30" style="box-shadow: 0 25px 60px rgba(0,0,0,0.45);">
+              <img :src="aspirantImage" alt="PRP Governorship Aspirant" class="absolute inset-0 h-full w-full object-cover object-top" />
+              <div class="absolute inset-x-0 bottom-0 p-5 sm:p-6 xl:p-8" style="background: linear-gradient(0deg, rgba(6,26,17,0.95) 10%, transparent 100%);">
                 <p class="text-[10px] uppercase tracking-[0.2em] text-[#e8c44a] font-black">Governorship Aspirant</p>
-                <p class="text-white font-bold text-lg mt-1">Leading Bauchi Forward</p>
+                <p class="text-white font-bold text-lg xl:text-2xl mt-1">Leading Bauchi Forward</p>
               </div>
             </div>
           </div>
@@ -155,7 +157,7 @@ const features = [
         </section>
 
         <section id="leadership" class="px-6 lg:px-12 py-16 lg:py-20 border-t border-white/5">
-          <div class="max-w-4xl mx-auto text-center">
+          <div class="w-full text-center">
             <Quote class="w-8 h-8 text-[#e8c44a]/50 mx-auto mb-6" />
             <p class="text-xl md:text-2xl font-bold text-white leading-relaxed">
               "Our commitment is to a Bauchi State built on justice, transparency,
@@ -168,7 +170,7 @@ const features = [
         </section>
 
         <section class="px-6 lg:px-12 pb-20">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto w-full">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
             <div
               v-for="feature in features"
               :key="feature.title"
@@ -183,11 +185,11 @@ const features = [
 
       </main>
 
-      <footer class="py-8 px-12 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-white/5 bg-black/20 backdrop-blur-lg">
-        <p class="text-[11px] text-white/40 uppercase tracking-widest font-medium">
+      <footer class="py-8 px-6 lg:px-12 flex flex-col md:flex-row justify-between items-center gap-4 border-t border-white/5 bg-black/20 backdrop-blur-lg">
+        <p class="text-center text-[11px] text-white/40 uppercase tracking-widest font-medium">
           © 2026 PRP Bauchi State · <span class="text-[#e8c44a]">Smart Core ICT Service</span>
         </p>
-        <div class="flex gap-8">
+        <div class="flex flex-wrap justify-center gap-x-8 gap-y-2">
           <a href="#" class="text-[10px] font-bold text-white/30 hover:text-[#e8c44a] uppercase tracking-widest transition-colors">Privacy Policy</a>
           <a href="#" class="text-[10px] font-bold text-white/30 hover:text-[#e8c44a] uppercase tracking-widest transition-colors">Terms of Service</a>
         </div>

@@ -62,7 +62,7 @@ class ProfileController extends Controller
             Storage::disk('public')->delete($oldAvatar);
         }
 
-        return to_route('profile.edit')->with('status', 'profile-updated');
+        return to_route('profile.edit')->with('success', 'Profile updated successfully.');
     }
 
     /**

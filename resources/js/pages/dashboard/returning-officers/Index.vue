@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Button from '@/components/ui/Button.vue';
 import { useToast } from '@/composables/useToast'
 import ActionDropdown from '@/components/tables/ActionDropdown.vue';
 import BulkActions from '@/components/tables/BulkActions.vue';
@@ -242,14 +243,10 @@ function closeDeleteDialog() {
                     <h2 class="text-lg font-black text-gray-900 sm:text-xl">Returning Officers</h2>
                     <p class="mt-1 text-xs font-medium text-gray-500 sm:text-sm">Manage INEC-appointed returning officers and their postings</p>
                 </div>
-                <button
-                    type="button"
-                    @click="openCreateModal"
-                    class="inline-flex w-full flex-shrink-0 items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:w-auto sm:py-2 sm:text-sm"
-                >
+                <Button @click="openCreateModal" class="w-full sm:w-auto">
                     <Plus class="h-4 w-4" />
                     Add Returning Officer
-                </button>
+                </Button>
             </div>
 
             <!-- Stats -->
@@ -274,7 +271,7 @@ function closeDeleteDialog() {
 
             <!-- Table -->
             <div class="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
-                <div class="min-w-[720px] sm:min-w-0">
+                <div class="min-w-0">
                     <DataTable
                         :columns="columns"
                         :rows="officers.data"
@@ -346,14 +343,10 @@ function closeDeleteDialog() {
         >
             <ReturningOfficerForm
                 v-if="modalMode"
+                :avatar-url="editingOfficer?.avatar_url"
                 :form="form"
                 :submit-label="modalMode === 'create' ? 'Create officer' : 'Save changes'"
                 :password-optional="modalMode === 'edit'"
-                :states="formOptions.states"
-                :zones="formOptions.zones"
-                :lgas="formOptions.lgas"
-                :wards="formOptions.wards"
-                :pus="formOptions.pus"
                 @submit="submitForm"
                 @cancel="closeModal"
             />

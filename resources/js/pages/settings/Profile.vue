@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Loader } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Head, useForm, usePage } from '@inertiajs/vue3'
 import { Camera, UserRound, X } from 'lucide-vue-next'
+import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/form/Input.vue'
 
 interface ProfileUser {
@@ -99,11 +99,9 @@ function submit() {
       </div>
 
       <div class="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-5">
-        <button type="submit" :disabled="form.processing" class="rounded-lg bg-green-700 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60">
-          <Loader v-if="form.processing" class="h-4 w-4 animate-spin" />
+        <Button type="submit" :loading="form.processing">
           {{ form.processing ? 'Saving…' : 'Save changes' }}
-        </button>
-        <p v-if="status === 'profile-updated'" class="text-sm font-medium text-green-700" role="status">Profile updated successfully.</p>
+        </Button>
       </div>
     </form>
   </section>

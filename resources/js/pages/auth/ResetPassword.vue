@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3'
-import { Lock, Mail } from 'lucide-vue-next'
+import { Head, Link, useForm } from '@inertiajs/vue3'
+import { ArrowLeft, Lock, Mail } from 'lucide-vue-next'
 import AuthField from '@/components/auth/AuthField.vue'
 import AuthSubmit from '@/components/auth/AuthSubmit.vue'
 import { useAuthPanel } from '@/composables/useAuthPanel'
@@ -33,5 +33,10 @@ const submit = () =>
     <AuthField id="password_confirmation" v-model="form.password_confirmation" label="Confirm new password" type="password" :icon="Lock" :error="form.errors.password_confirmation" placeholder="Re-enter password" autocomplete="new-password" :tabindex="2" />
 
     <AuthSubmit :processing="form.processing" label="Reset password" processing-label="Resetting…" :tabindex="3" />
+
+    <Link :href="route('login')" :tabindex="4" class="mt-1 inline-flex items-center justify-center gap-1.5 text-sm font-semibold text-[#16a34a] hover:text-[#0d3b26] transition-colors">
+      <ArrowLeft class="h-4 w-4" />
+      Back to sign in
+    </Link>
   </form>
 </template>

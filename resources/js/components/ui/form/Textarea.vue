@@ -30,7 +30,7 @@ const fieldId = computed(() => props.id || generatedId)
       <textarea
         :id="resolvedId" :name="name" :value="modelValue ?? ''" :rows="rows"
         :placeholder="placeholder" :required="required" :disabled="disabled"
-        :readonly="readonly" :class="[controlClasses(error, disabled), 'min-h-24', `resize-${resize}`]"
+        :readonly="readonly" :class="[controlClasses(error, disabled, 'auto'), 'min-h-24 py-2.5', `resize-${resize}`]"
         v-bind="attrs" @input="emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
       />
     </template>

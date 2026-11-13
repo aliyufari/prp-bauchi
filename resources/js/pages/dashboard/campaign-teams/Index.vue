@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Button from '@/components/ui/Button.vue';
 import { useToast } from '@/composables/useToast'
 import ConfirmDialog from '@/components/ui/overlay/ConfirmDialog.vue'
 import { ref, computed, watch } from 'vue'
@@ -128,16 +129,16 @@ function closeDeleteDialog() { deleteDialog.value = null }
           <h2 class="text-lg font-black text-gray-900 sm:text-xl">Campaign Teams</h2>
           <p class="mt-1 text-xs font-medium text-gray-500 sm:text-sm">Manage campaign teams and their assigned leads</p>
         </div>
-        <button type="button" @click="openCreate" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:w-auto sm:py-2 sm:text-sm flex-shrink-0">
+        <Button @click="openCreate" class="w-full sm:w-auto">
           <Plus class="h-4 w-4" />
           Add Team
-        </button>
+        </Button>
       </div>
 
       <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <StatCard :value="statistics.total" label="Total Teams" icon="Users2" icon-bg="bg-green-100" icon-color="text-green-700" />
-        <StatCard :value="statistics.active" label="Active" icon="UserCheck" icon-bg="bg-blue-100" icon-color="text-blue-700" />
-        <StatCard :value="statistics.total_members" label="Total Members" icon="Users" icon-bg="bg-purple-100" icon-color="text-purple-700" />
+        <StatCard :value="statistics.active" label="Active" icon="UserCheck" icon-bg="bg-green-50" icon-color="text-green-900" />
+        <StatCard :value="statistics.total_members" label="Total Members" icon="Users" icon-bg="bg-gray-100" icon-color="text-gray-700" />
         <StatCard :value="statistics.unassigned_lead" label="No Team Lead" icon="AlertCircle" icon-bg="bg-amber-100" icon-color="text-amber-700" />
       </div>
 
@@ -148,7 +149,7 @@ function closeDeleteDialog() { deleteDialog.value = null }
       </DataTableToolbar>
 
       <div class="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
-        <div class="min-w-[720px] sm:min-w-0">
+        <div class="min-w-0">
           <DataTable :columns="columns" :rows="teams.data" :selectable="false" :sort-by="table.sortBy.value" :sort-direction="table.sortDirection.value" @sort="table.toggleSort">
             <template #team="{ row }">
               <div class="flex items-center gap-2.5">

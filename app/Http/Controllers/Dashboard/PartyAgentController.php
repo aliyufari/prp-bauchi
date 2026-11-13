@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PartyAgent\StorePartyAgentRequest;
 use App\Http\Requests\PartyAgent\UpdatePartyAgentRequest;
 use App\Http\Resources\PartyAgentResource;
-use App\Models\Pu;
 use App\Models\User;
 use App\Support\ScopedLocations;
 use App\Traits\AppliesJurisdiction;
@@ -61,8 +60,7 @@ class PartyAgentController extends Controller
                 'statuses' => [['value' => 'active', 'label' => 'Active'], ['value' => 'inactive', 'label' => 'Inactive']],
                 'types' => $this->typeOptions(),
             ],
-            'formOptions' => $locations + [
-                'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
+            'formOptions' => [
                 'types' => $this->typeOptions(),
             ],
             'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status', 'type']),

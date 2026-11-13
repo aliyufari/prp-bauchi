@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Member\StoreMemberRequest;
 use App\Http\Requests\Member\UpdateMemberRequest;
 use App\Http\Resources\MemberResource;
-use App\Models\Pu;
 use App\Models\User;
 use App\Support\ScopedLocations;
 use App\Traits\AppliesJurisdiction;
@@ -61,8 +60,7 @@ class MemberController extends Controller
             'filterOptions' => $locations + [
                 'statuses' => [['value' => 'active', 'label' => 'Active'], ['value' => 'inactive', 'label' => 'Inactive']],
             ],
-            'formOptions' => $locations + [
-                'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
+            'formOptions' => [
                 'educationStatuses' => EducationStatus::options(),
             ],
             'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status']),

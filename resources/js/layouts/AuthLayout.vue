@@ -13,7 +13,7 @@ const stats = computed(() => (page.props as any).publicStats as { value: string;
   <div class="min-h-screen bg-green-50 flex flex-col lg:flex-row">
     <!-- Left: brand panel (lg+) -->
     <aside
-      class="hidden lg:flex lg:w-[52%] xl:w-[48%] flex-col relative overflow-hidden"
+      class="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[52%] xl:w-[48%] flex-col relative overflow-hidden"
       style="background: linear-gradient(180deg, #0d3b26 0%, #092b1c 40%, #061a11 100%);"
     >
       <div class="absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full border border-white/10" />
@@ -67,21 +67,25 @@ const stats = computed(() => (page.props as any).publicStats as { value: string;
       </div>
     </aside>
 
-    <!-- Right: form -->
-    <main class="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 lg:px-12 xl:px-16 py-8 sm:py-12">
-      <div class="flex lg:hidden items-center gap-3 mb-8 sm:mb-10">
-        <BrandMark size="sm" />
-        <div>
-          <p class="font-black text-lg leading-none" style="color: #0d3b26;">PRP</p>
-          <p class="text-[#16a34a] text-[9px] font-bold uppercase tracking-[0.2em] mt-0.5">Bauchi State</p>
+    <!-- Right: form column. The form block is centered both ways; the footer sits at the bottom. -->
+    <main class="flex min-h-screen min-w-0 flex-1 flex-col">
+      <div class="flex flex-1 items-center justify-center px-4 py-8 sm:px-8 sm:py-12 lg:px-12 xl:px-16">
+        <div class="w-full max-w-sm sm:max-w-md">
+          <div class="mb-8 flex items-center justify-center gap-3 sm:mb-10 lg:hidden">
+            <BrandMark size="sm" />
+            <div>
+              <p class="font-black text-lg leading-none" style="color: #0d3b26;">PRP</p>
+              <p class="text-[#16a34a] text-[9px] font-bold uppercase tracking-[0.2em] mt-0.5">Bauchi State</p>
+            </div>
+          </div>
+
+          <div class="w-full space-y-4">
+            <slot />
+          </div>
         </div>
       </div>
 
-      <div class="w-full max-w-sm space-y-4">
-        <slot />
-      </div>
-
-      <p class="mt-8 sm:mt-auto pt-6 sm:pt-10 text-[11px] text-[#9ca3af] text-center px-4">
+      <p class="px-4 pb-6 text-center text-[11px] text-[#9ca3af] sm:px-8">
         © {{ new Date().getFullYear() }} PRP Bauchi State Management System ·
         <span class="text-[#6b7280]">Smart Core ICT Service Consultant</span>
       </p>

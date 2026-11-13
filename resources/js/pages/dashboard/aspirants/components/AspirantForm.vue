@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { Loader } from 'lucide-vue-next';
+import FormActions from '@/components/forms/FormActions.vue';
 import Alert from '@/components/ui/Alert.vue';
 import Input from '@/components/ui/form/Input.vue';
-import FileUpload from '@/components/ui/form/FileUpload.vue'
+import AvatarUpload from '@/components/ui/form/AvatarUpload.vue'
 import SearchSelect from '@/components/ui/form/SearchSelect.vue';
 import Select from '@/components/ui/form/Select.vue';
 import Textarea from '@/components/ui/form/Textarea.vue';
@@ -46,6 +46,8 @@ interface FormShape {
 interface Props {
     form: FormShape;
     submitLabel?: string;
+    /** Existing photo shown in edit mode. */
+    avatarUrl?: string | null;
     passwordOptional?: boolean;
     lockOffice?: boolean;
     constituencies?: ConstituencyOption[];
@@ -72,7 +74,7 @@ const emit = defineEmits<{ submit: []; cancel: [] }>();
         <!-- Personal information -->
         <fieldset class="space-y-4">
             <legend class="text-xs font-bold tracking-wide text-gray-400 uppercase">Personal information</legend>
-            <FileUpload v-model="form.avatar" label="Profile photo (optional)" accept="image/jpeg,image/png,image/webp" hint="JPG, PNG or WebP · maximum 2 MB" :error="form.errors.avatar" />
+            <AvatarUpload v-model="form.avatar" :current-url="avatarUrl" :error="form.errors.avatar" />
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
@@ -104,15 +106,13 @@ const emit = defineEmits<{ submit: []; cancel: [] }>();
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Select
+            <Select
                     v-model="form.education_status"
                     label="Education status"
                     placeholder="Select education status"
                     :options="educationStatuses"
                     :error="form.errors.education_status"
                 />
-            </div>
 
             <div v-if="'password' in form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
@@ -239,22 +239,6 @@ const emit = defineEmits<{ submit: []; cancel: [] }>();
             </div>
         </fieldset>
 
-        <div class="flex items-center justify-end gap-3 pt-2">
-            <button
-                type="button"
-                @click="emit('cancel')"
-                class="rounded-xl px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-100"
-            >
-                Cancel
-            </button>
-            <button
-                type="submit"
-                :disabled="form.processing"
-                class="rounded-xl bg-green-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 active:bg-green-900 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-                <Loader v-if="form.processing" class="h-4 w-4 animate-spin" />
-                {{ form.processing ? 'Saving…' : submitLabel }}
-            </button>
-        </div>
+        <FormActions :processing="form.processing" :submit-label="submitLabel" @cancel="emit('cancel')" />
     </form>
 </template>

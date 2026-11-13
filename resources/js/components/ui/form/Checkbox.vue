@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { computed, useId } from 'vue'
+import { computed, useAttrs, useId } from 'vue'
 import FormField from './FormField.vue'
+defineOptions({ inheritAttrs: false })
+const attrs = useAttrs()
 const props = withDefaults(defineProps<{
   modelValue?: boolean
   label?: string
@@ -20,7 +22,8 @@ const fieldId = computed(() => props.id || generatedId)
     <template #default="{ id: resolvedId }">
       <label class="inline-flex cursor-pointer items-start gap-2.5 text-sm text-[#374151]" :class="disabled && 'cursor-not-allowed opacity-60'">
         <input :id="resolvedId" :name="name" type="checkbox" :checked="modelValue" :disabled="disabled" :required="required"
-          class="mt-0.5 h-4 w-4 rounded border-[#9ca3af] text-[#16a34a] accent-[#16a34a] focus:ring-[#16a34a]/25"
+          v-bind="attrs"
+          class="mt-0.5 h-4 w-4 rounded border-[#d1d5db] text-[#16a34a] accent-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/30"
           @change="emit('update:modelValue', ($event.target as HTMLInputElement).checked)" />
         <span>{{ label }}<span v-if="required" class="ml-1 text-[#dc2626]">*</span></span>
       </label>

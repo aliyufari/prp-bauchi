@@ -13,6 +13,7 @@ use App\Support\Jurisdiction;
 use App\Support\LocationChain;
 use App\Support\ScopedLocations;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -30,6 +31,14 @@ class DashboardController extends Controller
             );
 
             return redirect()->route('portal.home');
+        }
+
+        // Aspirants get a read-only progress report of their whole campaign.
+        if ($user->hasRole(Role::ASPIRANT->value)) {
+            return Inertia::render('dashboard/Index', [
+                'view' => 'aspirant',
+                'data' => $this->aspirantData(),
+            ]);
         }
 
         $j = Jurisdiction::for($user);
@@ -206,6 +215,72 @@ class DashboardController extends Controller
             'totalSupporters' => $a->total_supporters,
             'supportersGrowthThisWeek' => $a->supporters_growth_this_week,
             'campaignTeamMembers' => $a->campaignTeams()->count(),
+        ];
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Aspirant: read-only campaign progress report (state-wide)           */
+    /* ------------------------------------------------------------------ */
+
+    private function aspirantData(): array
+    {
+        $people = fn (Role $role) => User::role($role->value);
+        $since = fn ($q, int $days) => (clone $q)->where('users.created_at', '>=', now()->subDays($days))->count();
+        $pct = fn (int $part, int $whole) => $whole > 0 ? round($part / $whole * 100, 1) : 0;
+
+        $stat = fn (Role $role) => [
+            'total' => $people($role)->count(),
+            'last30' => $since($people($role), 30),
+            'last7' => $since($people($role), 7),
+        ];
+
+        $results = fn () => Result::query();
+        $resultTotal = $results()->count();
+        $verified = $results()->where('results.status', ResultStatus::VERIFIED->value)->count();
+        $pending = $results()->where('results.status', ResultStatus::PENDING->value)->count();
+        $disputed = $results()->where('results.status', ResultStatus::DISPUTED->value)->count();
+
+        $puTotal = Pu::query()->count();
+        $puReporting = $results()->distinct('results.pu_id')->count('results.pu_id');
+
+        $agents = $this->agentDeployment(Auth::user(), null, null);
+
+        // Per-LGA progress table: members, agents, coordinators and results.
+        $lgas = DB::table('lgas')->select('id', 'name')->orderBy('name')->get();
+        $profiles = DB::table('user_profiles')->whereNotNull('lga_id')->groupBy('lga_id')->selectRaw('lga_id as k, count(*) as c')->pluck('c', 'k');
+        $resultsByLga = DB::table('results')->whereNotNull('lga_id')->groupBy('lga_id')
+            ->selectRaw('lga_id as k, count(*) as c, sum(case when status = ? then 1 else 0 end) as v', [ResultStatus::VERIFIED->value])->get()->keyBy('k');
+
+        return [
+            'aspirant' => $this->governor(),
+            'stats' => [
+                'members' => $stat(Role::MEMBER),
+                'partyAgents' => $stat(Role::PARTY_AGENT),
+                'coordinators' => $stat(Role::COORDINATOR),
+                'stakeholders' => $stat(Role::STAKEHOLDER),
+                'pollingUnits' => $puTotal,
+                'registeredVoters' => (int) Pu::query()->sum('pus.registered_voters'),
+            ],
+            'results' => [
+                'total' => $resultTotal,
+                'verified' => $verified,
+                'pending' => $pending,
+                'disputed' => $disputed,
+                'verifiedPct' => $pct($verified, $resultTotal),
+                'puReporting' => $puReporting,
+                'puTotal' => $puTotal,
+                'puReportingPct' => $pct($puReporting, $puTotal),
+            ],
+            'agentDeployment' => $agents,
+            'membershipByLga' => $this->membershipByLga(Auth::user(), null, null),
+            'lgaProgress' => $lgas->map(fn ($l) => [
+                'id' => $l->id,
+                'name' => $l->name,
+                'people' => (int) ($profiles[$l->id] ?? 0),
+                'results' => (int) ($resultsByLga[$l->id]->c ?? 0),
+                'verified' => (int) ($resultsByLga[$l->id]->v ?? 0),
+            ])->values(),
+            'generatedAt' => now()->toIso8601String(),
         ];
     }
 

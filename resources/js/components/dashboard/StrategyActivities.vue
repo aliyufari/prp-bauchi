@@ -60,6 +60,6 @@ function getIcon(name: string) {
 const statusClasses: Record<string, string> = {
   Ongoing: 'bg-green-100 text-green-700',
   Planned: 'bg-yellow-100 text-yellow-700',
-  Completed: 'bg-blue-100 text-blue-700',
+  Completed: 'bg-green-50 text-green-900',
 }
 </script>

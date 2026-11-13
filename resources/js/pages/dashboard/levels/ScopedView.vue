@@ -49,10 +49,10 @@ const pct = (n: number) => (props.stats.results.total ? Math.round((n / props.st
     </div>
 
     <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5">
-      <StatCard :value="stats.party_agents" label="Party Agents" icon="UserCheck" icon-bg="bg-blue-100" icon-color="text-blue-700" />
-      <StatCard :value="stats.coordinators" label="Coordinators" icon="Briefcase" icon-bg="bg-purple-100" icon-color="text-purple-700" />
+      <StatCard :value="stats.party_agents" label="Party Agents" icon="UserCheck" icon-bg="bg-green-50" icon-color="text-green-900" />
+      <StatCard :value="stats.coordinators" label="Coordinators" icon="Briefcase" icon-bg="bg-gray-100" icon-color="text-gray-700" />
       <StatCard :value="stats.polling_units" label="Polling Units" icon="MapPin" icon-bg="bg-amber-100" icon-color="text-amber-700" />
-      <StatCard :value="stats.registered_voters" label="Registered Voters" icon="Users" icon-bg="bg-teal-100" icon-color="text-teal-700" />
+      <StatCard :value="stats.registered_voters" label="Registered Voters" icon="Users" icon-bg="bg-teal-100" icon-color="text-green-700" />
       <StatCard :value="stats.members" label="Members" icon="Users" icon-bg="bg-green-100" icon-color="text-green-700" />
     </section>
 

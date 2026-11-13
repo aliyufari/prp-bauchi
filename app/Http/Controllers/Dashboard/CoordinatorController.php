@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Coordinator\StoreCoordinatorRequest;
 use App\Http\Requests\Coordinator\UpdateCoordinatorRequest;
 use App\Http\Resources\CoordinatorResource;
-use App\Models\Pu;
 use App\Models\User;
 use App\Support\Jurisdiction;
 use App\Support\RoleHierarchy;
@@ -63,8 +62,7 @@ class CoordinatorController extends Controller
                 'statuses' => [['value' => 'active', 'label' => 'Active'], ['value' => 'inactive', 'label' => 'Inactive']],
                 'types' => $this->typeOptions(),
             ],
-            'formOptions' => $locations + [
-                'pus' => Pu::visibleTo($user)->orderBy('name')->get(['id', 'name']),
+            'formOptions' => [
                 'types' => $this->typeOptions($user), // only levels this user may assign
             ],
             'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status', 'type']),

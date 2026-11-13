@@ -5,6 +5,7 @@ import SearchSelect from '@/components/ui/form/SearchSelect.vue'
 import type { SelectOption } from '@/components/ui/form/types'
 import StatCard from '@/components/dashboard/StatCard.vue'
 import { Download } from 'lucide-vue-next'
+import Button from '@/components/ui/Button.vue'
 import MembershipChart from '@/components/dashboard/MembershipChart.vue'
 import CampaignActivities from '@/components/dashboard/CampaignActivities.vue'
 import GovernorshipAspirant from '@/components/dashboard/GovernorshipAspirant.vue'
@@ -61,6 +62,12 @@ watch([selectedLga, selectedWard], ([lga, ward]) => {
   })
 })
 
+// Shared layout classes so every section is built the same way.
+const headingClass = 'text-[11px] font-bold uppercase tracking-wider text-gray-400'
+const gridClass = 'grid grid-cols-1 items-stretch gap-4 sm:gap-5 md:grid-cols-2'
+// `[&>*]:h-full` makes each card fill its cell so a row of cards ends on one line.
+const cellClass = 'min-w-0 [&>*]:h-full'
+
 const currentDateTime = computed(() =>
   new Date().toLocaleDateString('en-US', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -69,69 +76,80 @@ const currentDateTime = computed(() =>
 </script>
 
 <template>
-  <div class="space-y-6 sm:space-y-8">
-    <!-- Header -->
-    <section class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+  <div class="space-y-8">
+    <!-- Header: greeting + scope filters + report -->
+    <section class="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
       <div>
-        <h2 class="text-lg sm:text-xl font-black text-gray-900">Welcome back, {{ auth.user?.first_name }}</h2>
-        <p class="text-xs sm:text-sm text-gray-500 font-medium mt-1">{{ currentDateTime }}</p>
+        <h2 class="text-lg font-black text-gray-900 sm:text-xl">Welcome back, {{ auth.user?.first_name }}</h2>
+        <p class="mt-1 text-xs font-medium text-gray-500 sm:text-sm">{{ currentDateTime }}</p>
       </div>
 
-      <div class="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:items-center">
+      <div class="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center xl:flex-nowrap">
         <SearchSelect
           v-model="selectedLga"
           :options="lgaOptions"
           placeholder="All LGAs"
           search-placeholder="Search LGAs…"
-          class="w-full sm:min-w-44"
+          class="w-full sm:w-48"
         />
         <SearchSelect
           v-model="selectedWard"
           :options="wardOptions"
           placeholder="All wards"
           search-placeholder="Search wards…"
-          class="w-full sm:min-w-44"
+          class="w-full sm:w-48"
         />
-        <a
-          :href="route('dashboard.export', { lga: selectedLga || undefined, ward: selectedWard || undefined })"
-          class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-green-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
-        >
-          <Download class="h-4 w-4" />
+        <Button :href="route('dashboard.export', { lga: selectedLga || undefined, ward: selectedWard || undefined })" external class="w-full sm:w-auto">
+          <Download class="h-4 w-4 shrink-0" />
           Download report
-        </a>
+        </Button>
       </div>
     </section>
 
-    <!-- Stats -->
-    <section class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
-      <StatCard :value="stats.totalMembers" label="Total Members" icon="Users" :growth="stats.totalMembersGrowth" icon-bg="bg-green-100" icon-color="text-green-700" />
-      <StatCard :value="stats.partyAgents" label="Party Agents" icon="UserCheck" :growth="stats.partyAgentsGrowth" icon-bg="bg-blue-100" icon-color="text-blue-700" />
-      <StatCard :value="stats.coordinators" label="Coordinators" icon="Briefcase" :growth="stats.coordinatorsGrowth" icon-bg="bg-purple-100" icon-color="text-purple-700" />
-      <StatCard :value="stats.stakeholders" label="Stakeholders" icon="Handshake" :growth="stats.stakeholdersGrowth" icon-bg="bg-amber-100" icon-color="text-amber-700" />
-      <StatCard :value="stats.upcomingActivities" label="Upcoming Activities" icon="Calendar" subtitle="This Week" icon-bg="bg-red-100" icon-color="text-red-600" />
-      <StatCard :value="stats.lgasCovered" label="LGAs Covered" icon="BarChart3" :subtitle="`Out of ${stats.totalLgas} LGAs`" icon-bg="bg-teal-100" icon-color="text-teal-700" />
+    <!-- 1. Overview: headline numbers -->
+    <section aria-labelledby="overview-heading" class="space-y-3">
+      <h3 id="overview-heading" :class="headingClass">Overview</h3>
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 2xl:grid-cols-6">
+        <StatCard :value="stats.totalMembers" label="Total Members" icon="Users" :growth="stats.totalMembersGrowth" icon-bg="bg-green-100" icon-color="text-green-700" />
+        <StatCard :value="stats.partyAgents" label="Party Agents" icon="UserCheck" :growth="stats.partyAgentsGrowth" icon-bg="bg-amber-100" icon-color="text-amber-700" />
+        <StatCard :value="stats.coordinators" label="Coordinators" icon="Briefcase" :growth="stats.coordinatorsGrowth" icon-bg="bg-gray-100" icon-color="text-gray-700" />
+        <StatCard :value="stats.stakeholders" label="Stakeholders" icon="Handshake" :growth="stats.stakeholdersGrowth" icon-bg="bg-green-100" icon-color="text-green-700" />
+        <StatCard :value="stats.upcomingActivities" label="Upcoming Activities" icon="Calendar" subtitle="This Week" icon-bg="bg-amber-100" icon-color="text-amber-700" />
+        <StatCard :value="stats.lgasCovered" label="LGAs Covered" icon="BarChart3" :subtitle="`Out of ${stats.totalLgas} LGAs`" icon-bg="bg-gray-100" icon-color="text-gray-700" />
+      </div>
     </section>
 
-    <!-- Main analytics -->
-    <section class="grid grid-cols-1 items-stretch gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-12">
-      <div class="min-w-0 xl:col-span-4"><MembershipChart :data="membershipByLga" /></div>
-      <div class="min-w-0 xl:col-span-3"><CampaignActivities :activities="campaignActivities" :total-activities="campaignActivities.length" /></div>
-      <div class="min-w-0 md:col-span-2 xl:col-span-5"><GovernorshipAspirant :aspirant="aspirant" /></div>
+    <!-- 2. Membership & campaign: aspirant card sits on the right and gets the most width -->
+    <section aria-labelledby="reach-heading" class="space-y-3">
+      <h3 id="reach-heading" :class="headingClass">Membership &amp; campaign</h3>
+      <div :class="[gridClass, 'xl:grid-cols-[minmax(17rem,3.6fr)_minmax(15rem,2.8fr)_minmax(0,5.6fr)]']">
+        <div :class="cellClass"><MembershipChart :data="membershipByLga" /></div>
+        <div :class="cellClass">
+          <CampaignActivities :activities="campaignActivities" :total-activities="campaignActivities.length" />
+        </div>
+        <div :class="[cellClass, 'md:col-span-2 xl:col-span-1']"><GovernorshipAspirant :aspirant="aspirant" /></div>
+      </div>
     </section>
 
-    <!-- Support insights -->
-    <section class="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-12">
-      <div class="min-w-0 xl:col-span-3"><ElectionStrategy :activities="electionStrategyActivities" /></div>
-      <div class="min-w-0 xl:col-span-3"><UpcomingActivities :activities="upcomingActivities" /></div>
-      <div class="min-w-0 xl:col-span-6"><LgaSupportMap :data="lgaSupportData" /></div>
+    <!-- 3. Strategy & support: the plan, what is next, where support is strongest -->
+    <section aria-labelledby="strategy-heading" class="space-y-3">
+      <h3 id="strategy-heading" :class="headingClass">Strategy &amp; support</h3>
+      <div :class="[gridClass, 'xl:grid-cols-[minmax(15rem,1fr)_minmax(15rem,1fr)_minmax(0,2fr)]']">
+        <div :class="cellClass"><ElectionStrategy :activities="electionStrategyActivities" /></div>
+        <div :class="cellClass"><UpcomingActivities :activities="upcomingActivities" /></div>
+        <div :class="[cellClass, 'md:col-span-2 xl:col-span-1']"><LgaSupportMap :data="lgaSupportData" /></div>
+      </div>
     </section>
 
-    <!-- Management -->
-    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-4">
-      <AgentDeployment :deployment="agentDeployment" />
-      <FinancialSummary :summary="financialSummary" />
-      <Announcements :announcements="announcements" />
-      <RecentSupporters :supporters="recentSupporters" />
+    <!-- 4. Operations: people on the ground, money, communication -->
+    <section aria-labelledby="operations-heading" class="space-y-3">
+      <h3 id="operations-heading" :class="headingClass">Operations</h3>
+      <div class="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 sm:gap-5 2xl:grid-cols-4">
+        <div :class="cellClass"><AgentDeployment :deployment="agentDeployment" /></div>
+        <div :class="cellClass"><FinancialSummary :summary="financialSummary" /></div>
+        <div :class="cellClass"><Announcements :announcements="announcements" /></div>
+        <div :class="cellClass"><RecentSupporters :supporters="recentSupporters" /></div>
+      </div>
     </section>
   </div>
 </template>
