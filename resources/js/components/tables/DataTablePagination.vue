@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { controlClasses } from '@/components/ui/form/controlClasses'
-import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 interface Props {
   currentPage: number
@@ -51,32 +51,35 @@ function go(page: number) {
 
 <template>
   <nav
-    class="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:px-5 md:flex-row md:items-center md:justify-between"
+    class="flex flex-col gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 sm:px-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6"
     aria-label="Table pagination"
   >
     <!-- Summary + rows per page -->
-    <div class="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 text-xs text-gray-500 md:justify-start">
-      <p>
+    <div class="flex flex-col gap-2.5 text-xs text-gray-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2">
+      <p class="leading-5">
         Showing <span class="font-semibold text-gray-900">{{ from ?? 0 }}</span> to
         <span class="font-semibold text-gray-900">{{ to ?? 0 }}</span> of
         <span class="font-semibold text-gray-900">{{ total.toLocaleString() }}</span> results
       </p>
-      <label class="inline-flex items-center gap-2">
-        <span>Rows per page</span>
-        <select
-          :value="perPage"
-          :disabled="disabled"
-          aria-label="Rows per page"
-          :class="[controlClasses(null, disabled, 'sm'), 'w-auto cursor-pointer pr-1']"
-          @change="emit('update:perPage', Number(($event.target as HTMLSelectElement).value))"
-        >
-          <option v-for="n in perPageOptions" :key="n" :value="n">{{ n }}</option>
-        </select>
+      <label class="inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap">
+        <span class="font-medium">Rows per page</span>
+        <span class="relative inline-flex">
+          <select
+            :value="perPage"
+            :disabled="disabled"
+            aria-label="Rows per page"
+            :class="[controlClasses(null, disabled), '!h-9 w-auto min-w-[4.5rem] cursor-pointer appearance-none !pr-8 !pl-3 text-sm font-semibold']"
+            @change="emit('update:perPage', Number(($event.target as HTMLSelectElement).value))"
+          >
+            <option v-for="n in perPageOptions" :key="n" :value="n">{{ n }}</option>
+          </select>
+          <ChevronDown class="pointer-events-none absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+        </span>
       </label>
     </div>
 
     <!-- Pager -->
-    <div class="flex items-center justify-between gap-2 md:justify-end">
+    <div class="flex items-center justify-between gap-2 lg:justify-end">
       <button type="button" aria-label="Previous page" :disabled="disabled || currentPage <= 1" :class="[navBtn, 'px-2.5 sm:px-3']" @click="go(currentPage - 1)">
         <ChevronLeft class="h-4 w-4" />
         <span class="hidden sm:inline">Previous</span>
