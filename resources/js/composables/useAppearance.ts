@@ -2,19 +2,18 @@ import { onMounted, ref } from 'vue';
 
 type Appearance = 'light' | 'dark' | 'system';
 
-export function updateTheme(value: Appearance) {
+/**
+ * The interface is designed in light mode only (every control is white with dark text).
+ * Following a phone's dark mode flipped inherited text colours to light on white fields,
+ * making typed text and selected values nearly invisible, so the app always renders light.
+ */
+export function updateTheme(_value?: Appearance) {
     if (typeof window === 'undefined') {
         return;
     }
 
-    if (value === 'system') {
-        const mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
-        const systemTheme = mediaQueryList.matches ? 'dark' : 'light';
-
-        document.documentElement.classList.toggle('dark', systemTheme === 'dark');
-    } else {
-        document.documentElement.classList.toggle('dark', value === 'dark');
-    }
+    document.documentElement.classList.remove('dark');
+    document.documentElement.style.colorScheme = 'light';
 }
 
 const setCookie = (name: string, value: string, days = 365) => {

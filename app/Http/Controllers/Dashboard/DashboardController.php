@@ -173,10 +173,13 @@ class DashboardController extends Controller
     {
         $agents = fn () => $this->peopleQuery($viewer, Role::PARTY_AGENT, $lgaId, $wardId);
 
+        // Three mutually exclusive buckets, so they always add up to the total (a donut needs that):
+        // not yet trained / trained and placed at a polling unit / trained but not placed.
         $total = $agents()->count();
-        $deployed = $agents()->whereHas('profile', fn ($q) => $q->whereNotNull('pu_id'))->count();
-        $awaiting = $agents()->whereHas('profile', fn ($q) => $q->where('training_status', false))->count();
-        $unassigned = $total - $deployed;
+        $trained = fn () => $agents()->whereHas('profile', fn ($q) => $q->where('training_status', true));
+        $awaiting = $total - $trained()->count();
+        $deployed = $trained()->whereHas('profile', fn ($q) => $q->whereNotNull('pu_id'))->count();
+        $unassigned = $total - $awaiting - $deployed;
         $pct = fn (int $n) => $total ? (int) round(($n / $total) * 100) : 0;
 
         return [
@@ -251,8 +254,50 @@ class DashboardController extends Controller
         $resultsByLga = DB::table('results')->whereNotNull('lga_id')->groupBy('lga_id')
             ->selectRaw('lga_id as k, count(*) as c, sum(case when status = ? then 1 else 0 end) as v', [ResultStatus::VERIFIED->value])->get()->keyBy('k');
 
+        // 12-week sign-up trend, bucketed per week (Monday start).
+        $weeks = 12;
+        $start = now()->startOfWeek()->subWeeks($weeks - 1);
+        $bucket = function (iterable $dates) use ($weeks, $start): array {
+            $out = array_fill(0, $weeks, 0);
+            foreach ($dates as $d) {
+                $i = (int) floor($start->diffInDays(\Illuminate\Support\Carbon::parse($d)->startOfDay(), false) / 7);
+                if ($i >= 0 && $i < $weeks) {
+                    $out[$i]++;
+                }
+            }
+            return $out;
+        };
+        $signups = fn (Role $role) => User::role($role->value)->where('users.created_at', '>=', $start)->pluck('users.created_at');
+        $leaderDates = collect([Role::COORDINATOR, Role::SUPERVISORY_AGENT, Role::RETURNING_OFFICER])
+            ->flatMap(fn (Role $r) => $signups($r));
+        $trend = [
+            'labels' => collect(range(0, $weeks - 1))->map(fn ($i) => $start->copy()->addWeeks($i)->format('j M'))->all(),
+            'members' => $bucket($signups(Role::MEMBER)),
+            'agents' => $bucket($signups(Role::PARTY_AGENT)),
+            'leaders' => $bucket($leaderDates),
+        ];
+
+        // Readiness index: how much of the state is organised (coverage, deployed agents, trained agents).
+        $lgaTotal = $lgas->count();
+        $lgaWithPeople = $profiles->filter(fn ($c) => $c > 0)->count();
+        $coveragePct = $pct($lgaWithPeople, $lgaTotal);
+        $deployedPct = (float) ($agents['deployedPct'] ?? 0);
+        $hasAgents = ($agents['total'] ?? 0) > 0;
+        $trainedPct = $hasAgents ? max(0.0, 100 - (float) ($agents['awaitingTrainingPct'] ?? 0)) : 0.0;
+        $readiness = [
+            'score' => (int) round(($coveragePct + $deployedPct + $trainedPct) / 3),
+            'parts' => [
+                ['label' => 'LGA coverage', 'value' => round($coveragePct)],
+                ['label' => 'Agents deployed', 'value' => round($deployedPct)],
+                ['label' => 'Agents trained', 'value' => round($trainedPct)],
+            ],
+        ];
+
         return [
             'aspirant' => $this->governor(),
+            'trend' => $trend,
+            'readiness' => $readiness,
+            'coverage' => ['lgasCovered' => $lgaWithPeople, 'totalLgas' => $lgaTotal],
             'stats' => [
                 'members' => $stat(Role::MEMBER),
                 'partyAgents' => $stat(Role::PARTY_AGENT),

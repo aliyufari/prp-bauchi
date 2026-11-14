@@ -3,7 +3,7 @@ import { computed, onMounted, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { Check, ChevronDown, Search, X } from 'lucide-vue-next'
 import type { SelectOption, SelectValue } from './types'
 import FormField from './FormField.vue'
-import { controlClasses } from './controlClasses'
+import { controlClasses, searchBoxClasses } from './controlClasses'
 
 const props = withDefaults(defineProps<{
   modelValue?: SelectValue[]
@@ -78,7 +78,7 @@ watch(open, value => { if (!value) query.value = '' })
         <div v-if="open" class="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-[#e5e7eb] bg-white shadow-lg">
           <div class="relative border-b border-[#e5e7eb] p-2">
             <Search class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9ca3af]" />
-            <input v-model="query" :placeholder="searchPlaceholder" class="h-9 w-full rounded-lg border border-[#e5e7eb] pl-9 pr-3 text-sm outline-none transition-all placeholder:text-[#d1d5db] hover:border-[#d1d5db] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/30" />
+            <input v-model="query" :placeholder="searchPlaceholder" :class="searchBoxClasses" />
           </div>
           <button v-if="selectAll && filtered.length" type="button" class="flex w-full items-center justify-between border-b border-[#e5e7eb] px-3 py-2 text-xs font-medium text-[#374151] hover:bg-[#f9fafb]" @click="toggleAll">
             <span>{{ allVisibleSelected ? 'Clear visible options' : 'Select all visible' }}</span>

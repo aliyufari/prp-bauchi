@@ -6,7 +6,6 @@ enum EducationStatus: string
 {
     case PRIMARY = 'primary';
     case SECONDARY = 'secondary';
-    case SSCE = 'ssce';
     case NCE = 'nce';
     case ND = 'nd';
     case HND = 'hnd';
@@ -20,7 +19,6 @@ enum EducationStatus: string
         return match ($this) {
             self::PRIMARY => 'Primary School',
             self::SECONDARY => 'Secondary School',
-            self::SSCE => 'SSCE',
             self::NCE => 'NCE',
             self::ND => 'ND',
             self::HND => 'HND',

@@ -6,7 +6,8 @@
  *  - zonal       -> only senatorial zones are listed
  *  - LGA         -> only LGAs are listed
  *  - ward        -> only wards are listed
- *  - polling unit-> only polling units are listed
+ *  - polling unit-> a ward is chosen first, then only that ward's polling units are listed
+ *                   (listing every polling unit in Bauchi in one select is far too heavy)
  *
  * There is no parent -> child dependency: choosing a ward does not require
  * choosing a zone and an LGA first. The level either comes from the parent form
@@ -67,6 +68,13 @@ const showPicker = computed(() => props.level == null);
 const activeLevel = computed<LocationLevel | null>(() => props.level ?? pickedLevel.value);
 
 const rows = ref<LocationApiOption[]>([]);
+
+/* Polling units are only ever loaded for ONE ward, so the picker never holds the whole state's list. */
+const wardRows = ref<LocationApiOption[]>([]);
+const wardId = ref<string | null>(props.modelValue.ward_id != null && props.modelValue.ward_id !== '' ? String(props.modelValue.ward_id) : null);
+const needsWard = computed(() => activeLevel.value === 'pu');
+const wardOptions = computed<SelectOption[]>(() => wardRows.value.map((item) => ({ value: String(item.id), label: item.name, description: item.code ?? undefined })));
+const wardLocked = computed(() => !!lockedValue('ward'));
 const loading = ref(false);
 const requestError = ref('');
 let requestId = 0;
@@ -107,8 +115,8 @@ function scopeParams(level: LocationLevel, stateId: string | null) {
     return params;
 }
 
-async function fetchRows(level: LocationLevel, stateId: string | null): Promise<LocationApiOption[]> {
-    const { data } = await axios.get(route(ROUTES[level]), { params: scopeParams(level, stateId) });
+async function fetchRows(level: LocationLevel, stateId: string | null, extra: Record<string, string> = {}): Promise<LocationApiOption[]> {
+    const { data } = await axios.get(route(ROUTES[level]), { params: { ...scopeParams(level, stateId), ...extra } });
     return normalizeRows(data);
 }
 
@@ -130,13 +138,27 @@ async function load() {
     const level = activeLevel.value;
     const id = ++requestId;
     rows.value = [];
+    wardRows.value = [];
     requestError.value = '';
     if (!level) return;
 
     loading.value = true;
     try {
         const stateId = await resolveState();
-        if (level !== 'state') {
+        if (level === 'pu') {
+            // Step 1: wards. Step 2 (below / on pick): the polling units of the chosen ward only.
+            const wards = await fetchRows('ward', stateId);
+            if (id !== requestId) return;
+            wardRows.value = wards;
+
+            const lockedWard = lockedValue('ward');
+            if (lockedWard) wardId.value = String(lockedWard);
+            if (wardId.value) {
+                const list = await fetchRows('pu', stateId, { ward_id: wardId.value });
+                if (id !== requestId) return;
+                rows.value = list;
+            }
+        } else if (level !== 'state') {
             const list = await fetchRows(level, stateId);
             if (id !== requestId) return;
             rows.value = list;
@@ -171,6 +193,31 @@ function select(value: string | number | null) {
     emit('selected', { level, option });
 }
 
+/** Choosing a ward loads just its polling units and clears any polling unit from another ward. */
+async function pickWard(value: string | number | null) {
+    const next = value == null || value === '' ? null : String(value);
+    if (next === wardId.value) return;
+    wardId.value = next;
+    rows.value = [];
+    requestError.value = '';
+
+    const ward = next ? (wardRows.value.find((item) => String(item.id) === next) ?? null) : null;
+    const lga = ward ? (ward as Record<string, unknown>).lga_id : null;
+    patch({ zone_id: null, lga_id: lga != null ? String(lga) : null, ward_id: next, pu_id: null });
+    if (!next) return;
+
+    const id = ++requestId;
+    loading.value = true;
+    try {
+        const list = await fetchRows('pu', props.modelValue.state_id != null ? String(props.modelValue.state_id) : null, { ward_id: next });
+        if (id === requestId) rows.value = list;
+    } catch {
+        if (id === requestId) requestError.value = 'Unable to load polling units. Please try again.';
+    } finally {
+        if (id === requestId) loading.value = false;
+    }
+}
+
 function pickLevel(value: string | number | null) {
     pickedLevel.value = (value as LocationLevel | null) ?? null;
 }
@@ -178,6 +225,7 @@ function pickLevel(value: string | number | null) {
 // Changing the level wipes the previous selection (the old id belongs to another level).
 watch(activeLevel, (next, previous) => {
     if (next === previous) return;
+    wardId.value = null;
     patch({ zone_id: null, lga_id: null, ward_id: null, pu_id: null });
     load();
 });
@@ -213,20 +261,34 @@ onMounted(load);
         </p>
 
         <SearchSelect
-            v-else
+            v-if="needsWard"
+            :model-value="wardId"
+            :options="wardOptions"
+            label="Ward"
+            :placeholder="loading && !wardRows.length ? 'Loading…' : 'Select ward first'"
+            search-placeholder="Search ward…"
+            :disabled="disabled || (loading && !wardRows.length) || wardLocked"
+            :required="required"
+            hint="Choose the ward, then pick the polling unit under it."
+            @update:model-value="pickWard"
+        />
+
+        <SearchSelect
+            v-if="activeLevel && activeLevel !== 'state'"
             :model-value="currentValue"
             :options="options"
             :label="LEVEL_LABEL[activeLevel]"
-            :placeholder="loading ? 'Loading…' : `Select ${LEVEL_LABEL[activeLevel].toLowerCase()}`"
+            :placeholder="needsWard && !wardId ? 'Select a ward first' : loading ? 'Loading…' : `Select ${LEVEL_LABEL[activeLevel].toLowerCase()}`"
             :search-placeholder="`Search ${LEVEL_LABEL[activeLevel].toLowerCase()}…`"
-            :disabled="disabled || loading || lockedHere"
+            :disabled="disabled || loading || lockedHere || (needsWard && !wardId)"
             :required="required"
             :error="fieldError"
             @update:model-value="select"
         />
 
         <p v-if="activeLevel && activeLevel !== 'state' && !requestError" class="-mt-2 text-xs text-gray-400">
-            Only {{ LEVEL_LABEL[activeLevel].toLowerCase() }}s are listed. No other selection is required.
+            <template v-if="needsWard">Only polling units in the selected ward are listed.</template>
+            <template v-else>Only {{ LEVEL_LABEL[activeLevel].toLowerCase() }}s are listed. No other selection is required.</template>
         </p>
 
         <Alert v-if="requestError" variant="error" title="Location options unavailable">

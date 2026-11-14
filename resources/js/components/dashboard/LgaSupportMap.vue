@@ -1,7 +1,21 @@
 <script setup lang="ts">
-defineProps<{
-  data: { lga: string; supportLevel: 'High' | 'Medium' | 'Low' }[]
+import { computed } from 'vue'
+
+const props = defineProps<{
+  data: { lga: string; supportLevel?: string | null }[] | null
 }>()
+
+type Level = 'High' | 'Medium' | 'Low'
+/* Accepts "high", "HIGH", "Medium" ... and falls back to Low so a badge never loses its colour. */
+const normalise = (v: unknown): Level => {
+  const t = String(v ?? '').trim().toLowerCase()
+  return t === 'high' ? 'High' : t === 'medium' || t === 'med' ? 'Medium' : 'Low'
+}
+const items = computed(() =>
+  (props.data ?? [])
+    .filter((d) => d && String(d.lga ?? '').trim())
+    .map((d) => ({ lga: String(d.lga).trim(), level: normalise(d.supportLevel) })),
+)
 
 const levelStyle: Record<string, string> = {
   High:   'bg-green-600 text-white',
@@ -23,7 +37,7 @@ const legendStyle: Record<string, string> = {
         <p class="text-xs text-gray-500 mt-1">Ward-level support distribution</p>
       </div>
       <!-- Legend -->
-      <div v-if="data.length" class="flex items-center gap-3">
+      <div v-if="items.length" class="flex items-center gap-3">
         <div v-for="(cls, level) in legendStyle" :key="level" class="flex items-center gap-1">
           <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" :class="cls" />
           <span class="text-[9px] font-semibold text-gray-500">{{ level }}</span>
@@ -32,15 +46,15 @@ const legendStyle: Record<string, string> = {
     </div>
 
     <!-- Grid of LGA badges -->
-    <div v-if="data.length" class="flex-1 overflow-y-auto">
+    <div v-if="items.length" class="flex-1 overflow-y-auto">
       <div class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         <div
-          v-for="d in data"
+          v-for="d in items"
           :key="d.lga"
-          :class="['rounded-lg px-2 py-1.5 text-center transition-transform hover:scale-105 cursor-default', levelStyle[d.supportLevel]]"
+          :class="['rounded-lg px-2 py-1.5 text-center transition-transform hover:scale-105 cursor-default', levelStyle[d.level]]"
         >
-          <p class="text-[9px] font-bold truncate leading-tight">{{ d.lga }}</p>
-          <p class="text-[8px] opacity-75 mt-0.5">{{ d.supportLevel }}</p>
+          <p class="text-[9px] font-bold truncate leading-tight" :title="d.lga">{{ d.lga }}</p>
+          <p class="text-[8px] opacity-75 mt-0.5">{{ d.level }}</p>
         </div>
       </div>
     </div>

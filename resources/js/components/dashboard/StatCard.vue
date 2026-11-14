@@ -1,25 +1,36 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  Users, UserCheck, Briefcase, Handshake, Calendar, BarChart3, TrendingUp, TrendingDown
+  Users, UserCheck, Briefcase, Handshake, Calendar, BarChart3, TrendingUp, TrendingDown,
+  MapPin, FileBarChart, UserX, UserPlus, ShieldCheck, Building2, Vote, ClipboardList,
 } from 'lucide-vue-next'
 
 const iconMap: Record<string, any> = {
   Users, UserCheck, Briefcase, Handshake, Calendar, BarChart3,
+  MapPin, FileBarChart, UserX, UserPlus, ShieldCheck, Building2, Vote, ClipboardList,
 }
 
 const props = defineProps<{
-  value: number
+  value: number | string | null
   label: string
   icon: string
-  growth?: number
+  growth?: number | string | null
   subtitle?: string
   iconBg?: string
   iconColor?: string
 }>()
 
 const iconComponent = computed(() => iconMap[props.icon] ?? Users)
-const formattedValue = computed(() => props.value.toLocaleString())
+/* Whatever the API sends (null, "1,250", undefined) renders as a number instead of crashing the page. */
+const formattedValue = computed(() => {
+  const n = typeof props.value === 'string' ? Number(props.value.replace(/,/g, '')) : Number(props.value)
+  return Number.isFinite(n) ? n.toLocaleString() : '0'
+})
+const growthValue = computed(() => {
+  if (props.growth === undefined || props.growth === null || props.growth === '') return null
+  const n = Number(props.growth)
+  return Number.isFinite(n) ? Math.round(n * 10) / 10 : null
+})
 </script>
 
 <template>
@@ -32,15 +43,15 @@ const formattedValue = computed(() => props.value.toLocaleString())
     <!-- ROW 1: Growth badge right -->
     <div class="flex justify-end">
       <span
-        v-if="growth !== undefined"
+        v-if="growthValue !== null"
         :class="[
           'inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full',
-          growth >= 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+          growthValue >= 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
         ]"
       >
-        <TrendingUp v-if="growth >= 0" class="w-2.5 h-2.5" />
+        <TrendingUp v-if="growthValue >= 0" class="w-2.5 h-2.5" />
         <TrendingDown v-else class="w-2.5 h-2.5" />
-        {{ growth >= 0 ? '+' : '' }}{{ growth }}%
+        {{ growthValue >= 0 ? '+' : '' }}{{ growthValue }}%
       </span>
     </div>
 

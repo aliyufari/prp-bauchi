@@ -33,6 +33,15 @@ class LocationOptionsController extends Controller
             ['nullable', 'uuid'],
         ));
 
+        // Polling units run into the thousands: never return them all in one response.
+        if ($level === 'pu') {
+            abort_unless(
+                $request->filled('ward_id') || $request->filled('lga_id'),
+                422,
+                'Select a ward first. Polling units are listed per ward.'
+            );
+        }
+
         $table = LocationChain::TABLES[$level];
         $query = DB::table($table)->orderBy("{$table}.name");
 

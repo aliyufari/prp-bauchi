@@ -5,10 +5,11 @@
  */
 import AgentDeployment from '@/components/dashboard/AgentDeployment.vue'
 import MembershipChart from '@/components/dashboard/MembershipChart.vue'
-import StatCard from '@/components/dashboard/StatCard.vue'
-import Button from '@/components/ui/Button.vue'
-import { usePermissions } from '@/composables/usePermissions'
-import { CheckCircle2, Download, Search, Target, TrendingUp, Users } from 'lucide-vue-next'
+import AspirantHero from '@/components/aspirant/AspirantHero.vue'
+import KpiTile from '@/components/aspirant/KpiTile.vue'
+import LgaLeaderboard from '@/components/aspirant/LgaLeaderboard.vue'
+import TrendChart from '@/components/aspirant/TrendChart.vue'
+import { CheckCircle2, Search } from 'lucide-vue-next'
 import { computed, ref } from 'vue'
 
 interface Trend { total: number; last30: number; last7: number }
@@ -22,9 +23,11 @@ const props = defineProps<{
   membershipByLga: { lga: string; count: number }[]
   lgaProgress: LgaRow[]
   generatedAt: string
+  trend: { labels: string[]; members: number[]; agents: number[]; leaders: number[] }
+  readiness: { score: number; parts: { label: string; value: number }[] }
+  coverage: { lgasCovered: number; totalLgas: number }
 }>()
 
-const { auth } = usePermissions()
 const fmt = (n: number | null | undefined) => (n ?? 0).toLocaleString()
 const clamp = (n: number | null | undefined) => Math.min(100, Math.max(0, Math.round(n ?? 0)))
 const updated = computed(() => new Date(props.generatedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }))
@@ -44,56 +47,45 @@ function sortBy(key: typeof sortKey.value) {
   if (sortKey.value === key) sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
   else { sortKey.value = key; sortDir.value = key === 'name' ? 'asc' : 'desc' }
 }
+const seg = (n: number) => `${props.results.total ? Math.min(100, Math.max(0, (n / props.results.total) * 100)) : 0}%`
 const verifiedPct = (r: LgaRow) => (r.results ? Math.round((r.verified / r.results) * 100) : 0)
+const spark = (k: 'members' | 'agents' | 'leaders') => props.trend?.[k] ?? []
 const card = 'rounded-2xl border border-gray-100 bg-white p-5 shadow-sm'
 const heading = 'text-[11px] font-black uppercase tracking-[0.18em] text-gray-400'
 </script>
 
 <template>
   <div class="space-y-6 sm:space-y-8">
-    <section class="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-      <div class="min-w-0">
-        <h2 class="text-lg font-black text-gray-900 sm:text-xl">Campaign progress report</h2>
-        <p class="mt-1 text-xs font-medium text-gray-500 sm:text-sm">Welcome, {{ auth.user?.first_name }} · Updated {{ updated }}</p>
-      </div>
-      <Button :href="route('dashboard.export')" external class="w-full sm:w-auto">
-        <Download class="h-4 w-4 shrink-0" /> Download report
-      </Button>
-    </section>
-
-    <!-- Headline: candidate + overall progress -->
-    <section :class="[card, 'grid gap-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-center']">
-      <div class="flex min-w-0 items-center gap-4">
-        <img v-if="aspirant?.imageUrl" :src="aspirant.imageUrl" :alt="aspirant.name" class="h-24 w-20 shrink-0 rounded-2xl object-cover object-top shadow-md sm:h-32 sm:w-28 lg:h-40 lg:w-32" />
-        <div v-else class="flex h-24 w-20 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-700 sm:h-32 sm:w-28 lg:h-40 lg:w-32"><Target class="h-7 w-7" /></div>
-        <div class="min-w-0">
-          <p :class="heading">{{ aspirant?.title ?? 'Governorship candidate' }}</p>
-          <h3 class="mt-1 truncate text-lg font-black text-gray-900 sm:text-xl">{{ aspirant?.name ?? 'Candidate profile pending' }}</h3>
-          <p v-if="aspirant?.vision" class="mt-1 line-clamp-2 text-sm text-gray-500">{{ aspirant.vision }}</p>
-        </div>
-      </div>
-      <div class="space-y-4">
-        <div>
-          <div class="mb-1.5 flex items-center justify-between text-sm"><span class="font-semibold text-gray-500">Overall campaign progress</span><span class="font-black text-gray-900">{{ clamp(aspirant?.overallProgress) }}%</span></div>
-          <div class="h-2.5 overflow-hidden rounded-full bg-gray-100"><div class="h-full rounded-full bg-green-600 transition-all duration-500" :style="{ width: clamp(aspirant?.overallProgress) + '%' }" /></div>
-        </div>
-        <dl class="grid grid-cols-2 gap-3 text-sm">
-          <div class="rounded-xl bg-gray-50 p-3"><dt class="flex items-center gap-1.5 text-xs font-medium text-gray-500"><Users class="h-3.5 w-3.5" />Supporters</dt><dd class="mt-1 text-lg font-black text-gray-900">{{ fmt(aspirant?.totalSupporters) }}</dd><p class="text-[11px] font-medium text-green-700">+{{ fmt(aspirant?.supportersGrowthThisWeek) }} this week</p></div>
-          <div class="rounded-xl bg-gray-50 p-3"><dt class="flex items-center gap-1.5 text-xs font-medium text-gray-500"><TrendingUp class="h-3.5 w-3.5" />Campaign team</dt><dd class="mt-1 text-lg font-black text-gray-900">{{ fmt(aspirant?.campaignTeamMembers) }}</dd><p class="text-[11px] text-gray-500">Team members</p></div>
-        </dl>
-      </div>
-    </section>
+    <AspirantHero
+      :aspirant="aspirant"
+      :readiness="readiness"
+      :coverage="coverage"
+      :members="stats.members.total"
+      :export-href="route('dashboard.export')"
+      :updated="updated"
+    />
 
     <!-- Reach -->
     <section class="space-y-3" aria-labelledby="reach">
       <h3 id="reach" :class="heading">Reach &amp; organisation</h3>
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 2xl:grid-cols-6">
-        <StatCard :value="stats.members.total" label="Members" icon="Users" :subtitle="`+${fmt(stats.members.last30)} in 30 days`" icon-bg="bg-green-100" icon-color="text-green-700" />
-        <StatCard :value="stats.partyAgents.total" label="Party Agents" icon="UserCheck" :subtitle="`+${fmt(stats.partyAgents.last30)} in 30 days`" icon-bg="bg-amber-100" icon-color="text-amber-700" />
-        <StatCard :value="stats.coordinators.total" label="Coordinators" icon="Briefcase" :subtitle="`+${fmt(stats.coordinators.last30)} in 30 days`" icon-bg="bg-gray-100" icon-color="text-gray-700" />
-        <StatCard :value="stats.stakeholders.total" label="Stakeholders" icon="Handshake" :subtitle="`+${fmt(stats.stakeholders.last30)} in 30 days`" icon-bg="bg-green-100" icon-color="text-green-700" />
-        <StatCard :value="stats.pollingUnits" label="Polling Units" icon="BarChart3" icon-bg="bg-amber-100" icon-color="text-amber-700" />
-        <StatCard :value="stats.registeredVoters" label="Registered Voters" icon="Users" icon-bg="bg-gray-100" icon-color="text-gray-700" />
+      <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <KpiTile label="Members" :value="stats.members.total" :delta="stats.members.last30" :series="spark('members')" tone="green" />
+        <KpiTile label="Party agents" :value="stats.partyAgents.total" :delta="stats.partyAgents.last30" :series="spark('agents')" tone="gold" />
+        <KpiTile label="Coordinators" :value="stats.coordinators.total" :delta="stats.coordinators.last30" :series="spark('leaders')" tone="teal" />
+        <KpiTile label="Stakeholders" :value="stats.stakeholders.total" :delta="stats.stakeholders.last30" tone="slate" />
+      </div>
+      <div class="grid grid-cols-2 gap-3 sm:gap-4">
+        <KpiTile label="Polling units" :value="stats.pollingUnits" tone="green" />
+        <KpiTile label="Registered voters" :value="stats.registeredVoters" tone="gold" />
+      </div>
+    </section>
+
+    <!-- Momentum + where to focus -->
+    <section class="space-y-3" aria-labelledby="momentum">
+      <h3 id="momentum" :class="heading">Momentum</h3>
+      <div class="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <TrendChart :trend="trend" />
+        <LgaLeaderboard :rows="lgaProgress" />
       </div>
     </section>
 
@@ -105,9 +97,9 @@ const heading = 'text-[11px] font-black uppercase tracking-[0.18em] text-gray-40
           <h4 class="text-sm font-bold text-gray-900">Result verification</h4>
           <p class="mt-1 text-xs text-gray-500">{{ fmt(results.total) }} results uploaded</p>
           <div class="mt-4 flex h-2.5 overflow-hidden rounded-full bg-gray-100">
-            <div class="bg-green-500" :style="{ width: (results.total ? (results.verified / results.total) * 100 : 0) + '%' }" />
-            <div class="bg-amber-400" :style="{ width: (results.total ? (results.pending / results.total) * 100 : 0) + '%' }" />
-            <div class="bg-red-500" :style="{ width: (results.total ? (results.disputed / results.total) * 100 : 0) + '%' }" />
+            <div class="bg-green-500" :style="{ width: seg(results.verified) }" />
+            <div class="bg-amber-400" :style="{ width: seg(results.pending) }" />
+            <div class="bg-red-500" :style="{ width: seg(results.disputed) }" />
           </div>
           <dl class="mt-4 space-y-2 text-sm">
             <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-green-500" />Verified</dt><dd class="font-semibold">{{ fmt(results.verified) }}</dd></div>
@@ -136,7 +128,7 @@ const heading = 'text-[11px] font-black uppercase tracking-[0.18em] text-gray-40
             <h4 class="text-sm font-bold text-gray-900">LGA scorecard</h4>
             <label class="relative block w-full sm:w-56">
               <Search class="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input v-model="search" type="search" placeholder="Search LGA…" aria-label="Search LGA" class="h-10 w-full rounded-xl border border-gray-200 bg-white pr-3 pl-9 text-sm outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600/20" />
+              <input v-model="search" type="search" placeholder="Search LGA…" aria-label="Search LGA" class="h-10 w-full rounded-xl border border-gray-200 bg-white pr-3 pl-9 text-sm text-[#111827] [color-scheme:light] outline-none focus:border-green-600 focus:ring-2 focus:ring-green-600/20" />
             </label>
           </div>
           <div class="max-h-[22rem] overflow-auto">
@@ -152,7 +144,7 @@ const heading = 'text-[11px] font-black uppercase tracking-[0.18em] text-gray-40
                 <tr v-for="r in rows" :key="r.id" class="hover:bg-green-50/30">
                   <td class="px-4 py-2.5 font-medium whitespace-nowrap text-gray-900">{{ r.name }}</td>
                   <td class="px-4 py-2.5">
-                    <div class="flex items-center gap-2"><span class="w-12 font-semibold tabular-nums">{{ fmt(r.people) }}</span><div class="h-1.5 w-24 overflow-hidden rounded-full bg-gray-100"><div class="h-full rounded-full bg-green-600" :style="{ width: (r.people / maxPeople) * 100 + '%' }" /></div></div>
+                    <div class="flex items-center gap-2"><span class="w-12 font-semibold tabular-nums">{{ fmt(r.people) }}</span><div class="h-1.5 w-24 overflow-hidden rounded-full bg-gray-100"><div class="h-full rounded-full bg-green-600" :style="{ width: Math.min(100, (r.people / maxPeople) * 100) + '%' }" /></div></div>
                   </td>
                   <td class="px-4 py-2.5 tabular-nums text-gray-700">{{ fmt(r.results) }}</td>
                   <td class="px-4 py-2.5 tabular-nums text-gray-700">{{ fmt(r.verified) }} <span class="text-xs text-gray-400">({{ verifiedPct(r) }}%)</span></td>

@@ -21,10 +21,13 @@ const { auth } = usePermissions()
 const { roleLabel } = useScopeLabel()
 
 const LEVEL_PLURAL: Record<string, string> = { zone: 'Zones', lga: 'LGAs', ward: 'Wards', pu: 'Polling units', state: 'States' }
-const fmt = (n: number) => n.toLocaleString()
+const fmt = (n: number | null | undefined) => (Number.isFinite(Number(n)) ? Number(n) : 0).toLocaleString()
+const width = (n: number) => `${Math.min(100, Math.max(0, n))}%`
 
-const maxPeople = computed(() => Math.max(1, ...props.breakdown.rows.map((r) => r.people)))
-const pct = (n: number) => (props.stats.results.total ? Math.round((n / props.stats.results.total) * 100) : 0)
+const rows = computed(() => props.breakdown?.rows ?? [])
+const results = computed(() => ({ total: 0, verified: 0, pending: 0, disputed: 0, ...(props.stats?.results ?? {}) }))
+const maxPeople = computed(() => Math.max(1, ...rows.value.map((r) => Number(r.people) || 0)))
+const pct = (n: number) => (results.value.total ? Math.round(((Number(n) || 0) / results.value.total) * 100) : 0)
 </script>
 
 <template>
@@ -60,18 +63,18 @@ const pct = (n: number) => (props.stats.results.total ? Math.round((n / props.st
       <!-- Results status -->
       <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-4">
         <h3 class="text-sm font-bold text-gray-900">Results</h3>
-        <p class="mt-1 text-xs text-gray-400">{{ fmt(stats.results.total) }} uploaded</p>
+        <p class="mt-1 text-xs text-gray-400">{{ fmt(results.total) }} uploaded</p>
 
         <div class="mt-4 flex h-2.5 overflow-hidden rounded-full bg-gray-100">
-          <div class="bg-green-500" :style="{ width: pct(stats.results.verified) + '%' }" />
-          <div class="bg-amber-400" :style="{ width: pct(stats.results.pending) + '%' }" />
-          <div class="bg-red-500" :style="{ width: pct(stats.results.disputed) + '%' }" />
+          <div class="bg-green-500" :style="{ width: width(pct(results.verified)) }" />
+          <div class="bg-amber-400" :style="{ width: width(pct(results.pending)) }" />
+          <div class="bg-red-500" :style="{ width: width(pct(results.disputed)) }" />
         </div>
 
         <dl class="mt-4 space-y-2 text-sm">
-          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-green-500" />Verified</dt><dd class="font-semibold text-gray-900">{{ fmt(stats.results.verified) }}</dd></div>
-          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-amber-400" />Pending</dt><dd class="font-semibold text-gray-900">{{ fmt(stats.results.pending) }}</dd></div>
-          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-red-500" />Disputed</dt><dd class="font-semibold text-gray-900">{{ fmt(stats.results.disputed) }}</dd></div>
+          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-green-500" />Verified</dt><dd class="font-semibold text-gray-900">{{ fmt(results.verified) }}</dd></div>
+          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-amber-400" />Pending</dt><dd class="font-semibold text-gray-900">{{ fmt(results.pending) }}</dd></div>
+          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-red-500" />Disputed</dt><dd class="font-semibold text-gray-900">{{ fmt(results.disputed) }}</dd></div>
         </dl>
       </div>
 
@@ -79,13 +82,13 @@ const pct = (n: number) => (props.stats.results.total ? Math.round((n / props.st
       <div class="rounded-2xl border border-gray-100 bg-white shadow-sm lg:col-span-8">
         <div class="border-b border-gray-50 p-5">
           <h3 class="text-sm font-bold text-gray-900">
-            {{ LEVEL_PLURAL[breakdown.level ?? ''] ?? 'Areas' }}<span v-if="scope.name"> in {{ scope.name }}</span>
+            {{ LEVEL_PLURAL[breakdown?.level ?? ''] ?? 'Areas' }}<span v-if="scope.name"> in {{ scope.name }}</span>
           </h3>
         </div>
 
-        <p v-if="!breakdown.rows.length" class="p-8 text-center text-sm text-gray-400">Nothing to show for this area yet.</p>
+        <p v-if="!rows.length" class="p-8 text-center text-sm text-gray-400">Nothing to show for this area yet.</p>
 
-        <table v-else class="w-full text-left">
+        <div v-else class="overflow-x-auto"><table class="w-full min-w-[22rem] text-left">
           <thead>
             <tr class="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
               <th class="px-5 py-3">Name</th>
@@ -94,12 +97,12 @@ const pct = (n: number) => (props.stats.results.total ? Math.round((n / props.st
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in breakdown.rows" :key="row.id" class="border-t border-gray-50">
+            <tr v-for="row in rows" :key="row.id" class="border-t border-gray-50">
               <td class="px-5 py-3 text-sm font-medium text-gray-900">{{ row.name }}</td>
               <td class="px-5 py-3">
                 <div class="flex items-center gap-3">
                   <div class="h-1.5 w-28 overflow-hidden rounded-full bg-gray-100">
-                    <div class="h-full rounded-full bg-green-500" :style="{ width: (row.people / maxPeople) * 100 + '%' }" />
+                    <div class="h-full rounded-full bg-green-500" :style="{ width: width(((Number(row.people) || 0) / maxPeople) * 100) }" />
                   </div>
                   <span class="text-sm text-gray-700">{{ fmt(row.people) }}</span>
                 </div>
@@ -107,7 +110,7 @@ const pct = (n: number) => (props.stats.results.total ? Math.round((n / props.st
               <td class="px-5 py-3 text-right text-sm text-gray-700">{{ fmt(row.results) }}</td>
             </tr>
           </tbody>
-        </table>
+        </table></div>
       </div>
     </section>
   </div>
