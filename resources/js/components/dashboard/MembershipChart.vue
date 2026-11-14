@@ -1,55 +1,69 @@
 <script setup lang="ts">
+import '@/plugins/echarts'
+import { compact, escapeHtml, num } from '@/lib/charts'
+import { Users } from 'lucide-vue-next'
 import { computed } from 'vue'
 import VChart from 'vue-echarts'
-import { Users } from 'lucide-vue-next'
 
 const props = defineProps<{
   data: { lga: string; count: number }[]
 }>()
 
+/* Clean rows only, biggest first, so the chart reads the same whatever order the API used. */
+const rows = computed(() =>
+  (props.data ?? [])
+    .map((d) => ({ lga: String(d?.lga ?? '').trim(), count: num(d?.count) }))
+    .filter((d) => d.lga)
+    .sort((a, b) => b.count - a.count),
+)
+const total = computed(() => rows.value.reduce((sum, r) => sum + r.count, 0))
+const dense = computed(() => rows.value.length > 8)
+
 const option = computed(() => ({
+  aria: { enabled: true },
   tooltip: {
-    trigger: 'axis'
+    trigger: 'axis',
+    axisPointer: { type: 'shadow' },
+    confine: true,
+    formatter: (params: any) => {
+      const p = Array.isArray(params) ? params[0] : params
+      return `${escapeHtml(String(p.name))}<br/>${p.marker} <b>${Number(p.value).toLocaleString()}</b> members`
+    },
   },
-  grid: {
-    left: 10,
-    right: 10,
-    bottom: 60,
-    top: 20
-  },
+  // containLabel keeps long LGA names inside the card instead of being clipped.
+  grid: { left: 8, right: 8, top: 16, bottom: 8, containLabel: true },
   xAxis: {
     type: 'category',
-    data: props.data.map(d => d.lga),
+    data: rows.value.map((r) => r.lga),
     axisLabel: {
-      rotate: 45,
-      fontSize: 8,
-      color: '#9ca3af'
+      interval: 0,
+      rotate: dense.value ? 45 : 0,
+      fontSize: 10,
+      color: '#6b7280',
+      width: dense.value ? 80 : 64,
+      overflow: 'truncate',
+      hideOverlap: !dense.value,
     },
-    axisLine: { show: false },
-    axisTick: { show: false }
+    axisLine: { lineStyle: { color: '#e5e7eb' } },
+    axisTick: { show: false },
   },
   yAxis: {
     type: 'value',
-    axisLabel: {
-      fontSize: 8,
-      color: '#9ca3af',
-      formatter: (v: number) => (v >= 1000 ? `${v / 1000}k` : v)
-    },
-    splitLine: {
-      lineStyle: { color: '#f0f0f0' }
-    }
+    minInterval: 1, // member counts are whole numbers
+    axisLabel: { fontSize: 10, color: '#9ca3af', formatter: (v: number) => compact(v) },
+    splitLine: { lineStyle: { color: '#f0f0f0' } },
   },
   series: [
     {
       type: 'bar',
-      data: props.data.map(d => d.count),
-      itemStyle: {
-        color: '#15803d',
-        borderRadius: [4, 4, 0, 0]
-      },
-      barMaxWidth: 20
-    }
-  ]
+      data: rows.value.map((r) => r.count),
+      itemStyle: { color: '#15803d', borderRadius: [4, 4, 0, 0] },
+      emphasis: { itemStyle: { color: '#16a34a' } },
+      barMaxWidth: 28,
+      showBackground: true,
+      backgroundStyle: { color: 'rgba(0,0,0,0.025)', borderRadius: [4, 4, 0, 0] },
+    },
+  ],
 }))
 </script>
 
@@ -67,11 +81,11 @@ const option = computed(() => ({
         </p>
       </div>
 
-      <span class="rounded-full bg-green-50 px-3 py-1 text-[11px] font-semibold text-green-700">Bauchi State</span>
+      <span class="rounded-full bg-green-50 px-3 py-1 text-[11px] font-semibold text-green-700">{{ total.toLocaleString() }} members</span>
     </div>
 
     <!-- Chart -->
-    <div v-if="data.length" class="flex-1 min-h-0 h-[240px]">
+    <div v-if="rows.length && total > 0" class="flex-1 min-h-0 h-[240px]">
       <VChart class="w-full h-full" :option="option" autoresize />
     </div>
     <div v-else class="flex flex-1 flex-col items-center justify-center rounded-xl bg-gray-50 px-4 py-8 text-center">

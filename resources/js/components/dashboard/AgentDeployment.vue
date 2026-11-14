@@ -1,36 +1,50 @@
 <script setup lang="ts">
+import '@/plugins/echarts'
+import { num, percentOf } from '@/lib/charts'
 import { computed } from 'vue'
 import VChart from 'vue-echarts'
 
 const props = defineProps<{
-  deployment: {
-    total: number
-    deployed: number
-    deployedPct: number
-    unassigned: number
-    unassignedPct: number
-    awaitingTraining: number
-    awaitingTrainingPct: number
-  }
+  deployment: Partial<{
+    total: number; deployed: number; deployedPct: number
+    unassigned: number; unassignedPct: number
+    awaitingTraining: number; awaitingTrainingPct: number
+  }> | null
 }>()
 
+/* Counts are the source of truth; percentages are derived so the donut and the list can never disagree. */
+const rows = computed(() => {
+  const d = props.deployment ?? {}
+  const deployed = num(d.deployed)
+  const unassigned = num(d.unassigned)
+  const awaiting = num(d.awaitingTraining)
+  const total = num(d.total) || deployed + unassigned + awaiting
+  return {
+    total,
+    items: [
+      { key: 'deployed', name: 'Deployed', value: deployed, pct: percentOf(deployed, total), color: '#15803d', dot: 'bg-green-700' },
+      { key: 'unassigned', name: 'Unassigned', value: unassigned, pct: percentOf(unassigned, total), color: '#f59e0b', dot: 'bg-amber-400' },
+      { key: 'awaiting', name: 'Awaiting Training', value: awaiting, pct: percentOf(awaiting, total), color: '#ef4444', dot: 'bg-red-500' },
+    ],
+  }
+})
+
 const option = computed(() => ({
-  tooltip: {
-    trigger: 'item'
-  },
+  aria: { enabled: true },
+  tooltip: { trigger: 'item', confine: true, formatter: (p: any) => `${p.marker} ${p.name}: <b>${Number(p.value).toLocaleString()}</b> (${p.percent}%)` },
   series: [
     {
       type: 'pie',
-      radius: ['55%', '75%'],
-      data: [
-        { value: props.deployment.deployedPct, name: 'Deployed' },
-        { value: props.deployment.unassignedPct, name: 'Unassigned' },
-        { value: props.deployment.awaitingTrainingPct, name: 'Awaiting Training' },
-      ],
+      radius: ['58%', '78%'],
+      avoidLabelOverlap: true,
+      minAngle: 3,
+      padAngle: 1,
+      itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 1 },
+      data: rows.value.items.filter((i) => i.value > 0).map((i) => ({ value: i.value, name: i.name, itemStyle: { color: i.color } })),
       label: { show: false },
-      color: ['#15803d', '#f59e0b', '#ef4444'],
-    }
-  ]
+      emphasis: { scaleSize: 4 },
+    },
+  ],
 }))
 </script>
 
@@ -48,13 +62,13 @@ const option = computed(() => ({
     </div>
 
     <!-- Chart -->
-    <div v-if="props.deployment.total > 0" class="relative mx-auto h-[120px] w-[120px]">
+    <div v-if="rows.total > 0" class="relative mx-auto h-[130px] w-[130px]">
       <VChart class="w-full h-full" :option="option" autoresize />
 
       <!-- Center Text -->
       <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
         <p class="text-sm font-black text-gray-900">
-          {{ props.deployment.total.toLocaleString() }}
+          {{ rows.total.toLocaleString() }}
         </p>
         <p class="text-[9px] text-gray-400 font-medium">
           Total Agents
@@ -63,38 +77,14 @@ const option = computed(() => ({
     </div>
 
     <!-- Breakdown -->
-    <ul v-if="props.deployment.total > 0" class="space-y-1.5">
-
-      <li class="flex items-center justify-between">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-green-700" />
-          <span class="text-[10px] text-gray-600">Deployed</span>
+    <ul v-if="rows.total > 0" class="space-y-1.5">
+      <li v-for="item in rows.items" :key="item.key" class="flex items-center justify-between gap-2">
+        <div class="flex min-w-0 items-center gap-1.5">
+          <span class="h-2 w-2 shrink-0 rounded-full" :class="item.dot" />
+          <span class="truncate text-[10px] text-gray-600">{{ item.name }}</span>
         </div>
-        <span class="text-[10px] font-bold">
-          {{ props.deployment.deployed.toLocaleString() }} ({{ props.deployment.deployedPct }}%)
-        </span>
+        <span class="shrink-0 text-[10px] font-bold">{{ item.value.toLocaleString() }} ({{ item.pct }}%)</span>
       </li>
-
-      <li class="flex items-center justify-between">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-amber-400" />
-          <span class="text-[10px] text-gray-600">Unassigned</span>
-        </div>
-        <span class="text-[10px] font-bold">
-          {{ props.deployment.unassigned.toLocaleString() }} ({{ props.deployment.unassignedPct }}%)
-        </span>
-      </li>
-
-      <li class="flex items-center justify-between">
-        <div class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-red-500" />
-          <span class="text-[10px] text-gray-600">Awaiting Training</span>
-        </div>
-        <span class="text-[10px] font-bold">
-          {{ props.deployment.awaitingTraining.toLocaleString() }} ({{ props.deployment.awaitingTrainingPct }}%)
-        </span>
-      </li>
-
     </ul>
 
     <div v-else class="rounded-xl bg-gray-50 px-4 py-7 text-center">

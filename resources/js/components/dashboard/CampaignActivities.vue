@@ -1,28 +1,36 @@
 <script setup lang="ts">
+import '@/plugins/echarts'
+import { colorOr, num } from '@/lib/charts'
 import { computed } from 'vue'
 import VChart from 'vue-echarts'
 
 const props = defineProps<{
-  activities: { name: string; percentage: number; color: string }[]
+  activities: { name: string; percentage: number; color?: string }[]
   totalActivities: number
 }>()
 
+/* Drops empty slices, coerces numbers and guarantees every slice has a colour. */
+const slices = computed(() =>
+  (props.activities ?? [])
+    .map((a, i) => ({ name: String(a?.name ?? 'Unnamed'), value: num(a?.percentage), color: colorOr(a?.color, i) }))
+    .filter((a) => a.value > 0),
+)
+
 const option = computed(() => ({
-  tooltip: {
-    trigger: 'item'
-  },
+  aria: { enabled: true },
+  tooltip: { trigger: 'item', confine: true, formatter: (p: any) => `${p.marker} ${p.name}: <b>${p.value}%</b>` },
   series: [
     {
       type: 'pie',
-      radius: ['45%', '68%'],
-      data: props.activities.map(a => ({
-        value: a.percentage,
-        name: a.name,
-        itemStyle: { color: a.color }
-      })),
-      label: { show: false }
-    }
-  ]
+      radius: ['52%', '74%'],
+      minAngle: 3,
+      padAngle: 1,
+      itemStyle: { borderRadius: 4, borderColor: '#fff', borderWidth: 1 },
+      data: slices.value.map((s) => ({ value: s.value, name: s.name, itemStyle: { color: s.color } })),
+      label: { show: false },
+      emphasis: { scaleSize: 4 },
+    },
+  ],
 }))
 </script>
 
@@ -40,7 +48,7 @@ const option = computed(() => ({
     </div>
 
     <!-- Chart + Legend -->
-    <div v-if="activities.length" class="flex flex-1 flex-wrap items-center justify-center gap-4">
+    <div v-if="slices.length" class="flex flex-1 flex-wrap items-center justify-center gap-4">
 
       <!-- Chart -->
       <div class="relative h-[150px] w-[150px] shrink-0">
@@ -58,7 +66,7 @@ const option = computed(() => ({
       <!-- Legend -->
       <ul class="min-w-[9rem] flex-1 basis-40 space-y-1.5">
         <li
-          v-for="a in activities"
+          v-for="a in slices"
           :key="a.name"
           class="flex items-center justify-between gap-2"
         >
@@ -66,7 +74,7 @@ const option = computed(() => ({
             <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: a.color }" />
             <span class="text-[10px] text-gray-600 truncate">{{ a.name }}</span>
           </div>
-          <span class="text-[10px] font-bold">{{ a.percentage }}%</span>
+          <span class="text-[10px] font-bold">{{ a.value }}%</span>
         </li>
       </ul>
 
