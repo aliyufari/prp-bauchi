@@ -105,7 +105,7 @@ function closeRemoveDialog() {
                     v-if="team.can_manage"
                     type="button"
                     @click="openAdd"
-                    class="inline-flex items-center gap-2 rounded-xl bg-green-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-green-800"
+                    class="inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-800"
                 >
                     <Plus class="h-4 w-4" />
                     Add Member
@@ -117,7 +117,7 @@ function closeRemoveDialog() {
                 <div v-for="member in members" :key="member.id" class="flex items-center justify-between border-b border-gray-50 p-4 last:border-0">
                     <div class="flex items-center gap-3">
                         <img v-if="member.avatar_url" :src="member.avatar_url" :alt="`${member.first_name} ${member.last_name}`" class="h-9 w-9 rounded-full object-cover" />
-                        <div v-else class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50 text-green-700">
+                        <div v-else class="flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-50 text-red-700">
                             <UserCog class="h-4 w-4" />
                         </div>
                         <div>
@@ -213,7 +213,7 @@ function closeRemoveDialog() {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="rounded-xl bg-green-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 disabled:opacity-60"
+                        class="rounded-xl bg-red-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-800 disabled:opacity-60"
                     >
                         <Loader v-if="form.processing" class="h-4 w-4 animate-spin" />
                         {{ form.processing ? 'Saving…' : editingMember ? 'Save changes' : 'Add member' }}

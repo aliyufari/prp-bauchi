@@ -5,6 +5,7 @@ import Sidebar from '@/components/layout/Sidebar.vue'
 import Topbar from '@/components/dashboard/Topbar.vue'
 import { useScopeLabel } from '@/composables/useScopeLabel'
 
+
 const { fullName, roleLabel, scopeName } = useScopeLabel()
 const page = usePage()
 const user = computed(() => ({
@@ -43,7 +44,7 @@ function toggleSidebar() {
 <template>
   <!-- App shell: the viewport is fixed. The sidebar and the content area scroll independently,
        so a long page never drags the sidebar along and a short page never leaves it half empty. -->
-  <div class="flex h-dvh overflow-hidden bg-green-50">
+  <div class="flex h-dvh overflow-hidden bg-neutral-50">
     <Sidebar :collapsed="sidebarCollapsed" :open="mobileSidebarOpen" @close="mobileSidebarOpen = false" />
 
     <div class="flex h-dvh min-w-0 flex-1 flex-col transition-all duration-300">
@@ -58,7 +59,7 @@ function toggleSidebar() {
         <footer class="border-t border-gray-100 bg-white px-4 py-4 text-center text-[11px] text-gray-400 sm:px-6 sm:text-xs">
           © {{ new Date().getFullYear() }} PRP Bauchi State Management System |
           Powered by
-          <span class="font-bold text-green-700">Smart Core ICT Service Consultant</span>
+          <span class="font-bold text-red-700">Smart Core ICT Service Consultant</span>
         </footer>
       </div>
     </div>

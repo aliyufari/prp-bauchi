@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('results', function (Blueprint $table) {
             $table->uuid('id')->primary();
 
+            // Geographic hierarchy for fast scoping and ward/LGA level rollups
             $table->foreignUuid('pu_id')->constrained('pus')->restrictOnDelete()->cascadeOnUpdate();
             $table->foreignUuid('ward_id')->nullable()->constrained('wards')->nullOnDelete()->cascadeOnUpdate();
             $table->foreignUuid('lga_id')->nullable()->constrained('lgas')->nullOnDelete()->cascadeOnUpdate();
@@ -28,7 +29,7 @@ return new class extends Migration
             $table->unsignedInteger('registered_voters')->default(0);
             $table->unsignedInteger('accredited_voters')->default(0);
             $table->unsignedInteger('rejected_votes')->default(0);
-            $table->json('party_votes');
+            $table->json('party_votes'); // Key-value or array storing votes per party
             $table->unsignedInteger('total_valid_votes')->default(0);
 
             $table->enum('status', array_column(ResultStatus::cases(), 'value'))
@@ -42,8 +43,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // One result per PU per office — adjust/drop if you need to
-            // support multiple concurrent election cycles.
+            // One result per PU per office
             $table->unique(['pu_id', 'office']);
         });
     }

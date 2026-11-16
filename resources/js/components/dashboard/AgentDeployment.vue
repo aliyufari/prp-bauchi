@@ -22,9 +22,9 @@ const rows = computed(() => {
   return {
     total,
     items: [
-      { key: 'deployed', name: 'Deployed', value: deployed, pct: percentOf(deployed, total), color: '#15803d', dot: 'bg-green-700' },
-      { key: 'unassigned', name: 'Unassigned', value: unassigned, pct: percentOf(unassigned, total), color: '#f59e0b', dot: 'bg-amber-400' },
-      { key: 'awaiting', name: 'Awaiting Training', value: awaiting, pct: percentOf(awaiting, total), color: '#ef4444', dot: 'bg-red-500' },
+      { key: 'deployed', name: 'Deployed', value: deployed, pct: percentOf(deployed, total), color: '#dc2626', dot: 'bg-red-600' },
+      { key: 'unassigned', name: 'Unassigned', value: unassigned, pct: percentOf(unassigned, total), color: '#171717', dot: 'bg-neutral-900' },
+      { key: 'awaiting', name: 'Awaiting Training', value: awaiting, pct: percentOf(awaiting, total), color: '#a3a3a3', dot: 'bg-neutral-400' },
     ],
   }
 })

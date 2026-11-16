@@ -207,13 +207,13 @@ function closeDeleteDialog() {
             </div>
 
             <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
-                <StatCard :value="statistics.total" label="Total Polling Units" icon="MapPin" icon-bg="bg-green-100" icon-color="text-green-700" />
+                <StatCard :value="statistics.total" label="Total Polling Units" icon="MapPin" icon-bg="bg-red-100" icon-color="text-red-700" />
                 <StatCard
                     :value="statistics.total_registered_voters"
                     label="Registered Voters"
                     icon="Users"
-                    icon-bg="bg-green-50"
-                    icon-color="text-green-900"
+                    icon-bg="bg-neutral-50"
+                    icon-color="text-red-900"
                 />
                 <StatCard
                     :value="statistics.wards_covered"
@@ -260,7 +260,7 @@ function closeDeleteDialog() {
                     >
                         <template #pu="{ row }">
                             <div class="flex items-center gap-2.5">
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-50 text-red-700">
                                     <MapPin class="h-4 w-4" />
                                 </div>
                                 <div>

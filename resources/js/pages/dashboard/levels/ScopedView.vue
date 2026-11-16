@@ -40,7 +40,7 @@ const pct = (n: number) => (results.value.total ? Math.round(((Number(n) || 0) /
           {{ roleLabel }}<span v-if="scope.name"> · {{ scope.name }}</span>
         </p>
       </div>
-      <a :href="route('dashboard.export')" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-green-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2">
+      <a :href="route('dashboard.export')" class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-red-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2">
         <Download class="h-4 w-4" />
         Download report
       </a>
@@ -52,11 +52,11 @@ const pct = (n: number) => (results.value.total ? Math.round(((Number(n) || 0) /
     </div>
 
     <section class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-5">
-      <StatCard :value="stats.party_agents" label="Party Agents" icon="UserCheck" icon-bg="bg-green-50" icon-color="text-green-900" />
+      <StatCard :value="stats.party_agents" label="Party Agents" icon="UserCheck" icon-bg="bg-neutral-50" icon-color="text-red-900" />
       <StatCard :value="stats.coordinators" label="Coordinators" icon="Briefcase" icon-bg="bg-gray-100" icon-color="text-gray-700" />
       <StatCard :value="stats.polling_units" label="Polling Units" icon="MapPin" icon-bg="bg-amber-100" icon-color="text-amber-700" />
-      <StatCard :value="stats.registered_voters" label="Registered Voters" icon="Users" icon-bg="bg-teal-100" icon-color="text-green-700" />
-      <StatCard :value="stats.members" label="Members" icon="Users" icon-bg="bg-green-100" icon-color="text-green-700" />
+      <StatCard :value="stats.registered_voters" label="Registered Voters" icon="Users" icon-bg="bg-neutral-100" icon-color="text-red-700" />
+      <StatCard :value="stats.members" label="Members" icon="Users" icon-bg="bg-red-100" icon-color="text-red-700" />
     </section>
 
     <section class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-12">
@@ -66,15 +66,15 @@ const pct = (n: number) => (results.value.total ? Math.round(((Number(n) || 0) /
         <p class="mt-1 text-xs text-gray-400">{{ fmt(results.total) }} uploaded</p>
 
         <div class="mt-4 flex h-2.5 overflow-hidden rounded-full bg-gray-100">
-          <div class="bg-green-500" :style="{ width: width(pct(results.verified)) }" />
-          <div class="bg-amber-400" :style="{ width: width(pct(results.pending)) }" />
-          <div class="bg-red-500" :style="{ width: width(pct(results.disputed)) }" />
+          <div class="bg-neutral-900" :style="{ width: width(pct(results.verified)) }" />
+          <div class="bg-neutral-400" :style="{ width: width(pct(results.pending)) }" />
+          <div class="bg-red-600" :style="{ width: width(pct(results.disputed)) }" />
         </div>
 
         <dl class="mt-4 space-y-2 text-sm">
-          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-green-500" />Verified</dt><dd class="font-semibold text-gray-900">{{ fmt(results.verified) }}</dd></div>
-          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-amber-400" />Pending</dt><dd class="font-semibold text-gray-900">{{ fmt(results.pending) }}</dd></div>
-          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-red-500" />Disputed</dt><dd class="font-semibold text-gray-900">{{ fmt(results.disputed) }}</dd></div>
+          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-neutral-900" />Verified</dt><dd class="font-semibold text-gray-900">{{ fmt(results.verified) }}</dd></div>
+          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-neutral-400" />Pending</dt><dd class="font-semibold text-gray-900">{{ fmt(results.pending) }}</dd></div>
+          <div class="flex justify-between"><dt class="flex items-center gap-2 text-gray-600"><span class="h-2 w-2 rounded-full bg-red-600" />Disputed</dt><dd class="font-semibold text-gray-900">{{ fmt(results.disputed) }}</dd></div>
         </dl>
       </div>
 
@@ -102,7 +102,7 @@ const pct = (n: number) => (results.value.total ? Math.round(((Number(n) || 0) /
               <td class="px-5 py-3">
                 <div class="flex items-center gap-3">
                   <div class="h-1.5 w-28 overflow-hidden rounded-full bg-gray-100">
-                    <div class="h-full rounded-full bg-green-500" :style="{ width: width(((Number(row.people) || 0) / maxPeople) * 100) }" />
+                    <div class="h-full rounded-full bg-red-500" :style="{ width: width(((Number(row.people) || 0) / maxPeople) * 100) }" />
                   </div>
                   <span class="text-sm text-gray-700">{{ fmt(row.people) }}</span>
                 </div>

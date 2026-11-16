@@ -57,8 +57,8 @@ const option = computed(() => ({
     {
       type: 'bar',
       data: rows.value.map((r) => r.count),
-      itemStyle: { color: '#15803d', borderRadius: [4, 4, 0, 0] },
-      emphasis: { itemStyle: { color: '#16a34a' } },
+      itemStyle: { color: '#b91c1c', borderRadius: [4, 4, 0, 0] },
+      emphasis: { itemStyle: { color: '#dc2626' } },
       barMaxWidth: 28,
       showBackground: true,
       backgroundStyle: { color: 'rgba(0,0,0,0.025)', borderRadius: [4, 4, 0, 0] },
@@ -81,7 +81,7 @@ const option = computed(() => ({
         </p>
       </div>
 
-      <span class="rounded-full bg-green-50 px-3 py-1 text-[11px] font-semibold text-green-700">{{ total.toLocaleString() }} members</span>
+      <span class="rounded-full bg-neutral-50 px-3 py-1 text-[11px] font-semibold text-red-700">{{ total.toLocaleString() }} members</span>
     </div>
 
     <!-- Chart -->

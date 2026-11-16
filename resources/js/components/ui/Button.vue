@@ -21,12 +21,12 @@ const props = withDefaults(defineProps<{
 }>(), { variant: 'primary', size: 'md', type: 'button', loading: false, disabled: false, block: false, external: false })
 
 const variants = {
-  primary: 'border-green-700 bg-green-700 text-white hover:border-green-800 hover:bg-green-800 active:bg-green-900 focus-visible:ring-green-600/30',
-  secondary: 'border-[#e8c44a] bg-[#e8c44a] text-[#061a11] hover:bg-[#d9b63d] focus-visible:ring-[#e8c44a]/40',
-  outline: 'border-green-700 bg-white text-green-700 hover:bg-green-50 focus-visible:ring-green-600/30',
-  neutral: 'border-[#e5e7eb] bg-white text-[#374151] hover:border-[#d1d5db] hover:bg-gray-50 focus-visible:ring-green-600/30',
-  ghost: 'border-transparent bg-transparent text-green-700 hover:bg-green-50 focus-visible:ring-green-600/30',
-  danger: 'border-[#dc2626] bg-[#dc2626] text-white hover:border-[#b91c1c] hover:bg-[#b91c1c] focus-visible:ring-[#dc2626]/30',
+  primary: 'border-red-700 bg-red-700 text-white hover:border-red-800 hover:bg-red-800 active:bg-red-900 focus-visible:ring-red-600/30',
+  secondary: 'border-[#ef4444] bg-white text-[#000000] hover:bg-white focus-visible:ring-[#ef4444]/40',
+  outline: 'border-red-700 bg-white text-red-700 hover:bg-neutral-50 focus-visible:ring-red-600/30',
+  neutral: 'border-[#e5e7eb] bg-white text-[#374151] hover:border-[#d1d5db] hover:bg-gray-50 focus-visible:ring-red-600/30',
+  ghost: 'border-transparent bg-transparent text-red-700 hover:bg-neutral-50 focus-visible:ring-red-600/30',
+  danger: 'border-neutral-900 bg-neutral-900 text-white hover:border-black hover:bg-black focus-visible:ring-neutral-900/30',
 } as const
 const sizes = { sm: 'h-8 px-3 text-xs', md: 'h-10 px-4 text-sm', lg: 'h-11 px-5 text-sm' } as const
 

@@ -15,7 +15,7 @@ const controlSize = {
 } as const
 
 export const controlNormal =
-  'border-[#e5e7eb] hover:border-[#d1d5db] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/30'
+  'border-[#e5e7eb] hover:border-[#d1d5db] focus:border-[#dc2626] focus:ring-2 focus:ring-[#dc2626]/30'
 
 export const controlInvalid =
   'border-[#dc2626] bg-[#fef2f2] text-[#111827] focus:border-[#dc2626] focus:ring-2 focus:ring-[#dc2626]/20'
@@ -40,4 +40,4 @@ export function controlClasses(
 
 /** Small search boxes inside dropdowns and toolbars: explicit colours so they never inherit a dark theme. */
 export const searchBoxClasses =
-  'h-9 w-full rounded-lg border border-[#e5e7eb] bg-white pl-9 pr-3 text-sm text-[#111827] [color-scheme:light] [-webkit-text-fill-color:#111827] outline-none transition-all placeholder:text-[#9ca3af] placeholder:[-webkit-text-fill-color:#9ca3af] hover:border-[#d1d5db] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/30'
+  'h-9 w-full rounded-lg border border-[#e5e7eb] bg-white pl-9 pr-3 text-sm text-[#111827] [color-scheme:light] [-webkit-text-fill-color:#111827] outline-none transition-all placeholder:text-[#9ca3af] placeholder:[-webkit-text-fill-color:#9ca3af] hover:border-[#d1d5db] focus:border-[#dc2626] focus:ring-2 focus:ring-[#dc2626]/30'

@@ -20,11 +20,11 @@ function go(page: number) {
       <template v-else>Page {{ currentPage }} of {{ lastPage }}</template>
     </p>
     <div class="flex items-center gap-1">
-      <button type="button" aria-label="Previous page" :disabled="disabled || currentPage <= 1" class="rounded-lg border border-[#d1d5db] p-2 text-[#374151] hover:bg-[#f0fdf4] disabled:opacity-40" @click="go(currentPage - 1)"><ChevronLeft class="h-4 w-4" /></button>
+      <button type="button" aria-label="Previous page" :disabled="disabled || currentPage <= 1" class="rounded-lg border border-[#d1d5db] p-2 text-[#374151] hover:bg-[#fafafa] disabled:opacity-40" @click="go(currentPage - 1)"><ChevronLeft class="h-4 w-4" /></button>
       <button v-for="page in pages" :key="page" type="button" :aria-current="page === currentPage ? 'page' : undefined"
-        :class="['min-w-9 rounded-lg border px-3 py-2 text-xs font-semibold', page === currentPage ? 'border-[#0d3b26] bg-[#0d3b26] text-white' : 'border-[#d1d5db] text-[#374151] hover:bg-[#f0fdf4]']"
+        :class="['min-w-9 rounded-lg border px-3 py-2 text-xs font-semibold', page === currentPage ? 'border-[#171717] bg-[#171717] text-white' : 'border-[#d1d5db] text-[#374151] hover:bg-[#fafafa]']"
         :disabled="disabled" @click="go(page)">{{ page }}</button>
-      <button type="button" aria-label="Next page" :disabled="disabled || currentPage >= lastPage" class="rounded-lg border border-[#d1d5db] p-2 text-[#374151] hover:bg-[#f0fdf4] disabled:opacity-40" @click="go(currentPage + 1)"><ChevronRight class="h-4 w-4" /></button>
+      <button type="button" aria-label="Next page" :disabled="disabled || currentPage >= lastPage" class="rounded-lg border border-[#d1d5db] p-2 text-[#374151] hover:bg-[#fafafa] disabled:opacity-40" @click="go(currentPage + 1)"><ChevronRight class="h-4 w-4" /></button>
     </div>
   </nav>
 </template>

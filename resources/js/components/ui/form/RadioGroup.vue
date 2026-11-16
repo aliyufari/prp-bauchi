@@ -23,7 +23,7 @@ const name = computed(() => props.name || groupId)
         <label v-for="option in options" :key="String(option.value)" class="inline-flex items-center gap-2 text-sm text-[#374151]"
           :class="[(disabled || option.disabled) && 'cursor-not-allowed opacity-50', 'cursor-pointer']">
           <input type="radio" :name="name" :value="option.value" :checked="modelValue === option.value"
-            :disabled="disabled || option.disabled" class="h-4 w-4 border-[#9ca3af] accent-[#16a34a] focus:ring-[#16a34a]/25"
+            :disabled="disabled || option.disabled" class="h-4 w-4 border-[#9ca3af] accent-[#dc2626] focus:ring-[#dc2626]/25"
             @change="emit('update:modelValue', option.value)" />
           {{ option.label }}
         </label>

@@ -68,20 +68,20 @@ function remove() {
         type="button"
         :disabled="disabled"
         :aria-label="hasPhoto ? 'Change profile photo' : 'Choose profile photo'"
-        class="group relative h-20 w-20 shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-green-600/30 focus-visible:ring-offset-2 disabled:opacity-60"
+        class="group relative h-20 w-20 shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-red-600/30 focus-visible:ring-offset-2 disabled:opacity-60"
         @click="pick"
       >
         <span
           :class="[
-            'flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-green-50 transition',
-            hasPhoto ? 'ring-2 ring-white shadow-sm outline outline-1 outline-[#e5e7eb]' : 'border-2 border-dashed border-[#d1d5db] group-hover:border-green-600',
+            'flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-neutral-50 transition',
+            hasPhoto ? 'ring-2 ring-white shadow-sm outline outline-1 outline-[#e5e7eb]' : 'border-2 border-dashed border-[#d1d5db] group-hover:border-red-600',
             message && !hasPhoto && 'border-[#dc2626]',
           ]"
         >
           <img v-if="shown" :src="shown" alt="Selected profile photo" class="h-full w-full object-cover" />
-          <UserRound v-else class="h-9 w-9 text-green-700/40" aria-hidden="true" />
+          <UserRound v-else class="h-9 w-9 text-red-700/40" aria-hidden="true" />
         </span>
-        <span class="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-green-700 text-white transition group-hover:bg-green-800">
+        <span class="absolute -bottom-0.5 -right-0.5 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-red-700 text-white transition group-hover:bg-red-800">
           <Camera class="h-3.5 w-3.5" aria-hidden="true" />
         </span>
       </button>

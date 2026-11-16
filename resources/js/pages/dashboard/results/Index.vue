@@ -228,8 +228,8 @@ function closeDeleteDialog() {
             </div>
 
             <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
-                <StatCard :value="statistics.total" label="Total Results" icon="FileBarChart" icon-bg="bg-green-100" icon-color="text-green-700" />
-                <StatCard :value="statistics.verified" label="Verified" icon="CheckCircle2" icon-bg="bg-green-50" icon-color="text-green-900" />
+                <StatCard :value="statistics.total" label="Total Results" icon="FileBarChart" icon-bg="bg-red-100" icon-color="text-red-700" />
+                <StatCard :value="statistics.verified" label="Verified" icon="CheckCircle2" icon-bg="bg-neutral-50" icon-color="text-red-900" />
                 <StatCard :value="statistics.pending" label="Pending" icon="Clock" icon-bg="bg-amber-100" icon-color="text-amber-700" />
                 <StatCard :value="statistics.disputed" label="Disputed" icon="AlertTriangle" icon-bg="bg-red-100" icon-color="text-red-700" />
             </div>
@@ -252,7 +252,7 @@ function closeDeleteDialog() {
                     >
                         <template #pu="{ row }">
                             <div class="flex items-center gap-2.5">
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
+                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-50 text-red-700">
                                     <FileBarChart class="h-4 w-4" />
                                 </div>
                                 <div>
@@ -281,7 +281,7 @@ function closeDeleteDialog() {
                             <span
                                 class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold"
                                 :class="{
-                                    'bg-green-100 text-green-700': row.status === 'verified',
+                                    'bg-red-100 text-red-700': row.status === 'verified',
                                     'bg-amber-100 text-amber-700': row.status === 'pending',
                                     'bg-red-100 text-red-700': row.status === 'disputed',
                                 }"

@@ -30,8 +30,8 @@ function clear() {
       <div class="rounded-xl border border-dashed border-[#9ca3af] bg-[#f9fafb] p-4">
         <input ref="input" type="file" class="sr-only" :accept="accept" :multiple="multiple" :disabled="disabled" :required="required" @change="changed" />
         <button type="button" :disabled="disabled" class="flex w-full flex-col items-center gap-2 text-center disabled:opacity-50" @click="input?.click()">
-          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-[#dcfce7] text-[#0d3b26]"><FileUp class="h-5 w-5" /></span>
-          <span class="text-sm font-semibold text-[#0d3b26]">Choose {{ multiple ? 'files' : 'a file' }}</span>
+          <span class="flex h-10 w-10 items-center justify-center rounded-full bg-[#fee2e2] text-[#171717]"><FileUp class="h-5 w-5" /></span>
+          <span class="text-sm font-semibold text-[#171717]">Choose {{ multiple ? 'files' : 'a file' }}</span>
           <span class="text-xs text-[#6b7280]">Click to browse your device</span>
         </button>
         <ul v-if="files.length" class="mt-3 space-y-2 border-t border-[#e5e7eb] pt-3">

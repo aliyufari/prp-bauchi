@@ -202,7 +202,7 @@ const mission = computed(
         <button
           type="button"
           @click="openEdit"
-          class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-green-700 px-4 text-xs font-semibold text-white transition hover:bg-green-800 active:bg-green-900 sm:text-sm"
+          class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-red-700 px-4 text-xs font-semibold text-white transition hover:bg-red-800 active:bg-red-900 sm:text-sm"
         >
           <Pencil class="h-4 w-4" />
 
@@ -240,7 +240,7 @@ const mission = computed(
         class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
       >
 
-        <div class="relative h-40 bg-gradient-to-r from-green-800 to-green-600 sm:h-52">
+        <div class="relative h-40 bg-gradient-to-r from-red-800 to-red-600 sm:h-52">
 
           <div class="absolute -bottom-12 left-6 sm:left-10">
             <img
@@ -258,7 +258,7 @@ const mission = computed(
             {{ fullName }}
           </h3>
 
-          <p class="mt-1 text-sm font-semibold text-green-700">
+          <p class="mt-1 text-sm font-semibold text-red-700">
             {{ aspirant.title || 'Governorship Candidate' }}
           </p>
 
@@ -283,7 +283,7 @@ const mission = computed(
         <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
 
           <div class="flex items-center gap-2 text-xs font-semibold text-gray-400">
-            <Users class="h-4 w-4 text-green-600" />
+            <Users class="h-4 w-4 text-red-600" />
             Total Supporters
           </div>
 
@@ -336,7 +336,7 @@ const mission = computed(
           <div class="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-100">
 
             <div
-              class="h-full rounded-full bg-gradient-to-r from-green-600 to-green-500 transition-all duration-500"
+              class="h-full rounded-full bg-gradient-to-r from-red-600 to-red-500 transition-all duration-500"
               :style="{ width: `${overallProgress}%` }"
             />
 

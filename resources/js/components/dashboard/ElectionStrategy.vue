@@ -11,9 +11,9 @@ defineProps<{
 }>()
 
 const statusStyle: Record<Status, string> = {
-  Ongoing: 'bg-green-50 text-green-700',
+  Ongoing: 'bg-neutral-50 text-red-700',
   Planned: 'bg-amber-50 text-amber-700',
-  Completed: 'bg-blue-50 text-green-900',
+  Completed: 'bg-blue-50 text-red-900',
 }
 
 const getInitials = (name?: string) =>
@@ -48,8 +48,8 @@ const getInitials = (name?: string) =>
       >
 
         <!-- Avatar -->
-        <div class="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <span class="text-[9px] font-black text-green-700">
+        <div class="w-7 h-7 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <span class="text-[9px] font-black text-red-700">
             {{ getInitials(a.name) }}
           </span>
         </div>

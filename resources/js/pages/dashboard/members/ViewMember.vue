@@ -44,7 +44,7 @@ function edit() {
           type="button"
           @click="edit"
           :disabled="!member"
-          class="inline-flex items-center gap-2 rounded-xl bg-green-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 disabled:opacity-50"
+          class="inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-800 disabled:opacity-50"
         >
           <Pencil class="h-3.5 w-3.5" />
           Edit member

@@ -20,6 +20,11 @@ final class NavigationBuilder
                     continue;
                 }
 
+                // Optional: show only to users working at this jurisdiction level (e.g. ward agents).
+                if (isset($item['level']) && Jurisdiction::for($user)->level !== $item['level']) {
+                    continue;
+                }
+
                 $ready = Route::has($item['route']);
 
                 // No route and no planned path: hide it. With a path: show it as "coming soon".

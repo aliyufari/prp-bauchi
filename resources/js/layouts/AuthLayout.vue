@@ -1,94 +1,150 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { usePage } from '@inertiajs/vue3'
-import BrandMark from '@/components/auth/BrandMark.vue'
-import { useAuthPanel } from '@/composables/useAuthPanel'
+import { computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import BrandMark from '@/components/auth/BrandMark.vue';
+import { useAuthPanel } from '@/composables/useAuthPanel';
 
-const panel = useAuthPanel()
-const page = usePage()
-const stats = computed(() => (page.props as any).publicStats as { value: string; label: string }[] | undefined)
+const panel = useAuthPanel();
+const page = usePage();
+const stats = computed(() => (page.props as any).publicStats as { value: string; label: string }[] | undefined);
 </script>
 
 <template>
-  <div class="min-h-screen bg-green-50 flex flex-col lg:flex-row">
-    <!-- Left: brand panel (lg+) -->
+  <div class="no-scrollbar flex min-h-screen flex-col bg-neutral-50 text-neutral-900 antialiased selection:bg-red-600 selection:text-white lg:flex-row">
+    <!-- Left: Sticky Brand & Context Panel (lg+) -->
     <aside
-      class="hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[52%] xl:w-[48%] flex-col relative overflow-hidden"
-      style="background: linear-gradient(180deg, #0d3b26 0%, #092b1c 40%, #061a11 100%);"
+      class="no-scrollbar relative hidden flex-col justify-between overflow-y-auto border-r border-neutral-800 bg-neutral-950 lg:sticky lg:top-0 lg:flex lg:h-screen lg:w-[46%] xl:w-[44%]"
     >
-      <div class="absolute -top-32 -left-32 w-[420px] h-[420px] rounded-full border border-white/10" />
-      <div class="absolute -top-20 -left-20 w-[300px] h-[300px] rounded-full border border-white/10" />
-      <div class="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full border border-white/5 translate-x-1/3 translate-y-1/3" />
-      <div
-        class="absolute top-0 right-0 w-28 h-full bg-[#dc2626]/10 origin-top-right"
-        style="clip-path: polygon(100% 0, 100% 100%, 60% 100%, 20% 0)"
-      />
+      <!-- Top PRP Tri-Colour Accent Bar -->
+      <div class="flex h-1 w-full shrink-0" aria-hidden="true">
+        <span class="flex-1 bg-red-600"></span>
+        <span class="flex-1 bg-white/90"></span>
+        <span class="flex-1 bg-neutral-800"></span>
+      </div>
 
-      <div class="relative z-10 flex flex-col h-full px-8 xl:px-12 py-8 xl:py-10 overflow-y-auto">
-        <div class="flex items-center gap-3">
+      <!-- Subtle Architectural Rings & Glow -->
+      <div class="pointer-events-none absolute -left-32 -top-32 h-[26rem] w-[26rem] rounded-full border border-white/[0.07]" aria-hidden="true" />
+      <div class="pointer-events-none absolute -left-20 -top-20 h-[18rem] w-[18rem] rounded-full border border-white/[0.07]" aria-hidden="true" />
+      <div class="pointer-events-none absolute -bottom-32 -right-32 h-[28rem] w-[28rem] rounded-full bg-red-600/[0.07] blur-3xl" aria-hidden="true" />
+
+      <div class="relative z-10 flex flex-1 flex-col justify-between px-8 py-8 xl:px-12 xl:py-10">
+        <!-- Brand Header -->
+        <Link href="/" class="group inline-flex w-fit items-center gap-3.5 focus:outline-none">
           <BrandMark status />
           <div>
-            <p class="font-black text-xl tracking-widest leading-none" style="color: #e8c44a; text-shadow: 0 1px 4px rgba(232,196,74,0.4);">PRP</p>
-            <p class="font-bold text-[10px] uppercase mt-1 tracking-[0.25em]" style="color: rgba(255,255,255,0.55);">Bauchi State</p>
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-black tracking-wider text-white transition-colors group-hover:text-red-500">PRP</span>
+              <span class="h-3.5 w-px bg-neutral-700" aria-hidden="true"></span>
+              <span class="text-[11px] font-bold uppercase tracking-[0.2em] text-red-500">Bauchi State</span>
+            </div>
+            <p class="mt-0.5 text-[11px] font-medium text-neutral-400">
+              People's Redemption Party · Digital Command
+            </p>
           </div>
-        </div>
+        </Link>
 
-        <div class="mt-auto mb-auto pt-14 xl:pt-20">
-          <div class="inline-block border rounded-full px-3 py-1 mb-6" style="background: rgba(232,196,74,0.1); border-color: rgba(232,196,74,0.25);">
-            <span class="text-xs font-semibold uppercase tracking-widest" style="color: #e8c44a;">{{ panel.badge }}</span>
+        <!-- Dynamic Hero Copy & Optional Onboarding Steps -->
+        <div class="my-auto py-8">
+          <div class="inline-flex items-center gap-2 rounded-full border border-red-500/25 bg-red-500/10 px-3 py-1">
+            <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+            <span class="text-[11px] font-bold uppercase tracking-[0.18em] text-red-400">
+              {{ panel.badge }}
+            </span>
           </div>
 
-          <h1 class="text-white font-black text-3xl xl:text-5xl leading-[1.05] tracking-tight max-w-sm">
+          <h2 class="mt-5 max-w-md text-3xl font-black leading-[1.1] tracking-tight text-white xl:text-[2.65rem]">
             <template v-for="(line, i) in panel.lines" :key="i">
-              <span :style="line.accent ? 'color: #4ade80;' : ''">{{ line.text }}</span><br v-if="i < panel.lines.length - 1" />
+              <span :class="line.accent ? 'text-red-500' : ''">{{ line.text }}</span>
+              <br v-if="i < panel.lines.length - 1" />
             </template>
-          </h1>
+          </h2>
 
-          <p class="text-white/60 text-sm mt-5 max-w-xs leading-relaxed">{{ panel.text }}</p>
+          <p class="mt-4 max-w-sm text-sm leading-relaxed text-neutral-400">
+            {{ panel.text }}
+          </p>
 
-          <ol v-if="panel.steps?.length" class="mt-8 space-y-3.5">
-            <li v-for="(step, i) in panel.steps" :key="i" class="flex items-center gap-3">
-              <span class="w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0 text-[10px] font-black" style="background: rgba(232,196,74,0.1); border-color: rgba(232,196,74,0.35); color: #e8c44a;">{{ i + 1 }}</span>
-              <span class="text-white/70 text-sm font-medium">{{ step }}</span>
+          <ol v-if="panel.steps?.length" class="mt-6 space-y-2.5 border-t border-neutral-800/90 pt-5">
+            <li v-for="(step, i) in panel.steps" :key="i" class="flex items-start gap-3">
+              <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-red-500/35 bg-red-500/10 text-[10px] font-black text-red-400">
+                {{ i + 1 }}
+              </span>
+              <span class="text-[13px] font-medium leading-snug text-neutral-300">{{ step }}</span>
             </li>
           </ol>
         </div>
 
-        <div v-if="stats?.length" class="flex flex-wrap gap-6 mt-auto pb-2">
-          <div v-for="stat in stats" :key="stat.label">
-            <p class="text-white font-black text-xl leading-none">{{ stat.value }}</p>
-            <p class="text-white/40 text-[11px] mt-0.5 uppercase tracking-wider">{{ stat.label }}</p>
-          </div>
-        </div>
+        <!-- Bottom Stats & Chapter Footer -->
+        <div>
+          <dl v-if="stats?.length" class="mb-5 flex flex-wrap gap-8 border-t border-neutral-800/90 pt-5">
+            <div v-for="stat in stats" :key="stat.label">
+              <dd class="text-xl font-black leading-none text-white">{{ stat.value }}</dd>
+              <dt class="mt-1 text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ stat.label }}</dt>
+            </div>
+          </dl>
 
-        <p class="text-white/25 text-[10px] font-medium uppercase tracking-widest mt-5 border-t border-white/10 pt-4">
-          People's Redemption Party · Bauchi State Chapter
-        </p>
+          <p class="border-t border-neutral-800/80 pt-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+            People's Redemption Party · Bauchi State Chapter
+          </p>
+        </div>
       </div>
     </aside>
 
-    <!-- Right: form column. The form block is centered both ways; the footer sits at the bottom. -->
-    <main class="flex min-h-screen min-w-0 flex-1 flex-col">
-      <div class="flex flex-1 items-center justify-center px-4 py-8 sm:px-8 sm:py-12 lg:px-12 xl:px-16">
-        <div class="w-full max-w-sm sm:max-w-md">
-          <div class="mb-8 flex items-center justify-center gap-3 sm:mb-10 lg:hidden">
+    <!-- Right: Cardless Form Column -->
+    <main class="no-scrollbar flex min-h-screen min-w-0 flex-1 flex-col bg-neutral-50">
+      <!-- Mobile Tri-Colour Strip (lg:hidden) -->
+      <div class="flex h-1 w-full lg:hidden" aria-hidden="true">
+        <span class="flex-1 bg-red-600"></span>
+        <span class="flex-1 bg-neutral-200"></span>
+        <span class="flex-1 bg-neutral-950"></span>
+      </div>
+
+      <div class="flex flex-1 items-center justify-center px-5 py-8 sm:px-8 lg:px-12 xl:px-16">
+        <div class="w-full max-w-md">
+          <!-- Mobile Brand Header -->
+          <Link href="/" class="mb-8 flex items-center justify-center gap-3 lg:hidden">
             <BrandMark size="sm" />
             <div>
-              <p class="font-black text-lg leading-none" style="color: #0d3b26;">PRP</p>
-              <p class="text-[#16a34a] text-[9px] font-bold uppercase tracking-[0.2em] mt-0.5">Bauchi State</p>
+              <div class="flex items-center gap-1.5">
+                <span class="text-lg font-black leading-none tracking-wider text-neutral-950">PRP</span>
+                <span class="h-3 w-px bg-neutral-300" aria-hidden="true"></span>
+                <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-red-600">Bauchi State</span>
+              </div>
             </div>
-          </div>
+          </Link>
 
-          <div class="w-full space-y-4">
-            <slot />
-          </div>
+          <!-- Direct Cardless Form Slot -->
+          <slot />
         </div>
       </div>
 
-      <p class="px-4 pb-6 text-center text-[11px] text-[#9ca3af] sm:px-8">
+      <footer class="px-4 pb-6 text-center text-[11px] font-medium text-neutral-400 sm:px-8">
         © {{ new Date().getFullYear() }} PRP Bauchi State Management System ·
-        <span class="text-[#6b7280]">Smart Core ICT Service Consultant</span>
-      </p>
+        <span class="font-semibold text-neutral-600">Smart Core ICT Service</span>
+      </footer>
     </main>
   </div>
 </template>
+
+<style scoped>
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+</style>
+
+<style>
+html,
+body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+</style>

@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Pu;
 use App\Models\Result;
 use App\Enums\ResultStatus;
+use App\Support\AspirantScope;
 use App\Support\LocationChain;
 use App\Support\ScopedLocations;
 use Illuminate\Http\Request;
@@ -30,13 +31,19 @@ class DashboardReportController extends Controller
         abort_unless(!$lgaId || DB::table('lgas')->where('id', $lgaId)->whereIn('zone_id', LocationChain::within('zone', 'state', $stateId))->exists(), 404);
         abort_unless(!$wardId || DB::table('wards')->where('id', $wardId)->whereIn('lga_id', LocationChain::within('lga', 'state', $stateId))->when($lgaId, fn ($q) => $q->where('lga_id', $lgaId))->exists(), 404);
 
-        $people = fn (Role $role) => User::role($role->value)->visibleTo($request->user())
+        $viewer = $request->user();
+        $isAspirant = AspirantScope::is($viewer);
+
+        // Aspirants report on their own people; polling units and results are state facts they may see in full.
+        $people = fn (Role $role) => ($isAspirant
+            ? User::role($role->value)->whereIn('users.id', AspirantScope::peopleIds($viewer))
+            : User::role($role->value)->visibleTo($viewer))
             ->when($lgaId, fn ($q) => $q->whereHas('profile', fn ($p) => $p->where('lga_id', $lgaId)))
             ->when($wardId, fn ($q) => $q->whereHas('profile', fn ($p) => $p->where('ward_id', $wardId)));
-        $pollingUnits = fn () => Pu::visibleTo($request->user())
+        $pollingUnits = fn () => ($isAspirant ? Pu::query() : Pu::visibleTo($viewer))
             ->when($lgaId, fn ($q) => $q->whereHas('ward', fn ($w) => $w->where('lga_id', $lgaId)))
             ->when($wardId, fn ($q) => $q->where('ward_id', $wardId));
-        $results = fn () => Result::query()->visibleTo($request->user())
+        $results = fn () => ($isAspirant ? Result::query() : Result::query()->visibleTo($viewer))
             ->when($lgaId, fn ($q) => $q->where('results.lga_id', $lgaId))
             ->when($wardId, fn ($q) => $q->where('results.ward_id', $wardId));
 

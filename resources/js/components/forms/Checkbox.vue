@@ -23,7 +23,7 @@ const fieldId = computed(() => props.id || generatedId)
       <label class="inline-flex cursor-pointer items-start gap-2.5 text-sm text-[#374151]" :class="disabled && 'cursor-not-allowed opacity-60'">
         <input :id="resolvedId" :name="name" type="checkbox" :checked="modelValue" :disabled="disabled" :required="required"
           v-bind="attrs"
-          class="mt-0.5 h-4 w-4 rounded border-[#d1d5db] text-[#16a34a] accent-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/30"
+          class="mt-0.5 h-4 w-4 rounded border-[#d1d5db] text-[#dc2626] accent-[#dc2626] focus:ring-2 focus:ring-[#dc2626]/30"
           @change="emit('update:modelValue', ($event.target as HTMLInputElement).checked)" />
         <span>{{ label }}<span v-if="required" class="ml-1 text-[#dc2626]">*</span></span>
       </label>

@@ -17,7 +17,7 @@ defineProps<{
         :key="a.title"
         class="flex items-start gap-2 p-2 rounded-lg hover:bg-gray-50 transition-colors cursor-default"
       >
-        <span class="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0 mt-1.5" />
+        <span class="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0 mt-1.5" />
         <div class="min-w-0">
           <p class="text-[10px] font-semibold text-gray-800 leading-snug">{{ a.title }}</p>
           <p class="text-[9px] text-gray-400 mt-0.5">{{ a.date }}</p>

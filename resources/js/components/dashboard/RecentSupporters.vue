@@ -7,8 +7,8 @@ const initials = (name: string) =>
   name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase()
 
 const avatarColors = [
-  'bg-green-100 text-green-700',
-  'bg-green-50 text-green-900',
+  'bg-red-100 text-red-700',
+  'bg-neutral-50 text-red-900',
   'bg-gray-100 text-gray-700',
   'bg-amber-100 text-amber-700',
   'bg-red-100 text-red-700',
@@ -49,7 +49,7 @@ const avatarColors = [
         </div>
 
         <!-- Amount -->
-        <p class="text-[10px] font-black text-green-700 flex-shrink-0">
+        <p class="text-[10px] font-black text-red-700 flex-shrink-0">
           ₦{{ s.amount.toLocaleString() }}
         </p>
       </li>

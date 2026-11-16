@@ -100,7 +100,7 @@ const currentDateTime = computed(() => {
           </select>
 
           <button
-            class="inline-flex items-center justify-center gap-2 bg-green-700 hover:bg-green-800 active:bg-green-900 text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition w-full sm:w-auto"
+            class="inline-flex items-center justify-center gap-2 bg-red-700 hover:bg-red-800 active:bg-red-900 text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition w-full sm:w-auto"
           >
             <Download class="w-4 h-4" />
             Download Reports
@@ -118,8 +118,8 @@ const currentDateTime = computed(() => {
             label="Total Members"
             icon="Users"
             :growth="stats.totalMembersGrowth"
-            icon-bg="bg-green-100"
-            icon-color="text-green-700"
+            icon-bg="bg-red-100"
+            icon-color="text-red-700"
           />
 
           <StatCard
@@ -127,8 +127,8 @@ const currentDateTime = computed(() => {
             label="Party Agents"
             icon="UserCheck"
             :growth="stats.partyAgentsGrowth"
-            icon-bg="bg-green-50"
-            icon-color="text-green-900"
+            icon-bg="bg-neutral-50"
+            icon-color="text-red-900"
           />
 
           <StatCard
@@ -163,8 +163,8 @@ const currentDateTime = computed(() => {
             label="LGAs Covered"
             icon="BarChart3"
             :subtitle="`Out of ${stats.totalLgas} LGAs`"
-            icon-bg="bg-teal-100"
-            icon-color="text-green-700"
+            icon-bg="bg-neutral-100"
+            icon-color="text-red-700"
           />
         </div>
       </section>

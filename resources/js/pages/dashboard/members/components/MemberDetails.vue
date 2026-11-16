@@ -36,7 +36,7 @@ const joinedAt = computed(() =>
       />
       <div
         v-else
-        class="flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 text-lg font-bold text-green-700"
+        class="flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-lg font-bold text-red-700"
       >
         {{ initials }}
       </div>

@@ -13,7 +13,7 @@
           :alt="aspirant.name"
           class="w-full h-full object-cover"
         />
-        <div v-else class="w-full h-full bg-green-700 flex items-center justify-center">
+        <div v-else class="w-full h-full bg-red-700 flex items-center justify-center">
           <User class="w-8 h-8 text-white" />
         </div>
       </div>
@@ -24,9 +24,9 @@
 
         <div class="mt-2 space-y-2">
           <div class="flex items-start gap-1.5">
-            <Eye class="w-3.5 h-3.5 text-green-600 mt-0.5 flex-shrink-0" />
+            <Eye class="w-3.5 h-3.5 text-red-600 mt-0.5 flex-shrink-0" />
             <div>
-              <span class="text-[10px] font-bold text-green-600">Vision:</span>
+              <span class="text-[10px] font-bold text-red-600">Vision:</span>
               <span class="text-[10px] text-gray-600"> {{ aspirant.vision }}</span>
             </div>
           </div>
@@ -43,7 +43,7 @@
 
     <!-- Action Buttons -->
     <div class="flex gap-2 mb-5">
-      <button class="flex-1 bg-green-700 hover:bg-green-800 text-white text-xs font-semibold py-2 rounded-md transition-colors">
+      <button class="flex-1 bg-red-700 hover:bg-red-800 text-white text-xs font-semibold py-2 rounded-md transition-colors">
         Aspirant Profile
       </button>
       <button class="flex-1 border border-gray-300 hover:bg-gray-50 text-gray-600 text-xs font-semibold py-2 rounded-md transition-colors">
@@ -60,7 +60,7 @@
       </div>
       <div class="h-2.5 bg-gray-200 rounded-full overflow-hidden">
         <div
-          class="h-full bg-green-600 rounded-full transition-all duration-1000"
+          class="h-full bg-red-600 rounded-full transition-all duration-1000"
           :style="{ width: aspirant.overallProgress + '%' }"
         />
       </div>
@@ -70,11 +70,11 @@
     <div class="grid grid-cols-2 gap-3 mb-5">
       <div class="bg-gray-50 rounded-lg p-3">
         <div class="flex items-center gap-2 mb-1">
-          <Users class="w-4 h-4 text-green-600" />
+          <Users class="w-4 h-4 text-red-600" />
           <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Total Supporters</span>
         </div>
         <p class="text-xl font-extrabold text-gray-800">{{ aspirant.totalSupporters.toLocaleString() }}</p>
-        <p class="text-[10px] text-green-600 font-medium">
+        <p class="text-[10px] text-red-600 font-medium">
           +{{ aspirant.supportersGrowthThisWeek.toLocaleString() }} this week
         </p>
       </div>
@@ -114,7 +114,7 @@ import type { GovernorshipAspirant } from '@/types/dashboard'
 defineProps<{ aspirant: GovernorshipAspirant }>()
 
 const quickActions = [
-  { id: 'add-member', label: 'Add New Member', iconComponent: UserPlus, bg: 'bg-green-50', border: 'border-green-100', iconBg: 'bg-green-600' },
+  { id: 'add-member', label: 'Add New Member', iconComponent: UserPlus, bg: 'bg-neutral-50', border: 'border-red-100', iconBg: 'bg-red-600' },
   { id: 'register-agent', label: 'Register New Agent', iconComponent: Bot, bg: 'bg-blue-50', border: 'border-blue-100', iconBg: 'bg-blue-600' },
   { id: 'schedule', label: 'Schedule Activity', iconComponent: CalendarPlus, bg: 'bg-yellow-50', border: 'border-yellow-100', iconBg: 'bg-yellow-600' },
   { id: 'donation', label: 'Add Donation', iconComponent: HandCoins, bg: 'bg-purple-50', border: 'border-purple-100', iconBg: 'bg-purple-600' },

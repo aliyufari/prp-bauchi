@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AspirantOffice;
 use App\Enums\ConstituencyType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

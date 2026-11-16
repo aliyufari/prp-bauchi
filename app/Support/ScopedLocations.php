@@ -26,7 +26,8 @@ final class ScopedLocations
                 $q->whereIn('id', LocationChain::within($level, 'state', $stateId));
             }
             $columns = $level === 'ward' ? ['id', 'name', 'lga_id'] : ['id', 'name'];
-            $out[$key] = $j->constrainTable($level, $q)->get($columns);
+            // Aspirants follow the whole state; only their people are limited elsewhere.
+            $out[$key] = ($j->unrestricted || $user->hasRole(\App\Enums\Role::ASPIRANT->value) ? $q : $j->constrainTable($level, $q))->get($columns);
         }
 
         return $out;

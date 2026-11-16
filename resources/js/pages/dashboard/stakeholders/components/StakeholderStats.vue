@@ -14,15 +14,15 @@ defineProps<Props>()
       :value="statistics.total"
       label="Total Stakeholders"
       icon="Handshake"
-      icon-bg="bg-green-100"
-      icon-color="text-green-700"
+      icon-bg="bg-red-100"
+      icon-color="text-red-700"
     />
     <StatCard
       :value="statistics.active"
       label="Active"
       icon="UserCheck"
-      icon-bg="bg-green-50"
-      icon-color="text-green-900"
+      icon-bg="bg-neutral-50"
+      icon-color="text-red-900"
     />
     <StatCard
       :value="statistics.traditional_rulers"

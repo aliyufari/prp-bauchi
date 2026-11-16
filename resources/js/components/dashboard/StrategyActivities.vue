@@ -13,8 +13,8 @@
         class="flex items-start gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
       >
         <!-- Icon -->
-        <div class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-          <component :is="getIcon(activity.icon)" class="w-4 h-4 text-green-700" />
+        <div class="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+          <component :is="getIcon(activity.icon)" class="w-4 h-4 text-red-700" />
         </div>
 
         <!-- Content -->
@@ -35,7 +35,7 @@
       </div>
     </div>
 
-    <button class="mt-4 w-full text-center text-xs font-semibold text-green-700 hover:text-green-800 py-2 border border-green-200 rounded-md hover:bg-green-50 transition-colors">
+    <button class="mt-4 w-full text-center text-xs font-semibold text-red-700 hover:text-red-800 py-2 border border-red-200 rounded-md hover:bg-neutral-50 transition-colors">
       View All Activities →
     </button>
   </div>
@@ -58,8 +58,8 @@ function getIcon(name: string) {
 }
 
 const statusClasses: Record<string, string> = {
-  Ongoing: 'bg-green-100 text-green-700',
+  Ongoing: 'bg-red-100 text-red-700',
   Planned: 'bg-yellow-100 text-yellow-700',
-  Completed: 'bg-green-50 text-green-900',
+  Completed: 'bg-neutral-50 text-red-900',
 }
 </script>

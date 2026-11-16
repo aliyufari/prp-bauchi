@@ -12,7 +12,7 @@ export const compact = (n: number): string =>
 export const percentOf = (part: number, total: number): number => (total > 0 ? Math.round((part / total) * 100) : 0)
 
 /** Brand-aligned fallback palette for slices that arrive without a colour. */
-export const PALETTE = ['#15803d', '#e8c44a', '#0d9488', '#f59e0b', '#6366f1', '#ef4444', '#64748b', '#22c55e']
+export const PALETTE = ['#dc2626', '#171717', '#a3a3a3', '#f87171', '#525252', '#b91c1c', '#d4d4d4', '#7f1d1d']
 
 const HEX = /^#(?:[0-9a-f]{3}){1,2}$/i
 export const colorOr = (value: unknown, index: number): string =>

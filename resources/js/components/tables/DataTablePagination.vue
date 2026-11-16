@@ -37,11 +37,11 @@ const pages = computed(() => {
   return result
 })
 // Same border / radius / focus ring as the form controls and buttons.
-const focusRing = 'outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-green-600/30'
+const focusRing = 'outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-red-600/30'
 const navBtn = `inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-[#e5e7eb] bg-white text-sm font-semibold text-[#374151] hover:border-[#d1d5db] hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[#e5e7eb] disabled:hover:bg-white ${focusRing}`
 const pageBtn = `h-9 min-w-9 rounded-lg border px-2 text-sm font-semibold disabled:cursor-not-allowed ${focusRing}`
-const pageIdle = 'border-transparent text-[#374151] hover:bg-green-50 hover:text-green-800'
-const pageActive = 'border-green-700 bg-green-700 text-white'
+const pageIdle = 'border-transparent text-[#374151] hover:bg-neutral-50 hover:text-red-800'
+const pageActive = 'border-red-700 bg-red-700 text-white'
 
 function go(page: number) {
   if (props.disabled) return

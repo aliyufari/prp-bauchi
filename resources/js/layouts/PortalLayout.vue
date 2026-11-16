@@ -23,10 +23,10 @@ const logout = () => router.post(route('logout'))
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col bg-green-50">
-    <header class="sticky top-0 z-30 border-b border-white/10" style="background: linear-gradient(90deg, #0d3b26, #092b1c);">
+  <div class="flex min-h-screen flex-col bg-neutral-50">
+    <header class="sticky top-0 z-30 border-b border-white/10" style="background: linear-gradient(90deg, var(--brand-side-from,#171717), var(--brand-side-to,#0a0a0a));">
       <div class="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-        <img :src="logoUrl" alt="PRP" class="h-8 w-8 rounded-full object-cover ring-2 ring-[#e8c44a]/40" />
+        <img :src="logoUrl" alt="PRP" class="h-8 w-8 rounded-full object-cover ring-2 ring-[var(--brand-accent,#ef4444)]/40" />
 
         <div class="min-w-0 flex-1">
           <p class="truncate text-sm font-bold text-white">{{ fullName }}</p>
@@ -39,7 +39,7 @@ const logout = () => router.post(route('logout'))
           <Link
             v-for="item in items" :key="item.href" :href="item.href"
             class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
-            :class="isActive(item) ? 'bg-green-600 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'"
+            :class="isActive(item) ? 'bg-red-600 text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'"
           >{{ item.label }}</Link>
         </nav>
 
@@ -66,7 +66,7 @@ const logout = () => router.post(route('logout'))
           <Link
             :href="item.href"
             class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-semibold"
-            :class="isActive(item) ? 'text-green-700' : 'text-gray-400'"
+            :class="isActive(item) ? 'text-red-700' : 'text-gray-400'"
           >
             <component :is="resolveIcon(item.icon)" class="h-5 w-5" />
             {{ item.label }}

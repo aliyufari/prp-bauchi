@@ -15,7 +15,7 @@ const controlSize = {
 } as const
 
 export const controlNormal =
-  'border-[#e5e7eb] hover:border-[#d1d5db] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/30'
+  'border-[#e5e7eb] hover:border-[#d1d5db] focus:border-[#dc2626] focus:ring-2 focus:ring-[#dc2626]/30'
 
 export const controlInvalid =
   'border-[#dc2626] bg-[#fef2f2] focus:border-[#dc2626] focus:ring-2 focus:ring-[#dc2626]/20'

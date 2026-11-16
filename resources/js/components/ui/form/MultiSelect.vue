@@ -67,7 +67,7 @@ watch(open, value => { if (!value) query.value = '' })
           @click="open = !open">
           <span v-if="!chosen.length" class="flex-1 text-[#9ca3af]">{{ placeholder }}</span>
           <span v-else class="flex min-w-0 flex-1 flex-wrap gap-1">
-            <span v-for="item in visible" :key="String(item.value)" class="inline-flex max-w-full items-center gap-1 rounded-md bg-[#dcfce7] px-2 py-1 text-xs font-medium text-[#0d3b26]">
+            <span v-for="item in visible" :key="String(item.value)" class="inline-flex max-w-full items-center gap-1 rounded-md bg-[#fee2e2] px-2 py-1 text-xs font-medium text-[#171717]">
               <span class="max-w-36 truncate">{{ item.label }}</span>
               <X class="h-3 w-3 cursor-pointer" @click.stop="remove(item.value)" />
             </span>
@@ -88,9 +88,9 @@ watch(open, value => { if (!value) query.value = '' })
             <li v-if="!filtered.length" class="px-3 py-3 text-sm text-[#6b7280]">No matching options</li>
             <li v-for="option in filtered" :key="`${typeof option.value}:${option.value}`"
               role="option" :aria-selected="isSelected(option.value)"
-              :class="['flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-[#f0fdf4]', option.disabled && 'cursor-not-allowed opacity-40']"
+              :class="['flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-[#fafafa]', option.disabled && 'cursor-not-allowed opacity-40']"
               @click="toggleValue(option)">
-              <span class="flex h-4 w-4 items-center justify-center rounded border" :class="isSelected(option.value) ? 'border-[#16a34a] bg-[#16a34a] text-white' : 'border-[#9ca3af]'">
+              <span class="flex h-4 w-4 items-center justify-center rounded border" :class="isSelected(option.value) ? 'border-[#dc2626] bg-[#dc2626] text-white' : 'border-[#9ca3af]'">
                 <Check v-if="isSelected(option.value)" class="h-3 w-3" />
               </span>
               <span class="min-w-0 flex-1">

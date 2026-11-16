@@ -254,9 +254,9 @@ onMounted(load);
 
         <p
             v-else-if="activeLevel === 'state'"
-            class="flex items-center gap-2 rounded-xl border border-green-100 bg-green-50 px-3 py-2.5 text-xs font-medium text-green-800"
+            class="flex items-center gap-2 rounded-xl border border-red-100 bg-neutral-50 px-3 py-2.5 text-xs font-medium text-red-800"
         >
-            <Info class="h-4 w-4 shrink-0 text-green-700" />
+            <Info class="h-4 w-4 shrink-0 text-red-700" />
             State level covers all of Bauchi State. No further location is needed.
         </p>
 

@@ -9,7 +9,7 @@ import { Loader } from 'lucide-vue-next'
         aria-live="polite"
         aria-label="Loading page"
     >
-        <Loader :size="48" :stroke-width="1.8" class="animate-spin text-green-700" />
+        <Loader :size="48" :stroke-width="1.8" class="animate-spin text-red-700" />
         <span class="sr-only">Loading page…</span>
     </div>
 </template>

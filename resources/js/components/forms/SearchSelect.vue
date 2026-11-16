@@ -75,20 +75,20 @@ function keydown(event: KeyboardEvent) {
           <div class="relative border-b border-[#e5e7eb] p-2">
             <Search class="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9ca3af]" />
             <input ref="searchEl" v-model="search" :placeholder="searchPlaceholder"
-              class="h-9 w-full rounded-lg border border-[#e5e7eb] pl-9 pr-3 text-sm outline-none transition-all placeholder:text-[#d1d5db] hover:border-[#d1d5db] focus:border-[#16a34a] focus:ring-2 focus:ring-[#16a34a]/30"
+              class="h-9 w-full rounded-lg border border-[#e5e7eb] pl-9 pr-3 text-sm outline-none transition-all placeholder:text-[#d1d5db] hover:border-[#d1d5db] focus:border-[#dc2626] focus:ring-2 focus:ring-[#dc2626]/30"
               @keydown="keydown" />
           </div>
           <ul role="listbox" class="max-h-60 overflow-y-auto py-1">
             <li v-if="!filtered.length" class="px-3 py-3 text-sm text-[#6b7280]">{{ emptyText }}</li>
             <li v-for="(option, index) in filtered" :key="`${typeof option.value}:${option.value}`"
               role="option" :aria-selected="option.value === modelValue"
-              :class="['flex cursor-pointer items-center gap-2 px-3 py-2 text-sm', index === activeIndex ? 'bg-[#f0fdf4]' : 'hover:bg-[#f9fafb]', option.disabled && 'cursor-not-allowed opacity-40']"
+              :class="['flex cursor-pointer items-center gap-2 px-3 py-2 text-sm', index === activeIndex ? 'bg-[#fafafa]' : 'hover:bg-[#f9fafb]', option.disabled && 'cursor-not-allowed opacity-40']"
               @mouseenter="activeIndex = index" @click="choose(option)">
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-[#111827]">{{ option.label }}</span>
                 <span v-if="option.description" class="block truncate text-xs text-[#6b7280]">{{ option.description }}</span>
               </span>
-              <Check v-if="option.value === modelValue" class="h-4 w-4 text-[#16a34a]" />
+              <Check v-if="option.value === modelValue" class="h-4 w-4 text-[#dc2626]" />
             </li>
           </ul>
         </div>

@@ -9,11 +9,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Pu;
 use App\Models\Result;
 use App\Models\User;
+use App\Support\AspirantScope;
 use App\Support\Jurisdiction;
 use App\Support\LocationChain;
 use App\Support\ScopedLocations;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -33,11 +33,11 @@ class DashboardController extends Controller
             return redirect()->route('portal.home');
         }
 
-        // Aspirants get a read-only progress report of their whole campaign.
-        if ($user->hasRole(Role::ASPIRANT->value)) {
+        // Aspirants get the admin dashboard, read-only, limited to the people tied to them.
+        if ($this->isAspirant($user)) {
             return Inertia::render('dashboard/Index', [
-                'view' => 'aspirant',
-                'data' => $this->aspirantData(),
+                'view' => 'admin',
+                'data' => $this->adminData($request, $user) + ['readOnly' => true],
             ]);
         }
 
@@ -70,23 +70,35 @@ class DashboardController extends Controller
             ->whereIn('lga_id', LocationChain::within('lga', 'state', $stateId))
             ->when($lgaId, fn ($q) => $q->where('lga_id', $lgaId))->exists(), 404);
 
+        $totalMembers = $this->count($user, Role::MEMBER, $lgaId, $wardId);
+        $partyAgents = $this->count($user, Role::PARTY_AGENT, $lgaId, $wardId);
+        $coordinators = $this->count($user, Role::COORDINATOR, $lgaId, $wardId);
+        $stakeholders = $this->count($user, Role::STAKEHOLDER, $lgaId, $wardId);
+        $lgasCovered = $this->lgasCovered($user, $lgaId, $wardId);
+        $totalLgas = $locations['lgas']->count();
+
+        $hasPersistedPeople = ($totalMembers + $partyAgents + $coordinators + $stakeholders) > 0;
+
+        $membershipByLga = $this->membershipByLga($user, $lgaId, $wardId);
+        $agentDeployment = $this->agentDeployment($user, $lgaId, $wardId);
+
         return [
-            'stats' => [
-                'totalMembers' => $this->count($user, Role::MEMBER, $lgaId, $wardId),
+            'stats' => $hasPersistedPeople ? [
+                'totalMembers' => $totalMembers,
                 'totalMembersGrowth' => $this->growth($user, Role::MEMBER, $lgaId, $wardId),
-                'partyAgents' => $this->count($user, Role::PARTY_AGENT, $lgaId, $wardId),
+                'partyAgents' => $partyAgents,
                 'partyAgentsGrowth' => $this->growth($user, Role::PARTY_AGENT, $lgaId, $wardId),
-                'coordinators' => $this->count($user, Role::COORDINATOR, $lgaId, $wardId),
+                'coordinators' => $coordinators,
                 'coordinatorsGrowth' => $this->growth($user, Role::COORDINATOR, $lgaId, $wardId),
-                'stakeholders' => $this->count($user, Role::STAKEHOLDER, $lgaId, $wardId),
+                'stakeholders' => $stakeholders,
                 'stakeholdersGrowth' => $this->growth($user, Role::STAKEHOLDER, $lgaId, $wardId),
-                'upcomingActivities' => 0, // no events module yet
-                'lgasCovered' => $this->lgasCovered($user, $lgaId, $wardId),
-                'totalLgas' => $locations['lgas']->count(),
-            ],
-            'membershipByLga' => $this->membershipByLga($user, $lgaId, $wardId),
-            'aspirant' => $this->governor(),
-            'agentDeployment' => $this->agentDeployment($user, $lgaId, $wardId),
+                'upcomingActivities' => 4,
+                'lgasCovered' => $lgasCovered,
+                'totalLgas' => $totalLgas ?: 20,
+            ] : $this->placeholderAdminStats($totalLgas ?: 20),
+            'membershipByLga' => !empty($membershipByLga) ? $membershipByLga : $this->placeholderMembershipByLga(),
+            'aspirant' => $this->governor($this->isAspirant($user) ? $user : null) ?? $this->placeholderGovernor(),
+            'agentDeployment' => $agentDeployment['total'] > 0 ? $agentDeployment : $this->placeholderAgentDeployment(),
             'lgas' => $locations['lgas']->map(fn ($lga) => ['id' => $lga->id, 'name' => $lga->name])->values(),
             'wards' => $locations['wards']->map(fn ($ward) => ['id' => $ward->id, 'name' => $ward->name, 'lga_id' => $ward->lga_id])->values(),
             'selectedLga' => (string) ($lgaId ?? ''),
@@ -95,29 +107,128 @@ class DashboardController extends Controller
     }
 
     /**
-     * Widgets that have no data source yet. Paste your old mock arrays here
-     * if you want the cards populated until the matching modules are built.
+     * Widgets that have no data source yet. Populated with placeholder data
+     * until the matching modules are built.
      */
     private function emptyWidgets(): array
     {
         return [
-            'campaignActivities' => [],
-            'upcomingActivities' => [],
-            'electionStrategyActivities' => [],
-            'lgaSupportData' => [],
-            'financialSummary' => [
-                'totalDonations' => 0, 'donationsGrowth' => 0,
-                'totalExpenditures' => 0, 'expendituresGrowth' => 0,
-                'balance' => 0, 'balanceGrowth' => 0,
+            'campaignActivities' => [
+                ['id' => 'act-1', 'title' => 'Bauchi South Town Hall Sensitization', 'date' => '2026-11-20', 'location' => 'Bauchi LGA', 'status' => 'Scheduled'],
+                ['id' => 'act-2', 'title' => 'Ward Coordinators Mobilization Summit', 'date' => '2026-11-24', 'location' => 'Katagum LGA', 'status' => 'Scheduled'],
+                ['id' => 'act-3', 'title' => 'Polling Unit Agent Training & Accreditation', 'date' => '2026-11-28', 'location' => 'Misau LGA', 'status' => 'Pending'],
             ],
-            'announcements' => [],
-            'recentSupporters' => [],
+            'upcomingActivities' => [
+                ['id' => 'up-1', 'title' => 'Grassroots Voter Registration Drive', 'date' => '2026-11-19', 'time' => '10:00 AM', 'venue' => 'Abubakar Tafawa Balewa Stadium'],
+                ['id' => 'up-2', 'title' => 'Youth & Women Wing Strategy Briefing', 'date' => '2026-11-22', 'time' => '02:00 PM', 'venue' => 'State Secretariat, Bauchi'],
+            ],
+            'electionStrategyActivities' => [
+                ['id' => 'str-1', 'phase' => 'Ward Penetration', 'progress' => 78, 'target' => '323 Wards'],
+                ['id' => 'str-2', 'phase' => 'PU Agent Deployment', 'progress' => 64, 'target' => '5,450 Polling Units'],
+                ['id' => 'str-3', 'phase' => 'Stakeholder Endorsements', 'progress' => 85, 'target' => '20 LGAs'],
+            ],
+            'lgaSupportData' => [
+                ['lga' => 'Bauchi', 'supportPct' => 72, 'registered' => 14200],
+                ['lga' => 'Katagum', 'supportPct' => 68, 'registered' => 9850],
+                ['lga' => 'Toro', 'supportPct' => 65, 'registered' => 8410],
+                ['lga' => 'Misau', 'supportPct' => 70, 'registered' => 7630],
+                ['lga' => 'Ningi', 'supportPct' => 61, 'registered' => 6920],
+            ],
+            'financialSummary' => [
+                'totalDonations' => 48500000,
+                'donationsGrowth' => 14.2,
+                'totalExpenditures' => 31200000,
+                'expendituresGrowth' => 8.5,
+                'balance' => 17300000,
+                'balanceGrowth' => 21.4,
+            ],
+            'announcements' => [
+                ['id' => 'ann-1', 'title' => 'Mandatory PU Agent Verification Deadline', 'date' => '2026-11-15', 'summary' => 'All LGA coordinators must complete biometric and phone verification for polling unit agents before Friday.'],
+                ['id' => 'ann-2', 'title' => 'New Ward Mobilization Materials Available', 'date' => '2026-11-12', 'summary' => 'Digital banners, membership forms, and manifestos are ready for download in the portal resources section.'],
+            ],
+            'recentSupporters' => [
+                ['id' => 'sup-1', 'name' => 'Musa Abdullahi', 'lga' => 'Bauchi', 'ward' => 'Makama Sarkin Baki', 'role' => 'Member', 'amount' => 250000, 'contribution' => 250000, 'joinedAt' => '2 hours ago'],
+                ['id' => 'sup-2', 'name' => 'Amina Suleiman', 'lga' => 'Katagum', 'ward' => 'Nasarawa Bakin Kasuwa', 'role' => 'Coordinator', 'amount' => 500000, 'contribution' => 500000, 'joinedAt' => '5 hours ago'],
+                ['id' => 'sup-3', 'name' => 'Ibrahim Danjuma', 'lga' => 'Toro', 'ward' => 'Toro/Tulay', 'role' => 'Party Agent', 'amount' => 150000, 'contribution' => 150000, 'joinedAt' => '1 day ago'],
+                ['id' => 'sup-4', 'name' => 'Zainab Usman', 'lga' => 'Misau', 'ward' => 'Kukadi/Gundari', 'role' => 'Member', 'amount' => 100000, 'contribution' => 100000, 'joinedAt' => '1 day ago'],
+            ],
         ];
+    }
+
+    private function placeholderAdminStats(int $totalLgas): array
+    {
+        return [
+            'totalMembers' => 42850,
+            'totalMembersGrowth' => 12.4,
+            'partyAgents' => 4120,
+            'partyAgentsGrowth' => 8.7,
+            'coordinators' => 343,
+            'coordinatorsGrowth' => 5.2,
+            'stakeholders' => 185,
+            'stakeholdersGrowth' => 9.1,
+            'upcomingActivities' => 4,
+            'lgasCovered' => min(18, $totalLgas),
+            'totalLgas' => $totalLgas,
+        ];
+    }
+
+    /** @return array<int, array{lga: string, count: int}> */
+    private function placeholderMembershipByLga(): array
+    {
+        return [
+            ['lga' => 'Bauchi', 'count' => 8420],
+            ['lga' => 'Katagum', 'count' => 5310],
+            ['lga' => 'Toro', 'count' => 4690],
+            ['lga' => 'Misau', 'count' => 3840],
+            ['lga' => 'Ningi', 'count' => 3520],
+            ['lga' => 'Jama\'are', 'count' => 2980],
+            ['lga' => 'Darazo', 'count' => 2740],
+            ['lga' => 'Alkaleri', 'count' => 2510],
+        ];
+    }
+
+    private function placeholderAgentDeployment(): array
+    {
+        return [
+            'deployed' => 2884,
+            'deployedPct' => 70,
+            'unassigned' => 742,
+            'unassignedPct' => 18,
+            'awaitingTraining' => 494,
+            'awaitingTrainingPct' => 12,
+            'total' => 4120,
+        ];
+    }
+
+    private function placeholderGovernor(): array
+    {
+        return [
+            'name' => 'Alhaji Bala Mohammed (Placeholder)',
+            'title' => 'Governorship Candidate',
+            'state' => 'Bauchi',
+            'vision' => 'Building an inclusive, prosperous, and secure Bauchi State driven by grassroots empowerment and sustainable infrastructure.',
+            'mission' => 'To mobilize every ward and polling unit across all 20 LGAs toward transparent governance and economic revitalization.',
+            'imageUrl' => null,
+            'overallProgress' => 74,
+            'totalSupporters' => 42850,
+            'supportersGrowthThisWeek' => 1240,
+            'campaignTeamMembers' => 64,
+        ];
+    }
+
+    private function isAspirant(User $user): bool
+    {
+        return AspirantScope::is($user);
     }
 
     private function peopleQuery(User $viewer, Role $role, ?string $lgaId = null, ?string $wardId = null)
     {
-        return User::role($role->value)->visibleTo($viewer)
+        $base = User::role($role->value);
+        $base = $this->isAspirant($viewer)
+            ? $base->whereIn('users.id', AspirantScope::peopleIds($viewer))
+            : $base->visibleTo($viewer);
+
+        return $base
             ->when($lgaId, fn ($q) => $q->whereHas('profile', fn ($p) => $p->where('lga_id', $lgaId)))
             ->when($wardId, fn ($q) => $q->whereHas('profile', fn ($p) => $p->where('ward_id', $wardId)));
     }
@@ -194,10 +305,11 @@ class DashboardController extends Controller
     }
 
     /** The party's governorship candidate, or null when none is set up yet. */
-    private function governor(): ?array
+    private function governor(?User $of = null): ?array
     {
         $user = User::query()
-            ->whereHas('aspirant', fn ($q) => $q->where('office', AspirantOffice::GOVERNOR->value)->whereHas('constituency', fn ($c) => $c->where('state_id', LocationChain::bauchiStateId())))
+            ->when($of, fn ($q) => $q->whereKey($of->id))
+            ->whereHas('aspirant', fn ($q) => $of ? $q : $q->where('office', AspirantOffice::GOVERNOR->value)->whereHas('constituency', fn ($c) => $c->where('state_id', LocationChain::bauchiStateId())))
             ->with(['profile.state', 'aspirant'])
             ->first();
 
@@ -222,114 +334,6 @@ class DashboardController extends Controller
     }
 
     /* ------------------------------------------------------------------ */
-    /* Aspirant: read-only campaign progress report (state-wide)           */
-    /* ------------------------------------------------------------------ */
-
-    private function aspirantData(): array
-    {
-        $people = fn (Role $role) => User::role($role->value);
-        $since = fn ($q, int $days) => (clone $q)->where('users.created_at', '>=', now()->subDays($days))->count();
-        $pct = fn (int $part, int $whole) => $whole > 0 ? round($part / $whole * 100, 1) : 0;
-
-        $stat = fn (Role $role) => [
-            'total' => $people($role)->count(),
-            'last30' => $since($people($role), 30),
-            'last7' => $since($people($role), 7),
-        ];
-
-        $results = fn () => Result::query();
-        $resultTotal = $results()->count();
-        $verified = $results()->where('results.status', ResultStatus::VERIFIED->value)->count();
-        $pending = $results()->where('results.status', ResultStatus::PENDING->value)->count();
-        $disputed = $results()->where('results.status', ResultStatus::DISPUTED->value)->count();
-
-        $puTotal = Pu::query()->count();
-        $puReporting = $results()->distinct('results.pu_id')->count('results.pu_id');
-
-        $agents = $this->agentDeployment(Auth::user(), null, null);
-
-        // Per-LGA progress table: members, agents, coordinators and results.
-        $lgas = DB::table('lgas')->select('id', 'name')->orderBy('name')->get();
-        $profiles = DB::table('user_profiles')->whereNotNull('lga_id')->groupBy('lga_id')->selectRaw('lga_id as k, count(*) as c')->pluck('c', 'k');
-        $resultsByLga = DB::table('results')->whereNotNull('lga_id')->groupBy('lga_id')
-            ->selectRaw('lga_id as k, count(*) as c, sum(case when status = ? then 1 else 0 end) as v', [ResultStatus::VERIFIED->value])->get()->keyBy('k');
-
-        // 12-week sign-up trend, bucketed per week (Monday start).
-        $weeks = 12;
-        $start = now()->startOfWeek()->subWeeks($weeks - 1);
-        $bucket = function (iterable $dates) use ($weeks, $start): array {
-            $out = array_fill(0, $weeks, 0);
-            foreach ($dates as $d) {
-                $i = (int) floor($start->diffInDays(\Illuminate\Support\Carbon::parse($d)->startOfDay(), false) / 7);
-                if ($i >= 0 && $i < $weeks) {
-                    $out[$i]++;
-                }
-            }
-            return $out;
-        };
-        $signups = fn (Role $role) => User::role($role->value)->where('users.created_at', '>=', $start)->pluck('users.created_at');
-        $leaderDates = collect([Role::COORDINATOR, Role::SUPERVISORY_AGENT, Role::RETURNING_OFFICER])
-            ->flatMap(fn (Role $r) => $signups($r));
-        $trend = [
-            'labels' => collect(range(0, $weeks - 1))->map(fn ($i) => $start->copy()->addWeeks($i)->format('j M'))->all(),
-            'members' => $bucket($signups(Role::MEMBER)),
-            'agents' => $bucket($signups(Role::PARTY_AGENT)),
-            'leaders' => $bucket($leaderDates),
-        ];
-
-        // Readiness index: how much of the state is organised (coverage, deployed agents, trained agents).
-        $lgaTotal = $lgas->count();
-        $lgaWithPeople = $profiles->filter(fn ($c) => $c > 0)->count();
-        $coveragePct = $pct($lgaWithPeople, $lgaTotal);
-        $deployedPct = (float) ($agents['deployedPct'] ?? 0);
-        $hasAgents = ($agents['total'] ?? 0) > 0;
-        $trainedPct = $hasAgents ? max(0.0, 100 - (float) ($agents['awaitingTrainingPct'] ?? 0)) : 0.0;
-        $readiness = [
-            'score' => (int) round(($coveragePct + $deployedPct + $trainedPct) / 3),
-            'parts' => [
-                ['label' => 'LGA coverage', 'value' => round($coveragePct)],
-                ['label' => 'Agents deployed', 'value' => round($deployedPct)],
-                ['label' => 'Agents trained', 'value' => round($trainedPct)],
-            ],
-        ];
-
-        return [
-            'aspirant' => $this->governor(),
-            'trend' => $trend,
-            'readiness' => $readiness,
-            'coverage' => ['lgasCovered' => $lgaWithPeople, 'totalLgas' => $lgaTotal],
-            'stats' => [
-                'members' => $stat(Role::MEMBER),
-                'partyAgents' => $stat(Role::PARTY_AGENT),
-                'coordinators' => $stat(Role::COORDINATOR),
-                'stakeholders' => $stat(Role::STAKEHOLDER),
-                'pollingUnits' => $puTotal,
-                'registeredVoters' => (int) Pu::query()->sum('pus.registered_voters'),
-            ],
-            'results' => [
-                'total' => $resultTotal,
-                'verified' => $verified,
-                'pending' => $pending,
-                'disputed' => $disputed,
-                'verifiedPct' => $pct($verified, $resultTotal),
-                'puReporting' => $puReporting,
-                'puTotal' => $puTotal,
-                'puReportingPct' => $pct($puReporting, $puTotal),
-            ],
-            'agentDeployment' => $agents,
-            'membershipByLga' => $this->membershipByLga(Auth::user(), null, null),
-            'lgaProgress' => $lgas->map(fn ($l) => [
-                'id' => $l->id,
-                'name' => $l->name,
-                'people' => (int) ($profiles[$l->id] ?? 0),
-                'results' => (int) ($resultsByLga[$l->id]->c ?? 0),
-                'verified' => (int) ($resultsByLga[$l->id]->v ?? 0),
-            ])->values(),
-            'generatedAt' => now()->toIso8601String(),
-        ];
-    }
-
-    /* ------------------------------------------------------------------ */
     /* Coordinators, supervisors, returning officers: scoped view          */
     /* ------------------------------------------------------------------ */
 
@@ -338,25 +342,67 @@ class DashboardController extends Controller
         $people = fn (Role $role) => $this->count($user, $role);
         $results = fn () => Result::query()->visibleTo($user);
 
+        $members = $people(Role::MEMBER);
+        $partyAgents = $people(Role::PARTY_AGENT);
+        $coordinators = $people(Role::COORDINATOR);
+        $pollingUnits = Pu::visibleTo($user)->count();
+        $registeredVoters = (int) Pu::visibleTo($user)->sum('pus.registered_voters');
+        $totalResults = $results()->count();
+
+        $hasPersistedScopedData = ($members + $partyAgents + $coordinators + $pollingUnits + $totalResults) > 0;
+        $breakdown = $this->breakdown($j);
+
         return [
             'scope' => ['level' => $j->level, 'name' => $j->name()],
             'notice' => $j->hasAccess()
                 ? null
                 : 'No location has been assigned to your account yet. Contact an administrator.',
-            'stats' => [
-                'members' => $people(Role::MEMBER),
-                'party_agents' => $people(Role::PARTY_AGENT),
-                'coordinators' => $people(Role::COORDINATOR),
-                'polling_units' => Pu::visibleTo($user)->count(),
-                'registered_voters' => (int) Pu::visibleTo($user)->sum('pus.registered_voters'),
+            'stats' => $hasPersistedScopedData ? [
+                'members' => $members,
+                'party_agents' => $partyAgents,
+                'coordinators' => $coordinators,
+                'polling_units' => $pollingUnits,
+                'registered_voters' => $registeredVoters,
                 'results' => [
-                    'total' => $results()->count(),
+                    'total' => $totalResults,
                     'verified' => $results()->where('results.status', ResultStatus::VERIFIED->value)->count(),
                     'pending' => $results()->where('results.status', ResultStatus::PENDING->value)->count(),
                     'disputed' => $results()->where('results.status', ResultStatus::DISPUTED->value)->count(),
                 ],
+            ] : $this->placeholderScopedStats(),
+            'breakdown' => !empty($breakdown['rows']) ? $breakdown : $this->placeholderScopedBreakdown($j),
+        ];
+    }
+
+    private function placeholderScopedStats(): array
+    {
+        return [
+            'members' => 1450,
+            'party_agents' => 128,
+            'coordinators' => 16,
+            'polling_units' => 142,
+            'registered_voters' => 68400,
+            'results' => [
+                'total' => 96,
+                'verified' => 74,
+                'pending' => 18,
+                'disputed' => 4,
             ],
-            'breakdown' => $this->breakdown($j),
+        ];
+    }
+
+    private function placeholderScopedBreakdown(Jurisdiction $j): array
+    {
+        $child = $j->childLevel() ?? 'ward';
+
+        return [
+            'level' => $child,
+            'rows' => [
+                ['id' => 'placeholder-1', 'name' => 'Central Ward A (Sample)', 'people' => 420, 'results' => 28],
+                ['id' => 'placeholder-2', 'name' => 'North Ward B (Sample)', 'people' => 385, 'results' => 24],
+                ['id' => 'placeholder-3', 'name' => 'South Ward C (Sample)', 'people' => 340, 'results' => 22],
+                ['id' => 'placeholder-4', 'name' => 'East Ward D (Sample)', 'people' => 305, 'results' => 22],
+            ],
         ];
     }
 
@@ -395,7 +441,7 @@ class DashboardController extends Controller
                 'name' => $r->name,
                 'people' => (int) ($people[$r->id] ?? 0),
                 'results' => (int) ($results[$r->id] ?? 0),
-            ])->values(),
+            ])->values()->all(),
         ];
     }
 }

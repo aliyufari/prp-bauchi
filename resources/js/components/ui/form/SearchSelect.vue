@@ -82,13 +82,13 @@ function keydown(event: KeyboardEvent) {
             <li v-if="!filtered.length" class="px-3 py-3 text-sm text-[#6b7280]">{{ emptyText }}</li>
             <li v-for="(option, index) in filtered" :key="`${typeof option.value}:${option.value}`"
               role="option" :aria-selected="option.value === modelValue"
-              :class="['flex cursor-pointer items-center gap-2 px-3 py-2 text-sm', index === activeIndex ? 'bg-[#f0fdf4]' : 'hover:bg-[#f9fafb]', option.disabled && 'cursor-not-allowed opacity-40']"
+              :class="['flex cursor-pointer items-center gap-2 px-3 py-2 text-sm', index === activeIndex ? 'bg-[#fafafa]' : 'hover:bg-[#f9fafb]', option.disabled && 'cursor-not-allowed opacity-40']"
               @mouseenter="activeIndex = index" @click="choose(option)">
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-[#111827]">{{ option.label }}</span>
                 <span v-if="option.description" class="block truncate text-xs text-[#6b7280]">{{ option.description }}</span>
               </span>
-              <Check v-if="option.value === modelValue" class="h-4 w-4 text-[#16a34a]" />
+              <Check v-if="option.value === modelValue" class="h-4 w-4 text-[#dc2626]" />
             </li>
           </ul>
         </div>

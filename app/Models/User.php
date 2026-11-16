@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use App\Notifications\ResetPasswordNotification;
 use App\Support\Jurisdiction;
 use App\Traits\HasJurisdiction;
 use Illuminate\Database\Eloquent\Builder;
@@ -70,6 +71,12 @@ class User extends Authenticatable
     protected function constrainToJurisdiction(Builder $query, Jurisdiction $j): Builder
     {
         return $query->whereHas('profile', fn ($p) => $p->where($j->column(), $j->id));
+    }
+
+    /** Reset link e-mail (Laravel Notification, sent through the configured mailer). */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     public function profile(): HasOne

@@ -5,7 +5,7 @@ const props = withDefaults(defineProps<{ variant?: 'success' | 'info' | 'warning
 const emit = defineEmits<{ dismiss: [] }>()
 const icon = computed(() => ({ success: CheckCircle2, info: Info, warning: TriangleAlert, error: AlertCircle })[props.variant])
 const styles = computed(() => ({
-  success: 'border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]',
+  success: 'border-[#fecaca] bg-[#fafafa] text-[#991b1b]',
   info: 'border-[#bfdbfe] bg-[#eff6ff] text-[#1e40af]',
   warning: 'border-[#fde68a] bg-[#fffbeb] text-[#92400e]',
   error: 'border-[#fecaca] bg-[#fef2f2] text-[#991b1b]',

@@ -35,12 +35,12 @@ const fmt = (n: number) =>
     <!-- 3 stat blocks -->
     <div v-if="hasFinancialData" class="grid grid-cols-1 gap-2">
       <!-- Donations -->
-      <div class="bg-green-50 rounded-lg p-2.5">
-        <p class="text-[9px] font-bold text-green-700 uppercase tracking-wider">Total Donations</p>
-        <p class="text-base font-black text-green-900 mt-0.5">{{ fmt(summary.totalDonations) }}</p>
+      <div class="bg-neutral-50 rounded-lg p-2.5">
+        <p class="text-[9px] font-bold text-red-700 uppercase tracking-wider">Total Donations</p>
+        <p class="text-base font-black text-red-900 mt-0.5">{{ fmt(summary.totalDonations) }}</p>
         <div class="flex items-center gap-1 mt-0.5">
-          <TrendingUp class="w-3 h-3 text-green-600" />
-          <span class="text-[9px] font-bold text-green-600">+{{ summary.donationsGrowth }}%</span>
+          <TrendingUp class="w-3 h-3 text-red-600" />
+          <span class="text-[9px] font-bold text-red-600">+{{ summary.donationsGrowth }}%</span>
         </div>
       </div>
 
@@ -56,7 +56,7 @@ const fmt = (n: number) =>
 
       <!-- Balance -->
       <div class="bg-blue-50 rounded-lg p-2.5">
-        <p class="text-[9px] font-bold text-green-900 uppercase tracking-wider">Balance</p>
+        <p class="text-[9px] font-bold text-red-900 uppercase tracking-wider">Balance</p>
         <p class="text-base font-black text-blue-900 mt-0.5">{{ fmt(summary.balance) }}</p>
         <div class="flex items-center gap-1 mt-0.5">
           <TrendingUp class="w-3 h-3 text-blue-600" />

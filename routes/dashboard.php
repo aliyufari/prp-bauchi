@@ -6,7 +6,9 @@ use App\Http\Controllers\Dashboard\CampaignTeamController;
 use App\Http\Controllers\Dashboard\CampaignTeamMemberController;
 use App\Http\Controllers\Dashboard\LocationOptionsController;
 use App\Http\Controllers\Dashboard\MemberController;
+use App\Http\Controllers\Dashboard\PortalController;
 use App\Http\Controllers\Dashboard\PuController;
+use App\Http\Controllers\Dashboard\PuTaskController;
 use App\Http\Controllers\Dashboard\ResultController;
 
 use App\Http\Controllers\Dashboard\{
@@ -94,4 +96,23 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('{result}/verify', [ResultController::class, 'verify'])->name('verify');
         Route::delete('{result}', [ResultController::class, 'destroy'])->name('destroy');
     });
+
+    // Portal pages shared by every portal user (home is in web.php).
+    Route::get('portal/profile', [PortalController::class, 'profile'])->name('portal.profile');
+    Route::get('portal/agents', [PortalController::class, 'agents'])->name('portal.agents');
+    Route::get('portal/team', [PortalController::class, 'team'])->name('portal.team');
+
+    // Party-agent field tasks (PU agent: own PU, ward agent: every PU in the ward). Rendered in the portal layout.
+    Route::prefix('portal/polling-units')->name('portal.pus')->group(function () {
+        Route::get('/', [PuTaskController::class, 'index'])->name('');
+        Route::get('{pu}/officials', [PuTaskController::class, 'officials'])->name('.officials');
+        Route::put('{pu}/officials', [PuTaskController::class, 'saveOfficials'])->name('.officials.save');
+        Route::get('{pu}/result', [PuTaskController::class, 'result'])->name('.result');
+        Route::post('{pu}/result', [PuTaskController::class, 'saveResult'])->name('.result.save');
+        Route::delete('{pu}/result/file', [PuTaskController::class, 'deleteFile'])->name('.result.file');
+    });
+    Route::get('pu-media/{pu}/{kind}/{index?}', [PuTaskController::class, 'media'])->whereIn('kind', ['video', 'sheet'])->name('pu-media');
+
+    // Management review of what the agents submitted.
+    Route::get('dashboard/pu-reports', [PuTaskController::class, 'reports'])->name('pu-reports.index');
 });

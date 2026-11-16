@@ -60,8 +60,12 @@ class PermissionSeeder extends Seeder
         $grant(Role::PARTY_AGENT, ['portal.access', 'results.view']);
         $grant(Role::MEMBER, ['portal.access']);
         $grant(Role::STAKEHOLDER, ['portal.access']);
-        $grant(Role::ASPIRANT, ['portal.access', 'aspirants.view', 'campaign-teams.view']);
+        // Aspirants follow progress on the read-only dashboard (their own people, state-wide results).
+        $grant(Role::ASPIRANT, ['portal.access', 'dashboard.view', 'campaign-teams.view']);
         $grant(Role::CAMPAIGN_TEAM_MEMBER, ['portal.access', 'campaign-teams.view']);
+
+        // Field roles manage the people below them inside their own location (additive, runs last).
+        $this->call(ManagerPermissionsSeeder::class);
     }
 
     /** @return array<int, string> */

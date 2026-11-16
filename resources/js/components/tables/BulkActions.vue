@@ -34,13 +34,13 @@ const emit = defineEmits<{ clear: []; action: [key: string] }>()
   >
     <div
       v-if="selected.length"
-      class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3"
+      class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-100 bg-neutral-50 px-4 py-3"
     >
-      <div class="flex items-center gap-2 text-xs font-semibold text-green-800">
+      <div class="flex items-center gap-2 text-xs font-semibold text-red-800">
         <button
           type="button"
           @click="emit('clear')"
-          class="rounded-full p-1 hover:bg-green-100"
+          class="rounded-full p-1 hover:bg-red-100"
           aria-label="Clear selection"
         >
           <X class="h-3.5 w-3.5" />
@@ -58,7 +58,7 @@ const emit = defineEmits<{ clear: []; action: [key: string] }>()
           :class="
             action.danger
               ? 'bg-white text-red-600 hover:bg-red-50'
-              : 'bg-white text-green-800 hover:bg-green-100'
+              : 'bg-white text-red-800 hover:bg-red-100'
           "
         >
           {{ action.label }}

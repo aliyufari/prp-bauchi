@@ -92,7 +92,7 @@ const colStyle = (col: Column) => (col.minWidth ? { minWidth: col.minWidth } : u
 
 // A sticky column needs an opaque background, otherwise scrolled content shows through it.
 const stickyClass = (col: Column, head = false) =>
-    col.sticky ? ['sticky left-0 z-[1]', head ? 'bg-gray-50' : 'bg-white group-hover:bg-green-50', 'shadow-[1px_0_0_0_#f3f4f6]'] : [];
+    col.sticky ? ['sticky left-0 z-[1]', head ? 'bg-gray-50' : 'bg-white group-hover:bg-neutral-50', 'shadow-[1px_0_0_0_#f3f4f6]'] : [];
 
 const tableColumns = computed(() => props.columns);
 const visibleOnTablet = (col: Column) => !col.hideOnTablet;
@@ -132,8 +132,8 @@ const skeletonList = computed(() => Array.from({ length: props.skeletonRows }, (
 <template>
     <div class="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm" :aria-busy="loading">
         <!-- Thin progress bar: results stay visible while the next page loads. -->
-        <div v-if="loading" class="absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-green-100" role="status" aria-label="Loading records">
-            <div class="h-full w-1/3 animate-[dt-slide_1.1s_ease-in-out_infinite] rounded-full bg-green-600" />
+        <div v-if="loading" class="absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden bg-red-100" role="status" aria-label="Loading records">
+            <div class="h-full w-1/3 animate-[dt-slide_1.1s_ease-in-out_infinite] rounded-full bg-red-600" />
         </div>
 
         <!-- Table (md and up) -->
@@ -152,7 +152,7 @@ const skeletonList = computed(() => Array.from({ length: props.skeletonRows }, (
                                     :checked="allSelected"
                                     :disabled="rows.length === 0 || loading"
                                     aria-label="Select all records on this page"
-                                    class="h-4 w-4 rounded border-gray-300 text-green-700 focus:ring-2 focus:ring-green-600/25 disabled:opacity-40"
+                                    class="h-4 w-4 rounded border-gray-300 text-red-700 focus:ring-2 focus:ring-red-600/25 disabled:opacity-40"
                                     @change="emit('toggle-all')"
                                 />
                             </th>
@@ -168,15 +168,15 @@ const skeletonList = computed(() => Array.from({ length: props.skeletonRows }, (
                                 <button
                                     v-if="col.sortable"
                                     type="button"
-                                    class="group/sort inline-flex items-center gap-1.5 rounded-sm transition outline-none hover:text-green-800 focus-visible:ring-2 focus-visible:ring-green-600/30"
-                                    :class="isSorted(col) && 'text-green-800'"
+                                    class="group/sort inline-flex items-center gap-1.5 rounded-sm transition outline-none hover:text-red-800 focus-visible:ring-2 focus-visible:ring-red-600/30"
+                                    :class="isSorted(col) && 'text-red-800'"
                                     :aria-label="`Sort by ${col.label}`"
                                     @click="sort(col)"
                                 >
                                     {{ col.label }}
                                     <ArrowUp v-if="isSorted(col) && sortDirection === 'asc'" class="h-3.5 w-3.5" />
                                     <ArrowDown v-else-if="isSorted(col)" class="h-3.5 w-3.5" />
-                                    <ArrowUpDown v-else class="h-3.5 w-3.5 text-gray-300 group-hover/sort:text-green-600" />
+                                    <ArrowUpDown v-else class="h-3.5 w-3.5 text-gray-300 group-hover/sort:text-red-600" />
                                 </button>
                                 <span v-else :aria-label="col.ariaLabel">{{ col.label }}</span>
                             </th>
@@ -197,8 +197,8 @@ const skeletonList = computed(() => Array.from({ length: props.skeletonRows }, (
                         <tr
                             v-for="row in rows"
                             :key="row[rowKey]"
-                            class="group transition-colors hover:bg-green-50/40"
-                            :class="[isSelected(row[rowKey]) && 'bg-green-50/60', clickable && 'cursor-pointer']"
+                            class="group transition-colors hover:bg-neutral-50/40"
+                            :class="[isSelected(row[rowKey]) && 'bg-neutral-50/60', clickable && 'cursor-pointer']"
                             @click="clickable && emit('row-click', row)"
                         >
                             <td v-if="selectable" class="w-12 border-b border-gray-100" :class="cellPad" @click.stop>
@@ -206,7 +206,7 @@ const skeletonList = computed(() => Array.from({ length: props.skeletonRows }, (
                                     type="checkbox"
                                     :checked="isSelected(row[rowKey])"
                                     :aria-label="`Select record ${row[rowKey]}`"
-                                    class="h-4 w-4 rounded border-gray-300 text-green-700 focus:ring-2 focus:ring-green-600/25"
+                                    class="h-4 w-4 rounded border-gray-300 text-red-700 focus:ring-2 focus:ring-red-600/25"
                                     @change="emit('toggle-selection', row[rowKey])"
                                 />
                             </td>
@@ -242,7 +242,7 @@ const skeletonList = computed(() => Array.from({ length: props.skeletonRows }, (
                 v-for="row in rows"
                 :key="row[rowKey]"
                 class="p-4 transition-colors"
-                :class="[isSelected(row[rowKey]) ? 'bg-green-50/60' : 'active:bg-green-50/30', clickable && 'cursor-pointer']"
+                :class="[isSelected(row[rowKey]) ? 'bg-neutral-50/60' : 'active:bg-neutral-50/30', clickable && 'cursor-pointer']"
                 @click="clickable && emit('row-click', row)"
             >
                 <div class="flex items-start gap-3">
@@ -251,7 +251,7 @@ const skeletonList = computed(() => Array.from({ length: props.skeletonRows }, (
                         type="checkbox"
                         :checked="isSelected(row[rowKey])"
                         :aria-label="`Select record ${row[rowKey]}`"
-                        class="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-green-700 focus:ring-2 focus:ring-green-600/25"
+                        class="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-red-700 focus:ring-2 focus:ring-red-600/25"
                         @click.stop
                         @change="emit('toggle-selection', row[rowKey])"
                     />

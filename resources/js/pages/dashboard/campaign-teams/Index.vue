@@ -136,8 +136,8 @@ function closeDeleteDialog() { deleteDialog.value = null }
       </div>
 
       <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <StatCard :value="statistics.total" label="Total Teams" icon="Users2" icon-bg="bg-green-100" icon-color="text-green-700" />
-        <StatCard :value="statistics.active" label="Active" icon="UserCheck" icon-bg="bg-green-50" icon-color="text-green-900" />
+        <StatCard :value="statistics.total" label="Total Teams" icon="Users2" icon-bg="bg-red-100" icon-color="text-red-700" />
+        <StatCard :value="statistics.active" label="Active" icon="UserCheck" icon-bg="bg-neutral-50" icon-color="text-red-900" />
         <StatCard :value="statistics.total_members" label="Total Members" icon="Users" icon-bg="bg-gray-100" icon-color="text-gray-700" />
         <StatCard :value="statistics.unassigned_lead" label="No Team Lead" icon="AlertCircle" icon-bg="bg-amber-100" icon-color="text-amber-700" />
       </div>
@@ -153,7 +153,7 @@ function closeDeleteDialog() { deleteDialog.value = null }
           <DataTable :columns="columns" :rows="teams.data" :selectable="false" :sort-by="table.sortBy.value" :sort-direction="table.sortDirection.value" @sort="table.toggleSort">
             <template #team="{ row }">
               <div class="flex items-center gap-2.5">
-                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
+                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-neutral-50 text-red-700">
                   <Users2 class="h-4 w-4" />
                 </div>
                 <div>

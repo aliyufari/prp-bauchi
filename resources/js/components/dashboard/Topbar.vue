@@ -47,7 +47,7 @@ function logout() {
       </button>
 
       <div class="min-w-0">
-        <h1 class="text-green-700 font-black leading-none tracking-tight truncate text-xs xs:text-sm sm:text-base lg:text-lg">
+        <h1 class="text-red-700 font-black leading-none tracking-tight truncate text-xs xs:text-sm sm:text-base lg:text-lg">
           PRP BAUCHI STATE MANAGEMENT SYSTEM
         </h1>
         <p class="text-red-500 text-[10px] sm:text-xs italic font-semibold mt-0.5 hidden sm:block truncate">
@@ -101,7 +101,7 @@ function logout() {
             <div
               v-else
               class="w-full h-full flex items-center justify-center"
-              style="background: linear-gradient(135deg, #15803d, #14532d);"
+              style="background: linear-gradient(135deg, var(--brand-avatar-from,#b91c1c), var(--brand-avatar-to,#7f1d1d));"
             >
               <span class="text-white text-xs font-black">{{ initials }}</span>
             </div>

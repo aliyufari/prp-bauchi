@@ -21,6 +21,7 @@ return [
             ['label' => 'Election Calendar', 'route' => 'election-calendar.index', 'path' => '/dashboard/election-calendar', 'icon' => 'Calendar', 'can' => 'dashboard.view'],
             ['label' => 'Polling Units', 'route' => 'polling-units.index', 'icon' => 'MapPin', 'can' => 'polling-units.view'],
             ['label' => 'Campaign Teams', 'route' => 'campaign-teams.index', 'icon' => 'Users2', 'can' => 'campaign-teams.view'],
+            ['label' => 'PU Reports', 'route' => 'pu-reports.index', 'icon' => 'ClipboardCheck', 'can' => 'pu-tasks.view'],
             ['label' => 'Results Management', 'route' => 'results.index', 'icon' => 'BarChart3', 'can' => 'results.view'],
         ]],
 
@@ -61,9 +62,10 @@ return [
 
     'portal' => [
         ['group' => null, 'items' => [
-            ['label' => 'Home', 'route' => 'portal.home', 'icon' => 'Home', 'can' => 'portal.access', 'exact' => true],
+            ['label' => 'Dashboard', 'route' => 'portal.home', 'icon' => 'Home', 'can' => 'portal.access', 'exact' => true],
+            ['label' => 'My Polling Units', 'route' => 'portal.pus', 'icon' => 'MapPin', 'can' => 'pu-tasks.manage'],
+            ['label' => 'My Agents', 'route' => 'portal.agents', 'icon' => 'Users2', 'can' => 'pu-tasks.manage', 'level' => 'ward'],
             ['label' => 'My Team', 'route' => 'portal.team', 'icon' => 'Users2', 'can' => 'campaign-teams.view'],
-            ['label' => 'My Results', 'route' => 'portal.results', 'icon' => 'FileBarChart', 'can' => 'results.view'],
             ['label' => 'Profile', 'route' => 'portal.profile', 'icon' => 'User', 'can' => 'portal.access'],
         ]],
     ],

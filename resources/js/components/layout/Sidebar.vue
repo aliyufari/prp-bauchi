@@ -31,7 +31,7 @@ function isActive(item: NavItem): boolean {
   return item.exact ? path === item.href : path === item.href || path.startsWith(item.href + '/')
 }
 
-const ACTIVE_STYLE = 'background: linear-gradient(90deg,#22c55e,#16a34a); color:#fff; box-shadow: 0 2px 8px rgba(34,197,94,0.35);'
+const ACTIVE_STYLE = 'background: linear-gradient(90deg,var(--brand-active-from,#ef4444),var(--brand-active-to,#dc2626)); color:#fff; box-shadow: 0 2px 8px var(--brand-active-shadow,rgba(220,38,38,0.35));'
 
 function linkStyle(item: NavItem): string {
   if (isActive(item)) return ACTIVE_STYLE
@@ -63,7 +63,7 @@ function linkClass(item: NavItem, compact: boolean) {
       open ? 'translate-x-0' : '-translate-x-full',
       collapsed ? 'w-60 lg:w-16' : 'w-60',
     ]"
-    style="background: linear-gradient(180deg, #0d3b26 0%, #092b1c 40%, #061a11 100%);"
+    style="background: linear-gradient(180deg, var(--brand-side-from,#171717) 0%, var(--brand-side-via,#0a0a0a) 40%, var(--brand-side-to,#000000) 100%);"
   >
     <!-- Logo -->
     <div
@@ -74,11 +74,11 @@ function linkClass(item: NavItem, compact: boolean) {
       <div class="relative flex-shrink-0">
         <div
           class="w-8 h-8 rounded-full flex items-center justify-center"
-          style="background: linear-gradient(135deg, #e8c44a 0%, #c9960a 50%, #e8c44a 100%); padding: 2px; box-shadow: 0 0 0 2px rgba(232,196,74,0.25), 0 4px 12px rgba(0,0,0,0.4);"
+          style="background: linear-gradient(135deg, var(--brand-accent,#ef4444) 0%, var(--brand-accent-dark,#b91c1c) 50%, var(--brand-accent,#ef4444) 100%); padding: 2px; box-shadow: 0 0 0 2px var(--brand-ring,rgba(239,68,68,0.25)), 0 4px 12px rgba(0,0,0,0.4);"
         >
           <div
             class="w-full h-full rounded-full flex items-center justify-center overflow-hidden"
-            style="background: linear-gradient(145deg, #0d3b26, #061a11);"
+            style="background: linear-gradient(145deg, var(--brand-side-from,#171717), var(--brand-side-to,#000000));"
           >
             <img
               v-if="logoUrl"
@@ -86,20 +86,20 @@ function linkClass(item: NavItem, compact: boolean) {
               alt="PRP"
               class="w-full h-full rounded-full object-cover"
             />
-            <svg v-else viewBox="0 0 36 36" class="w-7 h-7" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg v-else viewBox="0 0 36 36" class="w-7 h-7" style="color: var(--brand-accent,#ef4444)" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 3 L23 8 L30 8 L30 22 C30 28 18 33 18 33 C18 33 6 28 6 22 L6 8 L13 8 Z"
-                fill="none" stroke="#e8c44a" stroke-width="1.2"/>
-              <path d="M18 3 L23 8 L13 8 Z" fill="#e8c44a" opacity="0.3"/>
+                fill="none" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M18 3 L23 8 L13 8 Z" fill="currentColor" opacity="0.3"/>
               <text x="18" y="22" text-anchor="middle" font-size="7" font-weight="900"
-                font-family="Arial,sans-serif" fill="#e8c44a" letter-spacing="0.5">PRP</text>
-              <circle cx="11" cy="13" r="1" fill="#e8c44a"/>
-              <circle cx="25" cy="13" r="1" fill="#e8c44a"/>
+                font-family="Arial,sans-serif" fill="currentColor" letter-spacing="0.5">PRP</text>
+              <circle cx="11" cy="13" r="1" fill="currentColor"/>
+              <circle cx="25" cy="13" r="1" fill="currentColor"/>
             </svg>
           </div>
         </div>
         <div
           class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 flex items-center justify-center"
-          style="background: #22c55e; border-color: #0d3b26;"
+          style="background: #ef4444; border-color: var(--brand-side-from,#171717);"
         />
       </div>
 
@@ -107,7 +107,7 @@ function linkClass(item: NavItem, compact: boolean) {
         <div v-if="!collapsed || open" class="min-w-0 overflow-hidden flex-1">
           <p
             class="font-black text-base leading-none tracking-widest"
-            style="color: #e8c44a; text-shadow: 0 1px 4px rgba(232,196,74,0.4);"
+            style="color: var(--brand-accent,#ef4444); text-shadow: 0 1px 4px var(--brand-ring,rgba(239,68,68,0.4));"
           >PRP</p>
           <p
             class="mt-1 font-bold text-[9px] uppercase tracking-[0.25em]"
@@ -193,9 +193,9 @@ function linkClass(item: NavItem, compact: boolean) {
       <div :class="['flex items-center gap-3', (collapsed && !open) ? 'lg:justify-center' : 'px-1']">
         <div
           class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style="background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.25);"
+          style="background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.25);"
         >
-          <Building2 class="w-4 h-4" style="color: #4ade80;" />
+          <Building2 class="w-4 h-4" style="color: var(--brand-soft,#f87171);" />
         </div>
         <div v-if="!collapsed || open" class="overflow-hidden">
           <p class="text-xs font-bold truncate" style="color: rgba(255,255,255,0.85);">Smart Core ICT</p>
