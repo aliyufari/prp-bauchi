@@ -1,12 +1,22 @@
 /.phpunit.cache
 /bootstrap/ssr
+/bootstrap/cache/*.php
+/bootstrap/cache/*.tmp
 /node_modules
-# /public/build
+/public/build
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/framework/testing/*
+/storage/app/private/*
+/storage/app/public/*
 /vendor
+
 .env
 .env.backup
 .env.production
@@ -22,7 +32,3 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
-# Generated application files
-/public/build/
-/bootstrap/cache/*.php
-/bootstrap/cache/*.tmp
