@@ -11,6 +11,10 @@ interface ProfileUser {
   last_name: string
   email: string
   avatar: string | null
+  last_login_at: string | null
+  last_login_ip: string | null
+  last_login_browser: string | null
+  last_login_device: string | null
 }
 
 const props = defineProps<{ user: ProfileUser; status?: string | null }>()
@@ -104,5 +108,16 @@ function submit() {
         </Button>
       </div>
     </form>
+
+    <section class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm sm:p-7">
+      <h2 class="text-sm font-black text-gray-900">Recent account access</h2>
+      <p class="mt-1 text-xs text-gray-500">Details from your most recent successful sign-in.</p>
+      <dl class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div><dt class="text-xs text-gray-400">Last login</dt><dd class="mt-1 text-sm font-semibold text-gray-800">{{ user.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'No login recorded' }}</dd></div>
+        <div><dt class="text-xs text-gray-400">IP address</dt><dd class="mt-1 text-sm font-semibold text-gray-800">{{ user.last_login_ip || '—' }}</dd></div>
+        <div><dt class="text-xs text-gray-400">Browser</dt><dd class="mt-1 text-sm font-semibold text-gray-800">{{ user.last_login_browser || '—' }}</dd></div>
+        <div><dt class="text-xs text-gray-400">Device</dt><dd class="mt-1 text-sm font-semibold text-gray-800">{{ user.last_login_device || '—' }}</dd></div>
+      </dl>
+    </section>
   </section>
 </template>

@@ -17,7 +17,7 @@ class LocationOptionsController extends Controller
     public function pus(Request $r)    { return $this->options($r, 'pu'); }
 
     /**
-     * Flat option list for one level, limited to Bauchi and the signed-in user's jurisdiction.
+     * Flat option list for one level, limited to the configured operating state and the signed-in user's jurisdiction.
      *
      * Parent ids are OPTIONAL narrowing filters (`zone_id` on lgas, `lga_id` on wards,
      * `ward_id` on pus, ...). Without them the whole level is returned, so a ward-level
@@ -26,7 +26,7 @@ class LocationOptionsController extends Controller
     private function options(Request $request, string $level)
     {
         $stateId = LocationChain::bauchiStateId();
-        abort_unless($stateId, 503, 'Bauchi state locations have not been seeded.');
+        abort_unless($stateId, 503, config('location.operating_state', 'Bauchi').' state locations have not been seeded.');
 
         $request->validate(array_fill_keys(
             array_map(fn ($l) => "{$l}_id", LocationChain::LEVELS),

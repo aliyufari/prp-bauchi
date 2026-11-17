@@ -25,7 +25,7 @@ final class NormalizeLocationObserver
 
         if (!$bauchiId || ($complete['state_id'] ?? null) !== $bauchiId) {
             throw ValidationException::withMessages([
-                'state_id' => 'This application is configured for Bauchi State. Select a location within Bauchi.',
+                'state_id' => 'This application is configured for '.config('location.operating_state', 'Bauchi').' State. Select a location within the configured state.',
             ]);
         }
 

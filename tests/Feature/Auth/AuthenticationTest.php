@@ -41,3 +41,15 @@ test('users can logout', function () {
     $this->assertGuest();
     $response->assertRedirect('/');
 });
+
+test('inactive users cannot authenticate before administrator approval', function () {
+    $user = User::factory()->create(['is_active' => false]);
+
+    $response = $this->from('/login')->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('email');
+});

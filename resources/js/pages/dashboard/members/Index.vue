@@ -117,6 +117,14 @@ function editFromView(m: Member) {
 function handleRowAction(key: string, row: Member) {
     if (key === 'view') return openView(row);
     if (key === 'edit') return openEdit(row);
+    if (key === 'assign') return openEdit(row);
+    if (key === 'suspend') {
+        const next = row.status !== 'active';
+        requestAction(`${next ? 'Reactivate' : 'Suspend'} ${row.first_name} ${row.last_name}?`, next ? 'Reactivate' : 'Suspend', next ? 'primary' : 'danger', () => {
+            router.patch(route('managed-users.status', { module: 'members', user: row.id }), { is_active: next }, { preserveScroll: true, onSuccess: () => { toast.success(next ? 'Account reactivated.' : 'Account suspended.'); router.reload() } });
+        });
+        return;
+    }
     if (key === 'delete') {
         requestDelete(`Delete ${row.first_name} ${row.last_name}?`, () => {
             router.delete(route('members.destroy', row.id), { preserveScroll: true, onSuccess: () => { toast.success('Record deleted.'); router.reload() } });
@@ -137,9 +145,12 @@ function toggleAll() {
     table.togglePage(ids);
 }
 
-const deleteDialog = ref<{ message: string; action: () => void } | null>(null);
+const deleteDialog = ref<{ message: string; action: () => void; title?: string; confirmText?: string; variant?: 'danger' | 'primary' } | null>(null);
 function requestDelete(message: string, action: () => void) {
     deleteDialog.value = { message, action };
+}
+function requestAction(message: string, confirmText: string, variant: 'danger' | 'primary', action: () => void) {
+    deleteDialog.value = { message, action, title: `${confirmText} account`, confirmText, variant };
 }
 function confirmDelete() {
     const pending = deleteDialog.value;
@@ -222,7 +233,10 @@ function closeDeleteDialog() {
                         </template>
                         <template #actions="{ row }">
                             <div class="flex justify-end">
-                                <ActionDropdown :actions="rowActions(row.can)" @action="(key) => handleRowAction(key, row)" />
+                                <ActionDropdown :actions="rowActions(row.can, row.can?.update ? [
+                                    { key: 'assign', label: 'Assign / change area', icon: 'assign' },
+                                    { key: 'suspend', label: row.status === 'active' ? 'Suspend account' : 'Reactivate account', icon: 'suspend', danger: row.status === 'active' },
+                                ] : [])" @action="(key) => handleRowAction(key, row)" />
                             </div>
                         </template>
                     </DataTable>
@@ -246,10 +260,10 @@ function closeDeleteDialog() {
         <ViewMember v-if="viewingMember" :member="viewingMember" @close="closeView" @edit="editFromView" />
         <ConfirmDialog
             :open="deleteDialog !== null"
-            title="Confirm deletion"
+            :title="deleteDialog?.title ?? 'Confirm deletion'"
             :description="deleteDialog?.message ?? ''"
-            confirm-text="Delete"
-            variant="danger"
+            :confirm-text="deleteDialog?.confirmText ?? 'Delete'"
+            :variant="deleteDialog?.variant ?? 'danger'"
             @confirm="confirmDelete"
             @cancel="closeDeleteDialog"
             @close="closeDeleteDialog"

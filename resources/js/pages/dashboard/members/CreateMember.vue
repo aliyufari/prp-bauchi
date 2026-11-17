@@ -19,7 +19,8 @@ const emit = defineEmits<{
 const form = useForm(emptyMemberFormValues())
 
 function submit() {
-    form.post(route('members.store'), {
+    form.transform((data) => data).post(route('members.store'), {
+        forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {
             form.reset()

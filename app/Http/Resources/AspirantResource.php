@@ -38,6 +38,10 @@ class AspirantResource extends JsonResource
             'state' => $this->profile?->state?->name,
 
             'created_at' => $this->created_at?->toISOString(),
+            'last_login_at' => $this->last_login_at?->toISOString(),
+            'last_login_ip' => $this->last_login_ip,
+            'last_login_browser' => $this->last_login_browser,
+            'last_login_device' => $this->last_login_device,
         ];
     }
 }

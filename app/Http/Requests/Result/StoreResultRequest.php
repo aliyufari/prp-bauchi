@@ -2,12 +2,11 @@
 
 namespace App\Http\Requests\Result;
 
-use App\Enums\AspirantOffice;
 use App\Enums\ElectionParty;
 use App\Models\Result;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreResultRequest extends FormRequest
@@ -27,8 +26,8 @@ class StoreResultRequest extends FormRequest
     protected function commonRules(): array
     {
         return [
-            'office' => ['required', new Enum(AspirantOffice::class)],
-            'election_date' => ['nullable', 'date'],
+            'election_id' => ['required', 'uuid', 'exists:elections,id'],
+            'office' => ['required', Rule::in((array) config('elections.active_offices', ['governor']))],
             'registered_voters' => ['nullable', 'integer', 'min:0'],
             'accredited_voters' => ['required', 'integer', 'min:0'],
             'rejected_votes' => ['required', 'integer', 'min:0'],
@@ -66,20 +65,21 @@ class StoreResultRequest extends FormRequest
 
     protected function checkUnique(Validator $v): void
     {
-        if ($v->errors()->hasAny(['pu_id', 'office'])) {
+        if ($v->errors()->hasAny(['pu_id', 'election_id', 'office'])) {
             return;
         }
 
         $current = $this->route('result');
 
         $exists = Result::query()
+            ->where('election_id', $this->input('election_id'))
             ->where('pu_id', $current?->pu_id ?? $this->input('pu_id'))
             ->where('office', $this->input('office'))
             ->when($current, fn ($q) => $q->whereKeyNot($current->id))
             ->exists();
 
         if ($exists) {
-            $v->errors()->add('office', 'A result for this office has already been uploaded for this polling unit.');
+            $v->errors()->add('office', 'A result for this office has already been uploaded for this polling unit and election.');
         }
     }
 

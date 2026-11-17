@@ -56,14 +56,14 @@ class PartyAgentController extends Controller
                 ],
             ],
             'statistics' => $this->statistics($user),
-            'filterOptions' => $locations + [
+            'filterOptions' => ['wards' => $locations['wards'] ?? collect()] + [
                 'statuses' => [['value' => 'active', 'label' => 'Active'], ['value' => 'inactive', 'label' => 'Inactive']],
                 'types' => $this->typeOptions(),
             ],
             'formOptions' => [
                 'types' => $this->typeOptions(),
             ],
-            'filters' => $request->only(['search', 'state', 'zone', 'lga', 'ward', 'pu', 'status', 'type']),
+            'filters' => $request->only(['search', 'ward', 'pu', 'status', 'type']),
         ]);
     }
 
@@ -116,7 +116,10 @@ class PartyAgentController extends Controller
 
         $party_agent->load(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'partyAgent']);
 
-        return Inertia::render('dashboard/party-agents/Show', ['agent' => new PartyAgentResource($party_agent)]);
+        return Inertia::render('dashboard/people/Show', [
+            'person' => new PartyAgentResource($party_agent),
+            'kind' => 'Party Agent',
+        ]);
     }
 
     public function destroy(User $party_agent)
@@ -179,9 +182,6 @@ class PartyAgentController extends Controller
                 ->orWhereHas('profile', fn ($q) => $q
                     ->where('application_id', 'like', "%{$s}%")
                     ->orWhere('phone', 'like', "%{$s}%"))))
-            ->when($request->state, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('state_id', $v)))
-            ->when($request->zone, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('zone_id', $v)))
-            ->when($request->lga, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('lga_id', $v)))
             ->when($request->ward, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('ward_id', $v)))
             ->when($request->pu, fn ($q, $v) => $q->whereHas('profile', fn ($q) => $q->where('pu_id', $v)))
             ->when($request->status, fn ($q, $v) => $q->where('users.is_active', $v === 'active'))

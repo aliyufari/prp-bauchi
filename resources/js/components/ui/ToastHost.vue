@@ -13,7 +13,7 @@
  * kind of message for the same operation, or when the identical text was just shown.
  */
 import { router, usePage } from '@inertiajs/vue3'
-import { AlertCircle, AlertTriangle, CheckCircle2, Info, X } from 'lucide-vue-next'
+import { AlertCircle, CheckCircle2, X } from 'lucide-vue-next'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 type Kind = 'success' | 'error' | 'warning' | 'info'
@@ -87,10 +87,10 @@ onBeforeUnmount(() => {
 const styles: Record<Kind, { border: string; icon: string }> = {
   success: { border: 'border-green-200', icon: 'text-green-600' },
   error: { border: 'border-red-200', icon: 'text-red-600' },
-  warning: { border: 'border-amber-200', icon: 'text-amber-600' },
-  info: { border: 'border-blue-200', icon: 'text-blue-600' },
+  warning: { border: 'border-red-200', icon: 'text-red-600' },
+  info: { border: 'border-red-200', icon: 'text-red-600' },
 }
-const icons = { success: CheckCircle2, error: AlertCircle, warning: AlertTriangle, info: Info }
+const icons = { success: CheckCircle2, error: AlertCircle, warning: AlertCircle, info: AlertCircle }
 </script>
 
 <template>

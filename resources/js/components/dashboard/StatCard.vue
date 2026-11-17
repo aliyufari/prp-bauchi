@@ -3,11 +3,13 @@ import { computed } from 'vue'
 import {
   Users, UserCheck, Briefcase, Handshake, Calendar, BarChart3, TrendingUp, TrendingDown,
   MapPin, FileBarChart, UserX, UserPlus, ShieldCheck, Building2, Vote, ClipboardList,
+  CheckCircle2, Clock, AlertTriangle, AlertCircle, Users2,
 } from 'lucide-vue-next'
 
 const iconMap: Record<string, any> = {
   Users, UserCheck, Briefcase, Handshake, Calendar, BarChart3,
   MapPin, FileBarChart, UserX, UserPlus, ShieldCheck, Building2, Vote, ClipboardList,
+  CheckCircle2, Clock, AlertTriangle, AlertCircle, Users2,
 }
 
 const props = defineProps<{
@@ -21,6 +23,13 @@ const props = defineProps<{
 }>()
 
 const iconComponent = computed(() => iconMap[props.icon] ?? Users)
+const cardTone = computed(() => ({
+  'bg-red-100': 'bg-rose-50 border-rose-100',
+  'bg-neutral-50': 'bg-sky-50 border-sky-100',
+  'bg-neutral-100': 'bg-blue-50 border-blue-100',
+  'bg-gray-100': 'bg-violet-50 border-violet-100',
+  'bg-amber-100': 'bg-amber-50 border-amber-100',
+}[props.iconBg ?? ''] ?? 'bg-indigo-50 border-indigo-100'))
 /* Whatever the API sends (null, "1,250", undefined) renders as a number instead of crashing the page. */
 const formattedValue = computed(() => {
   const n = typeof props.value === 'string' ? Number(props.value.replace(/,/g, '')) : Number(props.value)
@@ -35,10 +44,7 @@ const growthValue = computed(() => {
 
 <template>
   <div
-    class="relative rounded-xl overflow-hidden bg-white border border-gray-100
-           hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200
-           cursor-default shadow-sm w-full min-w-0
-           flex flex-col gap-1 px-3 pt-2.5 pb-2 min-h-[90px]"
+    :class="['relative rounded-xl overflow-hidden border', cardTone, 'hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-default shadow-sm w-full min-w-0 flex flex-col gap-1 px-3 pt-2.5 pb-2 min-h-[90px]']"
   >
     <!-- ROW 1: Growth badge right -->
     <div class="flex justify-end">

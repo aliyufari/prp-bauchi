@@ -177,8 +177,9 @@ class AspirantController extends Controller
         $this->ensureBauchiAspirant($aspirant);
         $aspirant->load(['profile.state', 'aspirant.constituency']);
 
-        return Inertia::render('dashboard/aspirants/Show', [
-            'aspirant' => new AspirantResource($aspirant),
+        return Inertia::render('dashboard/people/Show', [
+            'person' => new AspirantResource($aspirant),
+            'kind' => 'Aspirant',
         ]);
     }
 
@@ -235,7 +236,7 @@ class AspirantController extends Controller
 
     private function ensureOperatingState(): void
     {
-        abort_unless(LocationChain::bauchiStateId(), 503, 'Bauchi State locations have not been seeded.');
+        abort_unless(LocationChain::bauchiStateId(), 503, config('location.operating_state', 'Bauchi').' State locations have not been seeded.');
     }
 
     private function ensureBauchiAspirant(User $aspirant): void

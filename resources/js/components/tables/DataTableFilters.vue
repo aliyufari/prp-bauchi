@@ -36,7 +36,10 @@ const operatingStateId = ref('');
 const locationLoading = reactive<Record<LocationFilter, boolean>>({ state: false, zone: false, lga: false, ward: false, pu: false });
 const requestVersion = reactive<Record<LocationFilter, number>>({ state: 0, zone: 0, lga: 0, ward: 0, pu: 0 });
 const requestError = ref('');
-const locationFilters = computed(() => props.filters.filter((filter) => locationOrder.includes(filter.key as LocationFilter)));
+const locationFilters = computed(() => props.filters.filter((filter) => locationOrder.includes(filter.key as LocationFilter)))
+// Respect the hierarchy of the location filters actually displayed. If a page
+// shows only Ward and Polling Unit, Ward is the root and PU depends on Ward.
+const activeLocationOrder = computed(() => locationFilters.value.map((filter) => filter.key as LocationFilter));
 const activeCount = computed(() => props.filters.filter((filter) => Boolean(props.modelValue[filter.key])).length);
 
 function isLocation(key: string): key is LocationFilter {
@@ -56,8 +59,8 @@ function normalizeOptions(payload: unknown): SelectOption[] {
 }
 
 async function loadLocation(key: LocationFilter, parentValue?: string) {
-    const index = locationOrder.indexOf(key);
-    const parentKey = index > 0 ? locationOrder[index - 1] : null;
+    const index = activeLocationOrder.value.indexOf(key);
+    const parentKey = index > 0 ? activeLocationOrder.value[index - 1] : null;
     const parentId = parentKey === 'state' ? (parentValue ?? operatingStateId.value) : parentKey ? (parentValue ?? props.modelValue[parentKey] ?? '') : '';
     if (parentKey && !parentId) {
         locationOptions[key] = [];
@@ -88,12 +91,12 @@ async function hydrateLocationFilters() {
     if (!locationFilters.value.length) return;
     await loadLocation('state');
     operatingStateId.value = String(locationOptions.state[0]?.value ?? '');
-    for (let index = 1; index < locationOrder.length; index++) {
-        const key = locationOrder[index];
-        const parent = locationOrder[index - 1];
-        if (!locationFilters.value.some((filter) => filter.key === key)) continue;
-        const parentValue = parent === 'state' ? operatingStateId.value : props.modelValue[parent];
-        if (!parentValue) break;
+    for (let index = 0; index < activeLocationOrder.value.length; index++) {
+        const key = activeLocationOrder.value[index];
+        if (key === 'state') continue;
+        const parent = index > 0 ? activeLocationOrder.value[index - 1] : null;
+        const parentValue = parent === 'state' ? operatingStateId.value : parent ? props.modelValue[parent] : undefined;
+        if (parent && !parentValue) break;
         await loadLocation(key, parentValue);
     }
 }
@@ -103,8 +106,8 @@ function set(key: string, rawValue: string | number | null) {
     const next = { ...props.modelValue, [key]: value };
 
     if (isLocation(key)) {
-        const index = locationOrder.indexOf(key);
-        for (const child of locationOrder.slice(index + 1)) {
+        const index = activeLocationOrder.value.indexOf(key);
+        for (const child of activeLocationOrder.value.slice(index + 1)) {
             next[child] = '';
             locationOptions[child] = [];
             requestVersion[child]++;
@@ -114,7 +117,7 @@ function set(key: string, rawValue: string | number | null) {
 
     emit('update:modelValue', next);
     if (isLocation(key) && value) {
-        const child = locationOrder[locationOrder.indexOf(key) + 1];
+        const child = activeLocationOrder.value[activeLocationOrder.value.indexOf(key) + 1];
         if (child && locationFilters.value.some((filter) => filter.key === child)) void loadLocation(child, value);
     }
 }
@@ -124,7 +127,7 @@ function clearAll() {
     props.filters.forEach((filter) => {
         cleared[filter.key] = '';
     });
-    locationOrder.forEach((key) => {
+    activeLocationOrder.value.forEach((key) => {
         locationOptions[key] = [];
         requestVersion[key]++;
         locationLoading[key] = false;
@@ -153,7 +156,7 @@ onMounted(hydrateLocationFilters);
                 :empty-text="`No ${filter.label.toLowerCase()} found`"
                 :disabled="
                     locationLoading[filter.key] ||
-                    (filter.key === 'zone' ? !operatingStateId : !modelValue[locationOrder[locationOrder.indexOf(filter.key as LocationFilter) - 1]])
+                    (activeLocationOrder.indexOf(filter.key as LocationFilter) > 0 && !modelValue[activeLocationOrder[activeLocationOrder.indexOf(filter.key as LocationFilter) - 1]])
                 "
                 class="w-full min-w-[9rem] sm:w-auto sm:min-w-[10rem]"
                 @update:model-value="set(filter.key, $event)"

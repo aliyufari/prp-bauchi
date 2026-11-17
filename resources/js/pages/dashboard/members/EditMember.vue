@@ -42,7 +42,8 @@ watch(
 function submit() {
     if (!props.member) return
 
-    form.patch(route('members.update', props.member.id), {
+    form.transform((data) => ({ ...data, _method: 'patch' })).post(route('members.update', props.member.id), {
+        forceFormData: true,
         preserveScroll: true,
         onSuccess: () => emit('close'),
     })

@@ -7,10 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Pu;
 use App\Models\PuOfficial;
 use App\Models\PuResultSubmission;
+use App\Models\PuTaskAudit;
 use App\Models\User;
 use App\Support\Jurisdiction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Throwable;
+use RuntimeException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -18,7 +22,9 @@ use Inertia\Inertia;
 /**
  * Party-agent field tasks for a polling unit:
  *  1. capture the officials (PO, APO1, APO2, security),
- *  2. upload the counting video and photos of the result sheet.
+ *  2. upload the counting video,
+ *  3. upload result-sheet photos,
+ *  4. enter party figures.
  *
  * A PU agent works on his own PU; a ward agent works on every PU in his ward.
  * Scope is enforced by Pu::visibleTo (Jurisdiction), never by the URL.
@@ -30,24 +36,45 @@ class PuTaskController extends Controller
 
     /* ---------------------------------------------------------------- agent */
 
+    /**
+     * PU agent: straight to his own unit (nothing to browse).
+     * Ward agent: the list of units in his ward, with a few simple filters.
+     */
     public function index(Request $request)
     {
         $user = $this->agent($request);
-        $j = Jurisdiction::for($user);
         $office = $this->office($request);
 
-        $query = Pu::query()->visibleTo($user)->with(['ward', 'official', 'submission' => $this->forOffice($office)])
+        if (Jurisdiction::for($user)->level === 'pu') {
+            $pu = Pu::query()->visibleTo($user)->first();
+
+            return $pu
+                ? redirect()->route('portal.pus.show', ['pu' => $pu->id, 'office' => $office->value])
+                : redirect()->route('portal.home');
+        }
+
+        $base = fn () => Pu::query()->visibleTo($user);
+        $status = in_array($request->status, ['new', 'progress', 'done'], true) ? $request->status : '';
+
+        $pus = $base()->with([
+            'ward', 'official', 'submission' => $this->forOffice($office),
+            'results' => fn ($q) => $q->where('office', $office->value)->whereHas('election', fn ($e) => $e->where('is_active', true)),
+        ])
             ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
                 ->where('pus.name', 'like', "%{$s}%")->orWhere('pus.code', 'like', "%{$s}%")))
-            ->when($request->status === 'officials', fn ($q) => $q->whereDoesntHave('official'))
-            ->when($request->status === 'result', fn ($q) => $q->resultIncomplete($office->value))
-            ->orderBy('pus.name');
+            ->when($status === 'new', fn ($q) => $q->taskNotStarted($office->value))
+            ->when($status === 'done', fn ($q) => $q->taskDone($office->value))
+            ->when($status === 'progress', fn ($q) => $q->whereNot(fn ($q) => $q->taskNotStarted($office->value))
+                ->whereNot(fn ($q) => $q->taskDone($office->value)))
+            ->orderBy('pus.name')
+            ->paginate(12)->withQueryString();
 
-        $pus = $query->paginate(12)->withQueryString();
+        $total = $base()->count();
+        $done = $base()->taskDone($office->value)->count();
+        $new = $base()->taskNotStarted($office->value)->count();
 
         return Inertia::render('portal/pus/Index', [
-            'scope' => $j->level === 'pu' ? 'pu' : 'ward',
-            'scopeName' => $j->name(),
+            'scopeName' => Jurisdiction::for($user)->name(),
             'pus' => [
                 'data' => collect($pus->items())->map(fn (Pu $pu) => $this->summary($pu))->values(),
                 'meta' => [
@@ -56,9 +83,28 @@ class PuTaskController extends Controller
                     'per_page' => $pus->perPage(), 'total' => $pus->total(),
                 ],
             ],
-            'filters' => $request->only(['search', 'status']),
+            'counts' => ['all' => $total, 'new' => $new, 'progress' => $total - $new - $done, 'done' => $done],
+            'filters' => ['search' => $request->search, 'status' => $status],
             'office' => $office->value,
             'offices' => $this->officeOptions(),
+        ]);
+    }
+
+    /** One polling unit: the four required field tasks. */
+    public function show(Request $request, Pu $pu)
+    {
+        $this->authorizePu($request, $pu);
+        $office = $this->office($request);
+        $pu->load([
+            'ward.lga', 'official', 'submission' => $this->forOffice($office),
+            'results' => fn ($q) => $q->where('office', $office->value)->whereHas('election', fn ($e) => $e->where('is_active', true)),
+        ]);
+
+        return Inertia::render('portal/pus/Show', [
+            'unit' => $this->summary($pu) + ['lga' => $pu->ward?->lga?->name],
+            'office' => $office->value,
+            'offices' => $this->officeOptions(),
+            'canGoBack' => Jurisdiction::for($request->user())->level !== 'pu',
         ]);
     }
 
@@ -71,6 +117,7 @@ class PuTaskController extends Controller
             'pu' => $this->puInfo($pu),
             'official' => $pu->official?->only(['po_name', 'apo1_name', 'apo2_name', 'security_name']),
             'updatedAt' => $pu->official?->updated_at?->toIso8601String(),
+            'office' => $this->office($request)->value,
         ]);
     }
 
@@ -83,76 +130,141 @@ class PuTaskController extends Controller
             'apo1_name' => ['required', 'string', 'max:120'],
             'apo2_name' => ['required', 'string', 'max:120'],
             'security_name' => ['required', 'string', 'max:120'],
-        ]);
+        ], ['required' => 'Please write this name.']);
 
-        PuOfficial::updateOrCreate(['pu_id' => $pu->id], $data + ['updated_by' => $request->user()->id]);
+        $existing = PuOfficial::query()->where('pu_id', $pu->id)->first();
+        DB::transaction(function () use ($pu, $data, $request, $existing) {
+            PuOfficial::updateOrCreate(['pu_id' => $pu->id], $data + ['updated_by' => $request->user()->id]);
+            PuTaskAudit::create([
+                'pu_id' => $pu->id,
+                'action' => $existing ? 'officials_updated' : 'officials_recorded',
+                'details' => [
+                    'before' => $existing?->only(['po_name', 'apo1_name', 'apo2_name', 'security_name']),
+                    'after' => $data,
+                ],
+                'performed_by' => $request->user()->id,
+            ]);
+        });
 
-        return redirect()->route('portal.pus')->with('success', "Officials saved for {$pu->name}.");
+        return redirect()->route('portal.pus.show', ['pu' => $pu->id, 'office' => $this->office($request)->value])
+            ->with('success', 'Names saved.');
     }
 
-    public function result(Request $request, Pu $pu)
+    /** Result sheet photos page. */
+    public function sheet(Request $request, Pu $pu)
+    {
+        return $this->evidencePage($request, $pu, 'portal/pus/Sheet');
+    }
+
+    /** Counting video page. */
+    public function video(Request $request, Pu $pu)
+    {
+        return $this->evidencePage($request, $pu, 'portal/pus/Video');
+    }
+
+    public function saveSheet(Request $request, Pu $pu)
     {
         $this->authorizePu($request, $pu);
         $office = $this->office($request);
-        $pu->load(['ward.lga', 'submission' => $this->forOffice($office), 'submission.submitter']);
+        $submission = $this->submissionFor($pu, $office);
+        $room = max(0, self::MAX_SHEETS - count($submission->sheets ?? []));
 
-        return Inertia::render('portal/pus/Result', [
-            'pu' => $this->puInfo($pu),
-            'office' => $office->value,
-            'officeLabel' => $this->officeLabel($office),
-            'submission' => $this->submissionPayload($pu->submission),
-            'limits' => ['video_mb' => 150, 'sheet_mb' => 10, 'max_sheets' => self::MAX_SHEETS],
-        ]);
-    }
-
-    public function saveResult(Request $request, Pu $pu)
-    {
-        $this->authorizePu($request, $pu);
-        $office = $this->office($request);
-        $submission = $pu->submissions()->where('office', $office->value)->first();
-        $existing = count($submission?->sheets ?? []);
-
-        $data = $request->validate([
-            'video' => ['nullable', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm,video/3gpp,video/x-matroska', 'max:153600'],
-            'sheets' => ['nullable', 'array', 'max:'.max(0, self::MAX_SHEETS - $existing)],
+        $request->validate([
+            'sheets' => ['required', 'array', 'min:1', 'max:'.$room],
             'sheets.*' => ['image', 'max:10240'],
-            'remarks' => ['nullable', 'string', 'max:1000'],
         ], [
-            'sheets.max' => 'You can keep at most '.self::MAX_SHEETS.' result-sheet photos. Remove one first.',
-            'video.max' => 'The video is larger than 150 MB. Record a shorter clip or lower the camera quality.',
-            'video.mimetypes' => 'Upload a video file (mp4, mov, webm or 3gp).',
-            'sheets.*.image' => 'Result sheet files must be photos.',
-            'sheets.*.max' => 'Each photo must be 10 MB or less.',
+            'sheets.required' => 'Take a photo of the result sheet first.',
+            'sheets.max' => 'Too many photos. You can keep '.self::MAX_SHEETS.' at most. Remove one first.',
+            'sheets.*.image' => 'This file is not a photo.',
+            'sheets.*.max' => 'A photo is too big (limit 10 MB).',
         ]);
-
-        if (! $request->hasFile('video') && empty($data['sheets']) && ! $submission) {
-            return back()->withErrors(['video' => 'Add the counting video or at least one result-sheet photo.']);
-        }
-
-        $dir = "pu-evidence/{$pu->id}";
-        $submission ??= new PuResultSubmission(['pu_id' => $pu->id, 'office' => $office->value]);
-
-        if ($request->hasFile('video')) {
-            $this->forget($submission->video_path);
-            $file = $request->file('video');
-            $submission->video_path = $file->storeAs($dir, 'video-'.Str::uuid().'.'.($file->extension() ?: 'mp4'), self::DISK);
-            $submission->video_name = Str::limit($file->getClientOriginalName(), 120, '');
-        }
 
         $sheets = $submission->sheets ?? [];
-        foreach ($request->file('sheets', []) as $photo) {
-            $sheets[] = [
-                'path' => $photo->storeAs($dir, 'sheet-'.Str::uuid().'.'.($photo->extension() ?: 'jpg'), self::DISK),
-                'name' => Str::limit($photo->getClientOriginalName(), 120, ''),
-            ];
+        $storedPaths = [];
+
+        try {
+            foreach ($request->file('sheets') as $photo) {
+                $path = $photo->storeAs("pu-evidence/{$pu->id}", 'sheet-'.Str::uuid().'.'.($photo->extension() ?: 'jpg'), self::DISK);
+                if (! $path) {
+                    throw new RuntimeException('The result-sheet photo could not be saved. Please try again.');
+                }
+                $storedPaths[] = $path;
+                $sheets[] = [
+                    'path' => $path,
+                    'name' => Str::limit($photo->getClientOriginalName(), 120, ''),
+                ];
+            }
+
+            DB::transaction(function () use ($submission, $sheets, $request, $pu, $office, $storedPaths) {
+                $submission->sheets = array_values($sheets);
+                $submission->submitted_by = $request->user()->id;
+                $submission->save();
+                PuTaskAudit::create([
+                    'pu_id' => $pu->id,
+                    'office' => $office->value,
+                    'action' => 'result_sheets_uploaded',
+                    'details' => ['files' => count($storedPaths), 'total_sheets' => count($sheets)],
+                    'performed_by' => $request->user()->id,
+                ]);
+            });
+        } catch (Throwable $exception) {
+            foreach ($storedPaths as $path) {
+                $this->forget($path);
+            }
+
+            throw $exception;
         }
 
-        $submission->sheets = array_values($sheets);
-        $submission->remarks = $data['remarks'] ?? $submission->remarks;
-        $submission->submitted_by = $request->user()->id;
-        $submission->save();
+        return redirect()->route('portal.pus.show', ['pu' => $pu->id, 'office' => $office->value])->with('success', 'Result sheet photo saved.');
+    }
 
-        return redirect()->route('portal.pus', ['office' => $office->value])->with('success', "{$this->officeLabel($office)} result evidence uploaded for {$pu->name}.");
+    public function saveVideo(Request $request, Pu $pu)
+    {
+        $this->authorizePu($request, $pu);
+        $office = $this->office($request);
+
+        $request->validate([
+            'video' => ['required', 'file', 'mimetypes:video/mp4,video/quicktime,video/webm,video/3gpp,video/x-matroska', 'max:153600'],
+        ], [
+            'video.required' => 'Record or choose a video first.',
+            'video.max' => 'The video is too big (limit 150 MB). Record a shorter one.',
+            'video.mimetypes' => 'This file is not a video.',
+            'video.uploaded' => 'The video could not be uploaded. Check your network and try again.',
+        ]);
+
+        $submission = $this->submissionFor($pu, $office);
+        $previousPath = $submission->video_path;
+        $file = $request->file('video');
+        $newPath = $file->storeAs("pu-evidence/{$pu->id}", 'video-'.Str::uuid().'.'.($file->extension() ?: 'mp4'), self::DISK);
+        if (! $newPath) {
+            throw new RuntimeException('The counting video could not be saved. Please try again.');
+        }
+
+        try {
+            DB::transaction(function () use ($submission, $newPath, $file, $request, $pu, $office) {
+                $submission->video_path = $newPath;
+                $submission->video_name = Str::limit($file->getClientOriginalName(), 120, '');
+                $submission->submitted_by = $request->user()->id;
+                $submission->save();
+                PuTaskAudit::create([
+                    'pu_id' => $pu->id,
+                    'office' => $office->value,
+                    'action' => 'counting_video_uploaded',
+                    'details' => ['file' => $submission->video_name],
+                    'performed_by' => $request->user()->id,
+                ]);
+            });
+        } catch (Throwable $exception) {
+            $this->forget($newPath);
+            throw $exception;
+        }
+
+        // Keep the previous evidence until the replacement has been committed.
+        if ($previousPath && $previousPath !== $newPath) {
+            $this->forget($previousPath);
+        }
+
+        return redirect()->route('portal.pus.show', ['pu' => $pu->id, 'office' => $office->value])->with('success', 'Video saved.');
     }
 
     public function deleteFile(Request $request, Pu $pu)
@@ -163,21 +275,44 @@ class PuTaskController extends Controller
         $submission = $pu->submissions()->where('office', $this->office($request)->value)->first();
         abort_unless($submission, 404);
 
+        $pathsToDelete = [];
+        $deletedDetails = [];
+
         if ($request->kind === 'video') {
-            $this->forget($submission->video_path);
+            if ($submission->video_path) {
+                $pathsToDelete[] = $submission->video_path;
+            }
+            $deletedDetails = ['file' => $submission->video_name];
             $submission->video_path = $submission->video_name = null;
         } else {
             $sheets = $submission->sheets ?? [];
             $i = $request->integer('index');
             abort_unless(isset($sheets[$i]), 404);
-            $this->forget($sheets[$i]['path']);
+            if (! empty($sheets[$i]['path'])) {
+                $pathsToDelete[] = $sheets[$i]['path'];
+            }
+            $deletedDetails = ['file' => $sheets[$i]['name'] ?? null, 'index' => $i];
             unset($sheets[$i]);
             $submission->sheets = array_values($sheets);
         }
 
-        $submission->save();
+        DB::transaction(function () use ($submission, $pu, $request, $deletedDetails) {
+            $submission->save();
+            PuTaskAudit::create([
+                'pu_id' => $pu->id,
+                'office' => $submission->office->value,
+                'action' => $request->kind === 'video' ? 'counting_video_deleted' : 'result_sheet_deleted',
+                'details' => $deletedDetails,
+                'performed_by' => $request->user()->id,
+            ]);
+        });
 
-        return back()->with('success', 'File removed.');
+        // Remove the private file only after the database no longer references it.
+        foreach ($pathsToDelete as $path) {
+            $this->forget($path);
+        }
+
+        return back()->with('success', 'Removed.');
     }
 
     /* --------------------------------------------------------------- media */
@@ -197,7 +332,11 @@ class PuTaskController extends Controller
         };
         abort_unless($path && Storage::disk(self::DISK)->exists($path), 404);
 
-        return response()->file(Storage::disk(self::DISK)->path($path), ['Cache-Control' => 'private, max-age=3600']);
+        return response()->file(Storage::disk(self::DISK)->path($path), [
+            'Cache-Control' => 'private, no-store, no-cache, must-revalidate, max-age=0',
+            'Pragma' => 'no-cache',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /* ------------------------------------------------------- management view */
@@ -210,12 +349,18 @@ class PuTaskController extends Controller
         $office = $this->office($request);
         $base = fn () => Pu::query()->visibleTo($user);
 
-        $pus = $base()->with(['ward.lga', 'official', 'submission' => $this->forOffice($office), 'submission.submitter'])
+        $pus = $base()->with([
+            'ward.lga', 'official', 'submission' => $this->forOffice($office), 'submission.submitter',
+            'results' => fn ($q) => $q->where('office', $office->value)->whereHas('election', fn ($e) => $e->where('is_active', true)),
+            'taskAudits' => fn ($q) => $q->with('performer')
+                ->where(fn ($q) => $q->whereNull('office')->orWhere('office', $office->value))
+                ->latest()->limit(5),
+        ])
             ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
                 ->where('pus.name', 'like', "%{$s}%")->orWhere('pus.code', 'like', "%{$s}%")))
             ->when($request->status === 'officials', fn ($q) => $q->whereDoesntHave('official'))
             ->when($request->status === 'result', fn ($q) => $q->resultIncomplete($office->value))
-            ->when($request->status === 'complete', fn ($q) => $q->whereHas('official')->resultComplete($office->value))
+            ->when($request->status === 'complete', fn ($q) => $q->taskDone($office->value))
             ->orderBy('pus.name')
             ->paginate(15)->withQueryString();
 
@@ -227,6 +372,13 @@ class PuTaskController extends Controller
                         ? trim($pu->submission->submitter->first_name.' '.$pu->submission->submitter->last_name) : null,
                     'submitted_at' => $pu->submission?->updated_at?->toIso8601String(),
                     'official' => $pu->official?->only(['po_name', 'apo1_name', 'apo2_name', 'security_name']),
+                    'activity' => $pu->taskAudits->map(fn (PuTaskAudit $audit) => [
+                        'action' => $audit->action,
+                        'performed_by' => $audit->performer
+                            ? trim($audit->performer->first_name.' '.$audit->performer->last_name) : null,
+                        'created_at' => $audit->created_at?->toIso8601String(),
+                        'details' => $audit->details,
+                    ])->values(),
                     'submission' => $this->submissionPayload($pu->submission),
                 ])->values(),
                 'meta' => [
@@ -248,10 +400,33 @@ class PuTaskController extends Controller
 
     /* -------------------------------------------------------------- helpers */
 
+    private function evidencePage(Request $request, Pu $pu, string $component)
+    {
+        $this->authorizePu($request, $pu);
+        $office = $this->office($request);
+        $pu->load(['ward.lga', 'submission' => $this->forOffice($office), 'submission.submitter']);
+
+        return Inertia::render($component, [
+            'pu' => $this->puInfo($pu),
+            'office' => $office->value,
+            'submission' => $this->submissionPayload($pu->submission),
+            'limits' => ['video_mb' => 150, 'sheet_mb' => 10, 'max_sheets' => self::MAX_SHEETS],
+        ]);
+    }
+
+    private function submissionFor(Pu $pu, AspirantOffice $office): PuResultSubmission
+    {
+        return $pu->submissions()->where('office', $office->value)->first()
+            ?? new PuResultSubmission(['pu_id' => $pu->id, 'office' => $office->value]);
+    }
+
     /** Office the task belongs to (?office=governor ...). Defaults to governor. */
     private function office(Request $request): AspirantOffice
     {
-        return AspirantOffice::tryFrom((string) ($request->query('office') ?? $request->input('office'))) ?? AspirantOffice::GOVERNOR;
+        $active = (array) config('elections.active_offices', ['governor']);
+        $asked = AspirantOffice::tryFrom((string) ($request->query('office') ?? $request->input('office')));
+
+        return ($asked && in_array($asked->value, $active, true)) ? $asked : (AspirantOffice::tryFrom($active[0] ?? '') ?? AspirantOffice::GOVERNOR);
     }
 
     private function forOffice(AspirantOffice $office): \Closure
@@ -266,7 +441,10 @@ class PuTaskController extends Controller
 
     private function officeOptions(): array
     {
-        return collect(AspirantOffice::cases())->map(fn ($o) => ['value' => $o->value, 'label' => $this->officeLabel($o)])->all();
+        $active = (array) config('elections.active_offices', ['governor']);
+
+        return collect(AspirantOffice::cases())->filter(fn ($o) => in_array($o->value, $active, true))
+            ->map(fn ($o) => ['value' => $o->value, 'label' => $this->officeLabel($o)])->values()->all();
     }
 
     private function agent(Request $request): User
@@ -303,13 +481,19 @@ class PuTaskController extends Controller
     private function summary(Pu $pu): array
     {
         $s = $pu->submission;
+        $officials = (bool) $pu->official;
+        $video = (bool) $s?->video_path;
+        $sheets = count($s?->sheets ?? []);
+        $figures = $pu->results->isNotEmpty();
 
         return [
             'id' => $pu->id, 'name' => $pu->name, 'code' => $pu->code, 'ward' => $pu->ward?->name,
-            'officials_done' => (bool) $pu->official,
-            'has_video' => (bool) $s?->video_path,
-            'sheet_count' => count($s?->sheets ?? []),
+            'officials_done' => $officials,
+            'has_video' => $video,
+            'sheet_count' => $sheets,
+            'has_figures' => $figures,
             'result_done' => $this->hasResult($s),
+            'steps_done' => (int) $officials + (int) ($sheets > 0) + (int) $video + (int) $figures,
         ];
     }
 

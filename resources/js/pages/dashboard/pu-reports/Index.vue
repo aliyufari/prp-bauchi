@@ -11,8 +11,9 @@ import Pagination from '@/components/ui/Pagination.vue'
 interface Sheet { index: number; name: string; url: string }
 interface Row {
   id: string; name: string; code: string; ward: string | null; lga: string | null
-  officials_done: boolean; has_video: boolean; sheet_count: number; result_done: boolean
+  officials_done: boolean; has_video: boolean; sheet_count: number; has_figures: boolean; result_done: boolean
   submitted_by: string | null; submitted_at: string | null
+  activity: { action: string; performed_by: string | null; created_at: string; details: Record<string, unknown> | null }[]
   official: { po_name: string; apo1_name: string; apo2_name: string; security_name: string } | null
   submission: { video: { url: string } | null; sheets: Sheet[]; remarks: string | null } | null
 }
@@ -42,6 +43,17 @@ const tabs = [
   { value: 'result', label: 'No result' },
 ]
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : '')
+const ACTION_LABELS: Record<string, string> = {
+  officials_recorded: 'Officials recorded',
+  officials_updated: 'Officials updated',
+  result_sheets_uploaded: 'Result-sheet photos uploaded',
+  counting_video_uploaded: 'Counting video uploaded',
+  counting_video_deleted: 'Counting video removed',
+  result_sheet_deleted: 'Result-sheet photo removed',
+  party_figures_recorded: 'Party figures entered',
+  party_figures_updated: 'Party figures updated',
+}
+const actionLabel = (action: string) => ACTION_LABELS[action] ?? action.replaceAll('_', ' ')
 const LABELS: [keyof NonNullable<Row['official']>, string][] = [
   ['po_name', 'PO'], ['apo1_name', 'APO 1'], ['apo2_name', 'APO 2'], ['security_name', 'Security'],
 ]
@@ -95,7 +107,8 @@ const LABELS: [keyof NonNullable<Row['official']>, string][] = [
               </div>
               <div class="flex items-center gap-2">
                 <TaskStatus :done="pu.officials_done" done-text="Officials" pending-text="No officials" />
-                <TaskStatus :done="pu.result_done" done-text="Result" :pending-text="pu.has_video || pu.sheet_count ? 'Incomplete' : 'No result'" />
+                <TaskStatus :done="pu.result_done" done-text="Evidence" :pending-text="pu.has_video || pu.sheet_count ? 'Incomplete evidence' : 'No evidence'" />
+                <TaskStatus :done="pu.has_figures" done-text="Figures" pending-text="No figures" />
                 <ChevronDown class="h-4 w-4 text-gray-400 transition group-open:rotate-180" />
               </div>
             </summary>
@@ -120,6 +133,16 @@ const LABELS: [keyof NonNullable<Row['official']>, string][] = [
                 <p class="mt-3 text-xs text-gray-500">Submitted by {{ pu.submitted_by ?? 'unknown' }} · {{ when(pu.submitted_at) }}</p>
               </div>
               <p v-else class="text-sm text-gray-500">No result evidence uploaded yet.</p>
+
+              <details v-if="pu.activity.length" class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                <summary class="cursor-pointer text-sm font-bold text-gray-800">Recent activity ({{ pu.activity.length }})</summary>
+                <ol class="mt-3 space-y-2">
+                  <li v-for="(event, index) in pu.activity" :key="`${event.action}-${event.created_at}-${index}`" class="flex flex-wrap justify-between gap-2 text-xs">
+                    <span class="font-semibold text-gray-800">{{ actionLabel(event.action) }} <span class="font-normal text-gray-500">by {{ event.performed_by ?? 'unknown' }}</span></span>
+                    <time class="text-gray-500">{{ when(event.created_at) }}</time>
+                  </li>
+                </ol>
+              </details>
             </div>
           </details>
         </li>

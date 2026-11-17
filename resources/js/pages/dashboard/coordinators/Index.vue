@@ -12,6 +12,7 @@ import ConfirmDialog from '@/components/ui/overlay/ConfirmDialog.vue';
 import SlideOver from '@/components/ui/SlideOver.vue';
 import { useDataTable } from '@/composables/table/useDataTable';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { rowActions } from '@/lib/rowActions';
 import type { Coordinator, CoordinatorFilterOptions, CoordinatorStatistics, CoordinatorTypeOption } from '@/types/coordinator';
 import type { LocationOption } from '@/types/member';
 import type { DataTableResponse } from '@/types/table';
@@ -175,13 +176,14 @@ function closeModal() {
 
 function submitForm() {
     const options = {
+        forceFormData: true,
         preserveScroll: true,
         onSuccess: () => { closeModal(); toast.success('Changes saved successfully.'); router.reload() },
     };
     if (modalMode.value === 'create') {
-        form.post(route('coordinators.store'), options);
+        form.transform((data) => data).post(route('coordinators.store'), options);
     } else if (modalMode.value === 'edit' && editingCoordinator.value) {
-        form.patch(route('coordinators.update', editingCoordinator.value.id), options);
+        form.transform((data) => ({ ...data, _method: 'patch' })).post(route('coordinators.update', editingCoordinator.value.id), options);
     }
 }
 
@@ -195,6 +197,14 @@ function viewCoordinator(row: Coordinator) {
 function handleRowAction(key: string, row: Coordinator) {
     if (key === 'view') return viewCoordinator(row);
     if (key === 'edit') return openEditModal(row);
+    if (key === 'assign') return openEditModal(row);
+    if (key === 'suspend') {
+        const next = row.status !== 'active';
+        requestAction(`${next ? 'Reactivate' : 'Suspend'} ${row.first_name} ${row.last_name}?`, next ? 'Reactivate' : 'Suspend', next ? 'primary' : 'danger', () => {
+            router.patch(route('managed-users.status', { module: 'coordinators', user: row.id }), { is_active: next }, { preserveScroll: true, onSuccess: () => { toast.success(next ? 'Account reactivated.' : 'Account suspended.'); router.reload() } });
+        });
+        return;
+    }
     if (key === 'delete') {
         requestDelete(`Delete ${row.first_name} ${row.last_name}?`, () => {
             router.delete(route('coordinators.destroy', row.id), { preserveScroll: true, onSuccess: () => { toast.success('Record deleted.'); router.reload() } });
@@ -215,9 +225,12 @@ function toggleAll() {
     table.togglePage(ids);
 }
 
-const deleteDialog = ref<{ message: string; action: () => void } | null>(null);
+const deleteDialog = ref<{ message: string; action: () => void; title?: string; confirmText?: string; variant?: 'danger' | 'primary' } | null>(null);
 function requestDelete(message: string, action: () => void) {
     deleteDialog.value = { message, action };
+}
+function requestAction(message: string, confirmText: string, variant: 'danger' | 'primary', action: () => void) {
+    deleteDialog.value = { message, action, title: `${confirmText} account`, confirmText, variant };
 }
 function confirmDelete() {
     const pending = deleteDialog.value;
@@ -299,7 +312,13 @@ function closeDeleteDialog() {
                         </template>
                         <template #actions="{ row }">
                             <div class="flex justify-end">
-                                <ActionDropdown @action="(key) => handleRowAction(key, row)" />
+                                <ActionDropdown
+                                    :actions="rowActions(row.can, row.can?.update ? [
+                                        { key: 'assign', label: 'Assign / change area', icon: 'assign' },
+                                        { key: 'suspend', label: row.status === 'active' ? 'Suspend account' : 'Reactivate account', icon: 'suspend', danger: row.status === 'active' },
+                                    ] : [])"
+                                    @action="(key) => handleRowAction(key, row)"
+                                />
                             </div>
                         </template>
                     </DataTable>
@@ -347,10 +366,10 @@ function closeDeleteDialog() {
         </SlideOver>
         <ConfirmDialog
             :open="deleteDialog !== null"
-            title="Confirm deletion"
+            :title="deleteDialog?.title ?? 'Confirm deletion'"
             :description="deleteDialog?.message ?? ''"
-            confirm-text="Delete"
-            variant="danger"
+            :confirm-text="deleteDialog?.confirmText ?? 'Delete'"
+            :variant="deleteDialog?.variant ?? 'danger'"
             @confirm="confirmDelete"
             @cancel="closeDeleteDialog"
             @close="closeDeleteDialog"

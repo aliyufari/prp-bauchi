@@ -62,9 +62,9 @@ function closeModal() {
 }
 
 function submit() {
-    const options = { preserveScroll: true, onSuccess: () => closeModal() };
+    const options = { forceFormData: true, preserveScroll: true, onSuccess: () => closeModal() };
     if (editingMember.value) {
-        form.patch(route('campaign-teams.members.update', [props.team.id, editingMember.value.id]), options);
+        form.transform((data) => ({ ...data, _method: 'patch' })).post(route('campaign-teams.members.update', [props.team.id, editingMember.value.id]), options);
     } else {
         form.post(route('campaign-teams.members.store', props.team.id), options);
     }

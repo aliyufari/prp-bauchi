@@ -116,7 +116,10 @@ class StakeholderController extends Controller
 
         $stakeholder->load(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'stakeholder']);
 
-        return Inertia::render('dashboard/stakeholders/Show', ['stakeholder' => new StakeholderResource($stakeholder)]);
+        return Inertia::render('dashboard/people/Show', [
+            'person' => new StakeholderResource($stakeholder),
+            'kind' => 'Stakeholder',
+        ]);
     }
 
     public function destroy(User $stakeholder)

@@ -7,9 +7,12 @@ use App\Http\Controllers\Dashboard\CampaignTeamMemberController;
 use App\Http\Controllers\Dashboard\LocationOptionsController;
 use App\Http\Controllers\Dashboard\MemberController;
 use App\Http\Controllers\Dashboard\PortalController;
+use App\Http\Controllers\Dashboard\PartyFigureController;
 use App\Http\Controllers\Dashboard\PuController;
 use App\Http\Controllers\Dashboard\PuTaskController;
 use App\Http\Controllers\Dashboard\ResultController;
+use App\Http\Controllers\Dashboard\UserManagementActionController;
+use App\Http\Controllers\Dashboard\LoginActivityController;
 
 use App\Http\Controllers\Dashboard\{
     CoordinatorController, PartyAgentController, ReturningOfficerController,
@@ -20,6 +23,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function () {
     Route::get('dashboard/export', DashboardReportController::class)->name('dashboard.export');
+    Route::get('dashboard/login-activity', [LoginActivityController::class, 'index'])->name('login-activity.index');
+    Route::patch('dashboard/{module}/{user}/status', [UserManagementActionController::class, 'status'])
+        ->whereIn('module', ['party-agents', 'coordinators', 'stakeholders', 'returning-officers', 'supervisory-agents', 'members', 'aspirants'])
+        ->name('managed-users.status');
     Route::prefix('dashboard/members')->name('members.')->group(function () {
         Route::get('/', [MemberController::class, 'index'])->name('index');
         Route::post('/', [MemberController::class, 'store'])->name('store');
@@ -105,10 +112,15 @@ Route::middleware(['auth'])->group(function () {
     // Party-agent field tasks (PU agent: own PU, ward agent: every PU in the ward). Rendered in the portal layout.
     Route::prefix('portal/polling-units')->name('portal.pus')->group(function () {
         Route::get('/', [PuTaskController::class, 'index'])->name('');
+        Route::get('{pu}', [PuTaskController::class, 'show'])->name('.show');
         Route::get('{pu}/officials', [PuTaskController::class, 'officials'])->name('.officials');
         Route::put('{pu}/officials', [PuTaskController::class, 'saveOfficials'])->name('.officials.save');
-        Route::get('{pu}/result', [PuTaskController::class, 'result'])->name('.result');
-        Route::post('{pu}/result', [PuTaskController::class, 'saveResult'])->name('.result.save');
+        Route::get('{pu}/sheet', [PuTaskController::class, 'sheet'])->name('.sheet');
+        Route::post('{pu}/sheet', [PuTaskController::class, 'saveSheet'])->name('.sheet.save');
+        Route::get('{pu}/figures', [PartyFigureController::class, 'show'])->name('.figures');
+        Route::post('{pu}/figures', [PartyFigureController::class, 'store'])->name('.figures.save');
+        Route::get('{pu}/video', [PuTaskController::class, 'video'])->name('.video');
+        Route::post('{pu}/video', [PuTaskController::class, 'saveVideo'])->name('.video.save');
         Route::delete('{pu}/result/file', [PuTaskController::class, 'deleteFile'])->name('.result.file');
     });
     Route::get('pu-media/{pu}/{kind}/{index?}', [PuTaskController::class, 'media'])->whereIn('kind', ['video', 'sheet'])->name('pu-media');

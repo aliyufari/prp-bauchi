@@ -13,6 +13,7 @@ class PartyAgentResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'can' => $this->abilities($request, 'party-agents'),
             'id' => $this->id,
             'first_name' => $this->first_name,
             'middle_name' => $this->middle_name,
@@ -49,6 +50,10 @@ class PartyAgentResource extends JsonResource
             'deployed' => (bool) $this->profile?->pu_id,
 
             'created_at' => $this->created_at?->toISOString(),
+            'last_login_at' => $this->last_login_at?->toISOString(),
+            'last_login_ip' => $this->last_login_ip,
+            'last_login_browser' => $this->last_login_browser,
+            'last_login_device' => $this->last_login_device,
         ];
     }
 }

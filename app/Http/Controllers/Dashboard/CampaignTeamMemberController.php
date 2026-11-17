@@ -53,10 +53,12 @@ class CampaignTeamMemberController extends Controller
 
     public function update(UpdateCampaignTeamMemberRequest $request, CampaignTeam $campaign_team, CampaignTeamMember $team_member)
     {
+        Gate::authorize('manageRoster', $campaign_team);
         $this->ensureBauchiTeam($campaign_team);
         abort_unless($team_member->campaign_team_id === $campaign_team->id, 404);
 
         $team_member->update($request->validated());
+        $this->syncUserAvatar($team_member->user, $request);
 
         return back()->with('success', 'Team member updated.');
     }

@@ -2,13 +2,12 @@
 import FormActions from '@/components/forms/FormActions.vue';
 import LocationCascade from '@/components/location/LocationCascade.vue';
 import Alert from '@/components/ui/Alert.vue';
-import DatePicker from '@/components/ui/form/DatePicker.vue';
 import Input from '@/components/ui/form/Input.vue';
 import SearchSelect from '@/components/ui/form/SearchSelect.vue';
 import Textarea from '@/components/ui/form/Textarea.vue';
 import { useLocationModel } from '@/composables/useLocationModel';
 import type { LocationApiOption, LocationLevel } from '@/types/location';
-import type { LocationOption, OfficeOption, PartyOption } from '@/types/result';
+import type { ElectionOption, LocationOption, OfficeOption, PartyOption } from '@/types/result';
 import { computed } from 'vue';
 
 interface FormShape {
@@ -17,8 +16,8 @@ interface FormShape {
     lga_id: string | null;
     ward_id: string | null;
     pu_id: string | null;
+    election_id: string | null;
     office: string | null;
-    election_date: string | null;
     registered_voters: number;
     accredited_voters: number;
     rejected_votes: number;
@@ -32,12 +31,14 @@ interface FormShape {
 interface Props {
     form: FormShape;
     submitLabel?: string;
+    elections?: ElectionOption[];
     offices?: OfficeOption[];
     parties?: PartyOption[];
     states?: LocationOption[];
 }
 const props = withDefaults(defineProps<Props>(), {
     submitLabel: 'Save',
+    elections: () => [],
     offices: () => [],
     parties: () => [],
     states: () => [],
@@ -72,6 +73,16 @@ const totalValidVotes = computed(() => Object.values(props.form.party_votes || {
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <SearchSelect
+                        v-model="form.election_id"
+                        :options="elections"
+                        label="Election"
+                        placeholder="Select election"
+                        search-placeholder="Search election…"
+                        :error="form.errors.election_id"
+                    />
+                </div>
+                <div>
+                    <SearchSelect
                         v-model="form.office"
                         :options="offices"
                         label="Office"
@@ -81,9 +92,6 @@ const totalValidVotes = computed(() => Object.values(props.form.party_votes || {
                     />
                 </div>
 
-                <div>
-                    <DatePicker v-model="form.election_date" label="Election date" :error="form.errors.election_date" />
-                </div>
             </div>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">

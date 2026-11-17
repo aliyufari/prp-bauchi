@@ -121,7 +121,10 @@ class SupervisoryAgentController extends Controller
 
         $supervisory_agent->load(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'supervisoryAgent']);
 
-        return Inertia::render('dashboard/supervisory-agents/Show', ['agent' => new SupervisoryAgentResource($supervisory_agent)]);
+        return Inertia::render('dashboard/people/Show', [
+            'person' => new SupervisoryAgentResource($supervisory_agent),
+            'kind' => 'Supervisory Agent',
+        ]);
     }
 
     public function destroy(User $supervisory_agent)

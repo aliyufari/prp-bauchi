@@ -12,9 +12,11 @@ export interface Result {
   zone: string | null
   state: string | null
 
+  election_id: string
+  election_name: string | null
   office: string | null
   office_label: string | null
-  election_date: string | null
+  date: string | null
 
   registered_voters: number
   accredited_voters: number
@@ -49,6 +51,7 @@ export interface ResultStatistics {
 }
 
 export interface OfficeOption { value: string; label: string }
+export interface ElectionOption { value: string; label: string }
 export interface PartyOption { value: string; label: string }
 export interface LocationOption { id: string; name: string }
 

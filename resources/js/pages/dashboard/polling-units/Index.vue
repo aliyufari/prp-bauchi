@@ -147,7 +147,7 @@ function submitForm() {
     if (modalMode.value === 'create') {
         form.post(route('polling-units.store'), options);
     } else if (modalMode.value === 'edit' && editingPu.value) {
-        form.patch(route('polling-units.update', editingPu.value.id), options);
+        form.transform((data) => ({ ...data, _method: 'patch' })).post(route('polling-units.update', editingPu.value.id), options);
     }
 }
 

@@ -17,7 +17,8 @@ use Spatie\Permission\PermissionRegistrar;
  *  - RoleHierarchy::canManage / canAssign -> nobody manages anyone at or above their own rank;
  *  - the location pickers only offer levels strictly below the manager's own.
  *
- * Additive and idempotent: it never removes a permission, so it is safe to run repeatedly
+ * Idempotent: grants field permissions additively; removes the legacy management-dashboard
+ * permission from party agents so they consistently use the dedicated portal dashboard.
  *   php artisan db:seed --class=ManagerPermissionsSeeder
  */
 class ManagerPermissionsSeeder extends Seeder
@@ -40,6 +41,7 @@ class ManagerPermissionsSeeder extends Seeder
                 'returning-officers' => self::FULL,
                 'coordinators' => self::FULL, // lower-level coordinators only (hierarchy rule)
                 'polling-units' => ['view', 'manage'],
+                'pu-tasks' => ['view'],
                 'results' => ['view', 'upload', 'verify'],
                 'campaign-teams' => ['view'],
             ],
@@ -50,6 +52,7 @@ class ManagerPermissionsSeeder extends Seeder
                 'party-agents' => self::FULL,
                 'returning-officers' => self::READ,
                 'polling-units' => ['view'],
+                'pu-tasks' => ['view'],
                 'results' => ['view', 'upload', 'verify'],
             ],
             // Returning officers collate results for their LGA and manage the agents in it.
@@ -58,13 +61,14 @@ class ManagerPermissionsSeeder extends Seeder
                 'members' => self::READ,
                 'party-agents' => self::EDIT,
                 'polling-units' => ['view'],
+                'pu-tasks' => ['view'],
                 'results' => ['view', 'upload', 'verify'],
             ],
             // Party agents register members and report results from their ward / polling unit.
             RoleName::PARTY_AGENT->value => [
-                'dashboard' => ['view', 'export'], // opens the management layout and the scoped dashboard
                 'members' => self::EDIT,
                 'polling-units' => ['view'],
+                'pu-tasks' => ['manage'],
                 'results' => ['view', 'upload'],
             ],
         ];
@@ -93,6 +97,13 @@ class ManagerPermissionsSeeder extends Seeder
             }
 
             $role->givePermissionTo($names);
+
+            // Party agents use the dedicated, mobile-first portal dashboard.
+            // Remove the legacy dashboard.view grant so Access::layoutFor() selects the portal layout.
+            if ($roleName === RoleName::PARTY_AGENT->value) {
+                $role->revokePermissionTo('dashboard.view');
+            }
+
             $this->command?->info("{$roleName}: " . count($names) . ' permissions ensured.');
         }
 

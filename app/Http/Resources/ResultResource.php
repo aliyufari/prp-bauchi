@@ -29,6 +29,8 @@ class ResultResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'election_id' => $this->election_id,
+            'election_name' => $this->election?->name,
             'pu_id' => $this->pu_id,
             'pu' => $this->pu?->name,
             'pu_code' => $this->pu?->code,
@@ -39,7 +41,7 @@ class ResultResource extends JsonResource
 
             'office' => $this->office?->value,
             'office_label' => $this->office ? ucwords(str_replace('_', ' ', strtolower($this->office->value))) : null,
-            'election_date' => $this->election_date?->toDateString(),
+            'date' => $this->date?->toDateString(),
 
             'registered_voters' => $this->registered_voters,
             'accredited_voters' => $this->accredited_voters,

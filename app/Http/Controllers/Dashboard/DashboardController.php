@@ -60,7 +60,7 @@ class DashboardController extends Controller
         $locations = ScopedLocations::options($user);
         $filters = $request->validate(['lga' => ['nullable', 'uuid'], 'ward' => ['nullable', 'uuid']]);
         $stateId = LocationChain::bauchiStateId();
-        abort_unless($stateId, 503, 'Bauchi State locations have not been seeded.');
+        abort_unless($stateId, 503, config('location.operating_state', 'Bauchi').' State locations have not been seeded.');
         $lgaId = $filters['lga'] ?? null;
         $wardId = $filters['ward'] ?? null;
 
@@ -203,7 +203,7 @@ class DashboardController extends Controller
     private function placeholderGovernor(): array
     {
         return [
-            'name' => 'Alhaji Bala Mohammed (Placeholder)',
+            'name' => 'Sen. Shehu Buba Umar',
             'title' => 'Governorship Candidate',
             'state' => 'Bauchi',
             'vision' => 'Building an inclusive, prosperous, and secure Bauchi State driven by grassroots empowerment and sustainable infrastructure.',

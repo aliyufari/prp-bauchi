@@ -165,11 +165,11 @@ function closeModal() {
 }
 
 function submitForm() {
-  const options = { preserveScroll: true, onSuccess: () => { closeModal(); toast.success('Changes saved successfully.'); router.reload() } }
+  const options = { forceFormData: true, preserveScroll: true, onSuccess: () => { closeModal(); toast.success('Changes saved successfully.'); router.reload() } }
   if (modalMode.value === 'create') {
-    form.post(route('aspirants.store'), options)
+    form.transform((data) => data).post(route('aspirants.store'), options)
   } else if (modalMode.value === 'edit' && editingAspirant.value) {
-    form.patch(route('aspirants.update', editingAspirant.value.id), options)
+    form.transform((data) => ({ ...data, _method: 'patch' })).post(route('aspirants.update', editingAspirant.value.id), options)
   }
 }
 
@@ -180,6 +180,14 @@ function viewAspirant(row: Aspirant) {
 function handleRowAction(key: string, row: Aspirant) {
   if (key === 'view') return viewAspirant(row)
   if (key === 'edit') return openEditModal(row)
+  if (key === 'assign') return openEditModal(row)
+  if (key === 'suspend') {
+    const next = row.status !== 'active'
+    requestAction(`${next ? 'Reactivate' : 'Suspend'} ${row.first_name} ${row.last_name}?`, next ? 'Reactivate' : 'Suspend', next ? 'primary' : 'danger', () => {
+      router.patch(route('managed-users.status', { module: 'aspirants', user: row.id }), { is_active: next }, { preserveScroll: true, onSuccess: () => { toast.success(next ? 'Account reactivated.' : 'Account suspended.'); router.reload() } })
+    })
+    return
+  }
   if (key === 'delete') {
     requestDelete(`Delete ${row.first_name} ${row.last_name}?`, () => {
     router.delete(route('aspirants.destroy', row.id), { preserveScroll: true, onSuccess: () => { toast.success('Record deleted.'); router.reload() } });
@@ -206,9 +214,12 @@ function toggleAll() {
   table.togglePage(ids)
 }
 
-const deleteDialog = ref<{ message: string; action: () => void } | null>(null)
+const deleteDialog = ref<{ message: string; action: () => void; title?: string; confirmText?: string; variant?: 'danger' | 'primary' } | null>(null)
 function requestDelete(message: string, action: () => void) {
   deleteDialog.value = { message, action }
+}
+function requestAction(message: string, confirmText: string, variant: 'danger' | 'primary', action: () => void) {
+  deleteDialog.value = { message, action, title: `${confirmText} account`, confirmText, variant }
 }
 function confirmDelete() {
   const pending = deleteDialog.value
@@ -284,7 +295,16 @@ function closeDeleteDialog() { deleteDialog.value = null }
             </template>
             <template #actions="{ row }">
               <div class="flex justify-end">
-                <ActionDropdown @action="(key) => handleRowAction(key, row)" />
+                <ActionDropdown
+                  :actions="[
+                    { key: 'view', label: 'View details', icon: 'eye' },
+                    { key: 'edit', label: 'Edit details', icon: 'edit' },
+                    { key: 'assign', label: 'Change constituency', icon: 'assign' },
+                    { key: 'suspend', label: row.status === 'active' ? 'Suspend account' : 'Reactivate account', icon: 'suspend', danger: row.status === 'active' },
+                    { key: 'delete', label: 'Delete', icon: 'delete', danger: true },
+                  ]"
+                  @action="(key) => handleRowAction(key, row)"
+                />
               </div>
             </template>
           </DataTable>
@@ -331,10 +351,10 @@ function closeDeleteDialog() { deleteDialog.value = null }
     </SlideOver>
       <ConfirmDialog
       :open="deleteDialog !== null"
-      title="Confirm deletion"
+      :title="deleteDialog?.title ?? 'Confirm deletion'"
       :description="deleteDialog?.message ?? ''"
-      confirm-text="Delete"
-      variant="danger"
+      :confirm-text="deleteDialog?.confirmText ?? 'Delete'"
+      :variant="deleteDialog?.variant ?? 'danger'"
       @confirm="confirmDelete"
       @cancel="closeDeleteDialog"
       @close="closeDeleteDialog"

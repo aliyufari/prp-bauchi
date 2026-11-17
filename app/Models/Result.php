@@ -16,8 +16,8 @@ class Result extends Model
     use HasFactory, HasUuids, HasJurisdiction;
 
     protected $fillable = [
-        'pu_id', 'ward_id', 'lga_id', 'zone_id', 'state_id',
-        'office', 'election_date',
+        'election_id', 'pu_id', 'ward_id', 'lga_id', 'zone_id', 'state_id',
+        'office', 'date',
         'registered_voters', 'accredited_voters', 'rejected_votes',
         'party_votes', 'total_valid_votes',
         'status', 'result_sheet_url', 'remarks',
@@ -30,7 +30,7 @@ class Result extends Model
             'office' => AspirantOffice::class,
             'status' => ResultStatus::class,
             'party_votes' => 'array',
-            'election_date' => 'date',
+            'date' => 'date',
             'verified_at' => 'datetime',
         ];
     }
@@ -42,6 +42,7 @@ class Result extends Model
         });
     }
 
+    public function election(): BelongsTo { return $this->belongsTo(Election::class); }
     public function pu(): BelongsTo { return $this->belongsTo(Pu::class); }
     public function ward(): BelongsTo { return $this->belongsTo(Ward::class); }
     public function lga(): BelongsTo { return $this->belongsTo(Lga::class); }

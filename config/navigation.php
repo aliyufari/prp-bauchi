@@ -23,6 +23,7 @@ return [
             ['label' => 'Campaign Teams', 'route' => 'campaign-teams.index', 'icon' => 'Users2', 'can' => 'campaign-teams.view'],
             ['label' => 'PU Reports', 'route' => 'pu-reports.index', 'icon' => 'ClipboardCheck', 'can' => 'pu-tasks.view'],
             ['label' => 'Results Management', 'route' => 'results.index', 'icon' => 'BarChart3', 'can' => 'results.view'],
+            ['label' => 'Election Analysis', 'route' => 'election-analysis.index', 'icon' => 'BarChart3', 'can' => 'results.analyse'],
         ]],
 
         ['group' => 'Campaign & Activities', 'items' => [
@@ -53,6 +54,7 @@ return [
 
         ['group' => 'System', 'items' => [
             ['label' => 'User Management', 'route' => 'users.index', 'path' => '/dashboard/users', 'icon' => 'Users', 'can' => 'users.manage'],
+            ['label' => 'Login Activity', 'route' => 'login-activity.index', 'icon' => 'Monitor', 'can' => 'users.manage'],
             ['label' => 'Roles & Permissions', 'route' => 'roles.index', 'path' => '/dashboard/roles', 'icon' => 'Key', 'can' => 'roles.manage'],
             ['label' => 'Settings', 'route' => 'settings.index', 'path' => '/dashboard/settings', 'icon' => 'Settings', 'can' => 'settings.manage'],
             ['label' => 'Audit Logs', 'route' => 'audit-logs.index', 'path' => '/dashboard/audit-logs', 'icon' => 'ScrollText', 'can' => 'audit-logs.view'],
@@ -63,7 +65,7 @@ return [
     'portal' => [
         ['group' => null, 'items' => [
             ['label' => 'Dashboard', 'route' => 'portal.home', 'icon' => 'Home', 'can' => 'portal.access', 'exact' => true],
-            ['label' => 'My Polling Units', 'route' => 'portal.pus', 'icon' => 'MapPin', 'can' => 'pu-tasks.manage'],
+            ['label' => 'Polling Units', 'route' => 'portal.pus', 'icon' => 'MapPin', 'can' => 'pu-tasks.manage', 'level' => 'ward'],
             ['label' => 'My Agents', 'route' => 'portal.agents', 'icon' => 'Users2', 'can' => 'pu-tasks.manage', 'level' => 'ward'],
             ['label' => 'My Team', 'route' => 'portal.team', 'icon' => 'Users2', 'can' => 'campaign-teams.view'],
             ['label' => 'Profile', 'route' => 'portal.profile', 'icon' => 'User', 'can' => 'portal.access'],

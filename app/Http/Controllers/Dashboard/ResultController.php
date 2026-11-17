@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Result\StoreResultRequest;
 use App\Http\Requests\Result\UpdateResultRequest;
 use App\Http\Resources\ResultResource;
+use App\Models\Election;
 use App\Models\Pu;
 use App\Models\Result;
 use App\Models\User;
@@ -30,7 +31,7 @@ class ResultController extends Controller
         $user = $request->user();
 
         $query = Result::query()->visibleTo($user)
-            ->with(['pu', 'ward', 'lga', 'zone', 'state', 'uploader', 'verifier']);
+            ->with(['election', 'pu', 'ward', 'lga', 'zone', 'state', 'uploader', 'verifier']);
         $this->applyFilters($query, $request);
         $this->applySort($query, $request);
 
@@ -48,7 +49,15 @@ class ResultController extends Controller
             ],
             'statistics' => $this->statistics($user),
             'filterOptions' => ['offices' => $this->officeOptions(), 'statuses' => $this->statusOptions(), 'states' => $states],
-            'formOptions' => ['offices' => $this->officeOptions(), 'parties' => $this->partyOptions(), 'states' => $states],
+            'formOptions' => [
+                'offices' => $this->officeOptions(),
+                'parties' => $this->partyOptions(),
+                'states' => $states,
+                'elections' => Election::query()->orderByDesc('date')->orderBy('name')->get()->map(fn (Election $election) => [
+                    'value' => $election->id,
+                    'label' => $election->name.($election->date ? ' · '.$election->date->toDateString() : ''),
+                ])->values(),
+            ],
             'filters' => $request->only(['search', 'office', 'status', 'state', 'zone', 'lga', 'ward', 'pu']),
             'canUpload' => $user->checkPermissionTo('results.upload'),
         ]);
@@ -59,18 +68,23 @@ class ResultController extends Controller
         $data = $request->validated();
         $pu = Pu::findOrFail($data['pu_id']);
 
+        $election = Election::findOrFail($data['election_id']);
+
         // The observer fills ward/lga/zone/state from the PU.
-        Result::create($data + [
-            'registered_voters' => $data['registered_voters'] ?? $pu->registered_voters ?? 0,
-            'uploaded_by' => $request->user()->id,
-        ]);
+        $data['date'] = $election->date?->toDateString();
+        $data['registered_voters'] = $data['registered_voters'] ?? $pu->registered_voters ?? 0;
+        $data['uploaded_by'] = $request->user()->id;
+        Result::create($data);
 
         return back()->with('success', 'Result uploaded.');
     }
 
     public function update(UpdateResultRequest $request, Result $result)
     {
-        $result->update($request->validated());
+        $data = $request->validated();
+        $election = Election::findOrFail($data['election_id']);
+        $data['date'] = $election->date?->toDateString();
+        $result->update($data);
 
         return back()->with('success', 'Result updated.');
     }
@@ -138,6 +152,7 @@ class ResultController extends Controller
     protected function officeOptions(): array
     {
         return collect(AspirantOffice::cases())
+            ->filter(fn ($office) => in_array($office->value, (array) config('elections.active_offices', ['governor']), true))
             ->map(fn ($c) => ['value' => $c->value, 'label' => ucwords(str_replace('_', ' ', strtolower($c->value)))])->values()->all();
     }
 
@@ -149,6 +164,6 @@ class ResultController extends Controller
 
     protected function partyOptions(): array
     {
-        return collect(ElectionParty::cases())->map(fn ($c) => ['value' => $c->value, 'label' => $c->value])->values()->all();
+        return ElectionParty::options();
     }
 }

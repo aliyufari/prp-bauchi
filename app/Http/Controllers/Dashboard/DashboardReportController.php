@@ -24,7 +24,7 @@ class DashboardReportController extends Controller
         Gate::authorize('dashboard.view');
         $filters = $request->validate(['lga' => ['nullable', 'uuid'], 'ward' => ['nullable', 'uuid']]);
         $stateId = LocationChain::bauchiStateId();
-        abort_unless($stateId, 503, 'Bauchi State locations have not been seeded.');
+        abort_unless($stateId, 503, config('location.operating_state', 'Bauchi').' State locations have not been seeded.');
         $lgaId = $filters['lga'] ?? null;
         $wardId = $filters['ward'] ?? null;
 

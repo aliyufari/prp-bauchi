@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             BauchiLocationsSeeder::class,
             ConstituencySeeder::class,
             SuperAdminSeeder::class,
+            ElectionSeeder::class,
         ]);
 
         // if (! app()->isProduction()) {

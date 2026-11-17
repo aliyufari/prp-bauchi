@@ -19,8 +19,10 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        abort_if($request->user()->hasAnyRole(['party_agent', 'super_party_agent', 'coordinator', 'supervisory_agent', 'returning_officer', 'stakeholder', 'campaign_team_member']), 403, 'Your name and email are managed by an administrator.');
+
         return Inertia::render('settings/Profile', [
-            'user' => $request->user()->only(['first_name', 'middle_name', 'last_name', 'email', 'avatar']),
+            'user' => $request->user()->only(['first_name', 'middle_name', 'last_name', 'email', 'avatar', 'last_login_at', 'last_login_ip', 'last_login_browser', 'last_login_device']),
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
         ]);
@@ -32,6 +34,7 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
+        abort_if($user->hasAnyRole(['party_agent', 'super_party_agent', 'coordinator', 'supervisory_agent', 'returning_officer', 'stakeholder', 'campaign_team_member']), 403, 'Your name and email are managed by an administrator.');
         $validated = $request->validated();
 
         if ($request->hasFile('avatar')) {

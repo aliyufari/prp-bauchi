@@ -10,12 +10,15 @@ test('registration screen can be rendered', function () {
 
 test('new users can register', function () {
     $response = $this->post('/register', [
-        'name' => 'Test User',
+        'first_name' => 'Test',
+        'last_name' => 'User',
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
     ]);
 
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $this->assertGuest();
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('status', 'Request received. An administrator will activate your account.');
+    $this->assertDatabaseHas('users', ['email' => 'test@example.com', 'is_active' => false]);
 });

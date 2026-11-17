@@ -42,9 +42,6 @@ export interface PartyAgentTypeOption {
 }
 
 export interface PartyAgentFilterOptions {
-  states: LocationOption[]
-  zones: LocationOption[]
-  lgas: LocationOption[]
   wards: LocationOption[]
   statuses: { value: string; label: string }[]
   types: PartyAgentTypeOption[]

@@ -32,6 +32,10 @@ return new class extends Migration
             $table->string('password');
 
             $table->boolean('is_active')->default(true);
+            $table->timestamp('last_login_at')->nullable();
+            $table->string('last_login_ip', 45)->nullable();
+            $table->string('last_login_browser')->nullable();
+            $table->string('last_login_device')->nullable();
 
             $table->rememberToken();
 
@@ -216,6 +220,20 @@ return new class extends Migration
             $table->longText('payload');
             $table->integer('last_activity')->index();
         });
+
+        Schema::create('user_login_events', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('email', 255)->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->string('browser')->nullable();
+            $table->string('platform')->nullable();
+            $table->string('device')->nullable();
+            $table->timestamp('logged_in_at')->index();
+            $table->timestamps();
+            $table->index(['user_id', 'logged_in_at']);
+        });
     }
 
     /**
@@ -223,6 +241,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('user_login_events');
+        
         Schema::dropIfExists('supervisory_agents');
         Schema::dropIfExists('stakeholders');
         Schema::dropIfExists('coordinators');

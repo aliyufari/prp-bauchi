@@ -13,10 +13,10 @@ class PermissionSeeder extends Seeder
     ];
 
     private const SINGLES = [
-        'dashboard.view', 'portal.access', 'reports.view',
+        'dashboard.view', 'portal.access', 'reports.view', 'pu-tasks.manage', 'pu-tasks.view',
         'campaign.view', 'finance.view',
         'polling-units.view', 'polling-units.manage',
-        'results.view', 'results.upload', 'results.verify',
+        'results.view', 'results.upload', 'results.verify', 'results.analyse',
         'aspirants.view', 'aspirants.manage', 'aspirants.export',
         'campaign-teams.view', 'campaign-teams.manage',
         'users.manage', 'roles.manage', 'settings.manage', 'audit-logs.view', 'backups.manage',

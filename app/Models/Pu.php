@@ -20,7 +20,9 @@ class Pu extends Model
     protected $fillable = [
         'code',
         'name',
-        'ward_id'
+        'ward_id',
+        'address',
+        'registered_voters',
     ];
 
     protected function casts(): array
@@ -74,6 +76,12 @@ class Pu extends Model
         return $this->hasMany(PuResultSubmission::class, 'pu_id');
     }
 
+    /** Immutable audit history for officials and evidence changes. */
+    public function taskAudits(): HasMany
+    {
+        return $this->hasMany(PuTaskAudit::class, 'pu_id');
+    }
+
     /**
      * Eager-load / read the submission of one office:
      *   Pu::with(['submission' => fn ($q) => $q->where('office', $office)])
@@ -87,7 +95,7 @@ class Pu extends Model
     public function scopeResultComplete(Builder $query, string $office): Builder
     {
         return $query->whereHas('submission', fn ($s) => $s->where('office', $office)
-            ->whereNotNull('video_path')->whereRaw('json_length(sheets) > 0'));
+            ->whereNotNull('video_path')->whereJsonLength('sheets', '>', 0));
     }
 
     public function scopeResultIncomplete(Builder $query, string $office): Builder
@@ -95,6 +103,41 @@ class Pu extends Model
         return $query->where(fn ($q) => $q
             ->whereDoesntHave('submission', fn ($s) => $s->where('office', $office))
             ->orWhereHas('submission', fn ($s) => $s->where('office', $office)->where(fn ($s) => $s
-                ->whereNull('video_path')->orWhereRaw('sheets is null or json_length(sheets) = 0'))));
+                ->whereNull('video_path')->orWhereNull('sheets')->orWhereJsonLength('sheets', '=', 0))));
     }
+
+    /** Any evidence (video or at least one sheet photo) uploaded for the office. */
+    public function scopeHasEvidence(Builder $query, string $office): Builder
+    {
+        return $query->whereHas('submission', fn ($s) => $s->where('office', $office)
+            ->where(fn ($s) => $s->whereNotNull('video_path')->orWhereJsonLength('sheets', '>', 0)));
+    }
+
+    /** Party figures have been entered for an active election and this office. */
+    public function scopeHasPartyFigures(Builder $query, string $office): Builder
+    {
+        return $query->whereHas('results', fn ($result) => $result
+            ->where('office', $office)
+            ->whereHas('election', fn ($election) => $election->where('is_active', true)));
+    }
+
+    /** Nothing done yet: no officials, evidence or party figures. */
+    public function scopeTaskNotStarted(Builder $query, string $office): Builder
+    {
+        return $query->whereDoesntHave('official')
+            ->whereDoesntHave('submission', fn ($s) => $s->where('office', $office)
+                ->where(fn ($s) => $s->whereNotNull('video_path')->orWhereJsonLength('sheets', '>', 0)))
+            ->whereDoesntHave('results', fn ($result) => $result
+                ->where('office', $office)
+                ->whereHas('election', fn ($election) => $election->where('is_active', true)));
+    }
+
+    /** All four field tasks are complete. */
+    public function scopeTaskDone(Builder $query, string $office): Builder
+    {
+        return $query->whereHas('official')
+            ->resultComplete($office)
+            ->hasPartyFigures($office);
+    }
+
 }

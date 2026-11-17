@@ -16,7 +16,7 @@ class UpdatePuRequest extends StorePuRequest
 
     public function rules(): array
     {
-        return ['code' => ['nullable', 'string', 'max:50', Rule::unique('pus', 'code')->ignore($this->route('polling_unit')?->id)]]
+        return ['code' => ['required', 'string', 'max:50', Rule::unique('pus', 'code')->where(fn ($query) => $query->where('ward_id', $this->input('ward_id', $this->route('polling_unit')?->ward_id)))->ignore($this->route('polling_unit')?->id)]]
             + parent::rules();
     }
 

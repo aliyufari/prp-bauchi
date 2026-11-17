@@ -59,6 +59,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
             // 'password' => 'hashed',
         ];
     }
@@ -77,6 +78,11 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token): void
     {
         $this->notify(new ResetPasswordNotification($token));
+    }
+
+    public function loginEvents(): HasMany
+    {
+        return $this->hasMany(UserLoginEvent::class)->latest('logged_in_at');
     }
 
     public function profile(): HasOne

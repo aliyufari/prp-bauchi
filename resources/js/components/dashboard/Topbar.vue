@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import { PanelLeft, Bell, Mail, User, Settings, LogOut } from 'lucide-vue-next'
 
 interface User {
@@ -13,6 +13,9 @@ const props = defineProps<{ user?: User }>()
 defineEmits<{ (e: 'toggle-sidebar'): void }>()
 
 const dropdownOpen = ref(false)
+const page = usePage()
+const identityLocked = computed(() => (page.props as any).auth?.roles?.some((r: string) => ['party_agent', 'super_party_agent', 'coordinator', 'supervisory_agent', 'returning_officer', 'stakeholder', 'campaign_team_member'].includes(r)) ?? false)
+const canOpenPortalProfile = computed(() => ((page.props as any).auth?.permissions ?? []).includes('portal.access'))
 
 const initials = computed(() => {
   const name = props.user?.name ?? 'Admin'
@@ -50,7 +53,7 @@ function logout() {
         <h1 class="text-red-700 font-black leading-none tracking-tight truncate text-xs xs:text-sm sm:text-base lg:text-lg">
           PRP BAUCHI STATE MANAGEMENT SYSTEM
         </h1>
-        <p class="text-red-500 text-[10px] sm:text-xs italic font-semibold mt-0.5 hidden sm:block truncate">
+        <p class="text-black text-[10px] sm:text-xs italic font-semibold mt-0.5 hidden sm:block truncate">
           ...Motto: Justice, Unity and Progress
         </p>
       </div>
@@ -134,7 +137,8 @@ function logout() {
             <!-- Menu items -->
             <div class="py-1">
               <Link
-                :href="route('profile.edit')"
+                v-if="!identityLocked || canOpenPortalProfile"
+                :href="identityLocked ? route('portal.profile') : route('profile.edit')"
                 @click="closeDropdown"
                 class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors font-semibold"
               >

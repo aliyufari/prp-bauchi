@@ -35,6 +35,7 @@ class UpdateCampaignTeamMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'role_in_team' => ['required', 'string', 'max:255'],
             'education_status' => ['nullable', Rule::enum(EducationStatus::class)],
             'joined_date' => ['nullable', 'date'],

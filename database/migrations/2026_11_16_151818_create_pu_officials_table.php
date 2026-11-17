@@ -39,6 +39,19 @@ return new class extends Migration
 
             $table->unique(['pu_id', 'office']);
         });
+
+        Schema::create('pu_task_audits', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->foreignUuid('pu_id')->constrained('pus')->cascadeOnDelete()->cascadeOnUpdate();
+            $table->string('office')->nullable();
+            $table->string('action', 60);
+            $table->json('details')->nullable();
+            $table->foreignUuid('performed_by')->nullable()->constrained('users')->nullOnDelete()->cascadeOnUpdate();
+            $table->timestamps();
+
+            $table->index(['pu_id', 'created_at']);
+            $table->index(['office', 'action']);
+        });
     }
 
     /**
@@ -46,6 +59,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('pu_task_audits');
         Schema::dropIfExists('pu_result_submissions');
         Schema::dropIfExists('pu_officials');
     }

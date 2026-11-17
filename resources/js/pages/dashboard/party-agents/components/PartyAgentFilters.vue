@@ -11,8 +11,6 @@ const props = defineProps<Props>();
 const emit = defineEmits<{ 'update:modelValue': [value: Record<string, string>] }>();
 
 const filters = computed<FilterDef[]>(() => [
-    { key: 'zone', label: 'Zones', options: props.options.zones.map((z) => ({ value: z.id, label: z.name })) },
-    { key: 'lga', label: 'LGAs', options: props.options.lgas.map((l) => ({ value: l.id, label: l.name })) },
     { key: 'ward', label: 'Wards', options: props.options.wards.map((w) => ({ value: w.id, label: w.name })) },
     { key: 'pu', label: 'Polling units', options: [] },
     { key: 'type', label: 'Type', options: props.options.types },

@@ -14,14 +14,25 @@ final class LocationChain
         'state' => 'states', 'zone' => 'zones', 'lga' => 'lgas', 'ward' => 'wards', 'pu' => 'pus',
     ];
 
-    /** The single operating state for this deployment. */
+    /** The configured operating state for this deployment. */
+    public static function operatingStateId(): ?string
+    {
+        $stateName = trim((string) config('location.operating_state', 'Bauchi'));
+        $cacheKey = 'operating-state:'.strtolower($stateName).':id';
+
+        return Cache::remember(
+            $cacheKey,
+            3600,
+            fn () => DB::table('states')
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($stateName)])
+                ->value('id'),
+        );
+    }
+
+    /** @deprecated Use operatingStateId(); retained for existing application integrations. */
     public static function bauchiStateId(): ?string
     {
-        return Cache::remember(
-            'operating-state:bauchi:id',
-            3600,
-            fn () => DB::table('states')->whereRaw('LOWER(name) = ?', ['bauchi'])->value('id'),
-        );
+        return self::operatingStateId();
     }
 
     public static function index(string $level): ?int

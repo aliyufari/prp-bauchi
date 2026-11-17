@@ -114,7 +114,10 @@ class ReturningOfficerController extends Controller
 
         $returning_officer->load(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'returningOfficer']);
 
-        return Inertia::render('dashboard/returning-officers/Show', ['officer' => new ReturningOfficerResource($returning_officer)]);
+        return Inertia::render('dashboard/people/Show', [
+            'person' => new ReturningOfficerResource($returning_officer),
+            'kind' => 'Returning Officer',
+        ]);
     }
 
     public function destroy(User $returning_officer)

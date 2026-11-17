@@ -114,7 +114,7 @@ class MemberController extends Controller
 
         $member->load(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu']);
 
-        return Inertia::render('dashboard/members/Show', ['member' => new MemberResource($member)]);
+        return Inertia::render('dashboard/people/Show', ['person' => new MemberResource($member), 'kind' => 'Member']);
     }
 
     public function destroy(User $member)

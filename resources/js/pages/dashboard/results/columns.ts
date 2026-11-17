@@ -2,6 +2,7 @@ import type { Column } from '@/components/tables/DataTable.vue'
 
 export const columns: Column[] = [
   { key: 'pu', label: 'Polling Unit', slot: 'pu' },
+  { key: 'election_name', label: 'Election', slot: 'election' },
   { key: 'office', label: 'Office', slot: 'office' },
   { key: 'location', label: 'Location', slot: 'location' },
   { key: 'votes', label: 'Valid Votes', sortable: true, sortKey: 'total_valid_votes', slot: 'votes' },

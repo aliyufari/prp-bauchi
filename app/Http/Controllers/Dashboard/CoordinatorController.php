@@ -121,7 +121,10 @@ class CoordinatorController extends Controller
 
         $coordinator->load(['profile.state', 'profile.zone', 'profile.lga', 'profile.ward', 'profile.pu', 'coordinator']);
 
-        return Inertia::render('dashboard/coordinators/Show', ['coordinator' => new CoordinatorResource($coordinator)]);
+        return Inertia::render('dashboard/people/Show', [
+            'person' => new CoordinatorResource($coordinator),
+            'kind' => 'Coordinator',
+        ]);
     }
 
     public function destroy(User $coordinator)

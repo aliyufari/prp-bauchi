@@ -22,6 +22,7 @@ import ResultForm from './components/ResultForm.vue';
 interface FormOptions {
     offices: OfficeOption[];
     parties: PartyOption[];
+    elections: { value: string; label: string }[];
     states: LocationOption[];
 }
 
@@ -37,7 +38,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     filters: () => ({}),
     filterOptions: () => ({ offices: [], statuses: [], states: [] }),
-    formOptions: () => ({ offices: [], parties: [], states: [] }),
+    formOptions: () => ({ offices: [], parties: [], states: [], elections: [] }),
 });
 
 const table = useDataTable()
@@ -107,8 +108,8 @@ function emptyForm() {
         lga_id: null as string | null,
         ward_id: null as string | null,
         pu_id: null as string | null,
+        election_id: null as string | null,
         office: '' as string | null,
-        election_date: '' as string | null,
         registered_voters: 0,
         accredited_voters: 0,
         rejected_votes: 0,
@@ -141,8 +142,8 @@ function openEdit(row: Result) {
         lga_id: null,
         ward_id: null,
         pu_id: row.pu_id,
+        election_id: row.election_id,
         office: row.office,
-        election_date: row.election_date,
         registered_voters: row.registered_voters,
         accredited_voters: row.accredited_voters,
         rejected_votes: row.rejected_votes,
@@ -229,7 +230,7 @@ function closeDeleteDialog() {
 
             <div class="grid grid-cols-2 gap-4 xl:grid-cols-4">
                 <StatCard :value="statistics.total" label="Total Results" icon="FileBarChart" icon-bg="bg-red-100" icon-color="text-red-700" />
-                <StatCard :value="statistics.verified" label="Verified" icon="CheckCircle2" icon-bg="bg-neutral-50" icon-color="text-red-900" />
+                <StatCard :value="statistics.verified" label="Verified" icon="CheckCircle2" icon-bg="bg-neutral-100" icon-color="text-neutral-900" />
                 <StatCard :value="statistics.pending" label="Pending" icon="Clock" icon-bg="bg-amber-100" icon-color="text-amber-700" />
                 <StatCard :value="statistics.disputed" label="Disputed" icon="AlertTriangle" icon-bg="bg-red-100" icon-color="text-red-700" />
             </div>
@@ -281,7 +282,7 @@ function closeDeleteDialog() {
                             <span
                                 class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold"
                                 :class="{
-                                    'bg-red-100 text-red-700': row.status === 'verified',
+                                    'bg-neutral-900 text-white': row.status === 'verified',
                                     'bg-amber-100 text-amber-700': row.status === 'pending',
                                     'bg-red-100 text-red-700': row.status === 'disputed',
                                 }"
@@ -322,6 +323,7 @@ function closeDeleteDialog() {
                 :form="form"
                 :submit-label="editingResult ? 'Save changes' : 'Upload result'"
                 :offices="formOptions.offices"
+                :elections="formOptions.elections"
                 :parties="formOptions.parties"
                 :states="formOptions.states"
                 @submit="submit"

@@ -4,7 +4,9 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -41,6 +43,18 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        $user = User::query()->where('email', $this->string('email')->toString())->first();
+
+        // Do not establish a session for an account that is awaiting administrator approval.
+        // Check the password first so this message does not disclose account status to strangers.
+        if ($user && ! $user->is_active && Hash::check($this->string('password')->toString(), $user->password)) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Your account is awaiting approval by an administrator.',
+            ]);
+        }
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
@@ -50,12 +64,6 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
-
-        // $user = User::where('email', $this->email)->first();
-
-        // if ($user && !$user->is_active && Hash::check($this->password, $user->password)) {
-        //     throw ValidationException::withMessages(['email' => 'Your account is awaiting approval by an administrator.']);
-        // }
     }
 
     /**
